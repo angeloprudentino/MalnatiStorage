@@ -1,0 +1,16 @@
+﻿Compilazione avviata 26/09/2015 09:56:59.
+     1>Progetto "C:\Users\daniele\Desktop\prova_sqlite\prova_sqlite\prova_sqlite.vcxproj" sul nodo 2 (destinazioni: Build).
+     1>ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /I"C:\Users\daniele\Desktop\sql lite dll" /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _LIB /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Yu"stdafx.h" /Fp"Debug\prova_sqlite.pch" /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt prova_sqlite.cpp
+         prova_sqlite.cpp
+       Link:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\daniele\Desktop\prova_sqlite\Debug\prova_sqlite.exe" /INCREMENTAL /NOLOGO /LIBPATH:C:\Users\daniele\Desktop /LIBPATH:"C:\Users\daniele\Desktop\sql lite dll" kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\Users\daniele\Desktop\prova_sqlite\Debug\prova_sqlite.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\daniele\Desktop\prova_sqlite\Debug\prova_sqlite.lib" /MACHINE:X86 Debug\sqlite3.obj
+         Debug\prova_sqlite.obj
+         Debug\SQlite_db.obj
+         Debug\stdafx.obj
+         prova_sqlite.vcxproj -> C:\Users\daniele\Desktop\prova_sqlite\Debug\prova_sqlite.exe
+     1>Compilazione progetto "C:\Users\daniele\Desktop\prova_sqlite\prova_sqlite\prova_sqlite.vcxproj" (destinazioni: Build) completata.
+
+Compilazione completata.
+
+Tempo trascorso 00:00:02.99
