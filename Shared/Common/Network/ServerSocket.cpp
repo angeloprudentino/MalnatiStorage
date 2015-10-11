@@ -16,17 +16,19 @@ ServerSockController::ServerSockController(int AServerPort, ServerSockController
 
 	this->callbackObj = callback;
 	onServerSockLog("ServerSockController", "constructor", "creating ServerSocket object...");
-	this->sock = new ServerSocket(MainIoService);
+	this->sock = new ServerSocket(MainIoService, this);
 	onServerSockLog("ServerSockController", "constructor", "ServerSocket object created");
-	this->sock->setCallbackObj(this);
 }
 
 ServerSockController::~ServerSockController(){
-	this->callbackObj = nullptr;
-	if (this->sock != nullptr)
+	this->MainIoService.stop();
+	if (this->sock != nullptr){
+		onServerSockLog("ServerSockController", "destructor", "deleting ServerSocket object...");
 		delete this->sock;
+		onServerSockLog("ServerSockController", "destructor", "ServerSocket object deleted");
+	}
 	this->sock = nullptr;
-	//this->MainIoService.stop();
+	this->callbackObj = nullptr;
 }
 
 void ServerSockController::StartSocket(){
@@ -41,7 +43,7 @@ void ServerSockController::StartSocket(){
 
 	// socket server is created and ready to accept connections	
 	this->sock->doAccept();
-	//this->MainIoService.run();
+	this->MainIoService.run();
 }
 void ServerSockController::onServerSockCreate(){
 	if (this->callbackObj != nullptr)
@@ -65,17 +67,18 @@ void ServerSockController::onAccept(tcp::socket* sock, tcp::endpoint* endp){
 //////////////////////////////////////
 //         ServerSocket	            //
 //////////////////////////////////////
-ServerSocket::ServerSocket(io_service& ios){
+ServerSocket::ServerSocket(io_service& ios, ServerSockControllerInterface* callbackObj){
+	this->callbackObj = callbackObj;
 	this->peerEndPoint = new tcp::endpoint();
 	this->ServerAcceptor = new tcp::acceptor(ios);
 	this->InternalSocket = new tcp::socket(ios);
 }
 
 ServerSocket::~ServerSocket(){
-	this->callbackObj = nullptr;
 	delete this->peerEndPoint;
 	delete this->ServerAcceptor;
 	delete this->InternalSocket;
+	this->callbackObj = nullptr;
 }
 
 bool ServerSocket::setAcceptState(int AcceptPort){

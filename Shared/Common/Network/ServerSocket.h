@@ -49,14 +49,10 @@ private:
 	
 	ServerSockControllerInterface* callbackObj = nullptr;
 public:
-	ServerSocket(io_service& ios);
+	ServerSocket(io_service& ios, ServerSockControllerInterface* callbackObj);
 	virtual ~ServerSocket();
 
 	bool setAcceptState(int AcceptPort);
 	void doAccept();
-
-	void setCallbackObj(ServerSockControllerInterface* obj){
-		this->callbackObj = obj;
-	}
 };
 

@@ -9,6 +9,17 @@
 
 using namespace TCP_server_test;
 
+void ServerForm::LogDelegateMethod(String^ strToLog){
+	//thread-safe logging function
+	if (this->rtbLog->InvokeRequired){
+		LogDelegate^ d = gcnew LogDelegate(this, &ServerForm::LogDelegateMethod);
+		this->Invoke(d, strToLog);
+	}
+	else{
+		this->rtbLog->AppendText(strToLog);
+	}
+}
+
 void ServerForm::initTCPserver(Object^ data){
 	int port = int::Parse((System::String^)data);
 
@@ -19,12 +30,16 @@ void ServerForm::initTCPserver(Object^ data){
 }
 
 void ServerForm::dismissTCPserver(){
-	//wait for all secondary threads to terminate
-	serverThread->Join();
 
-	if (this->serverEngine != nullptr)
+	if (this->serverEngine != nullptr){
+		this->Log("ServerForm", "dismissTCPserver", "start deleting StorageServer object...");
 		delete this->serverEngine;
+		this->Log("ServerForm", "dismissTCPserver", "StorageServer object deleted");
+	}
 	this->serverEngine = nullptr;
+
+	//wait for all secondary threads to terminate
+	NetworkThread->Join();
 }
 
 void ServerForm::onServerSockCreate(){
