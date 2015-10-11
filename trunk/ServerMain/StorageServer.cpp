@@ -19,11 +19,13 @@ StorageServer::StorageServer(int AServerPort, ManagedServerSockControllerInterfa
 }
 
 StorageServer::~StorageServer(){
-	this->callbackObj = nullptr;
-
-	if (sockController != nullptr)
+	if (sockController != nullptr){
+		onServerSockLog("StorageServer", "destructor", "deleting ServerSockController object...");
 		delete sockController;
+		onServerSockLog("StorageServer", "destructor", "ServerSockController object deleted");
+	}
 	sockController = nullptr;
+	this->callbackObj = nullptr;
 }
 
 void StorageServer::StartServer(){

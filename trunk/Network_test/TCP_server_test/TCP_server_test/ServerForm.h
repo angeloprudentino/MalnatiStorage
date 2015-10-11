@@ -158,9 +158,9 @@ namespace TCP_server_test {
 #pragma region MyCode
 
 	delegate void afterStartServerDelegate();
-	delegate void LogDelegate(std::string class_name, std::string func_name, std::string msg);
+	delegate void LogDelegate(String^ strToLog);
 
-	private: Thread^ serverThread;
+	private: Thread^ NetworkThread;
 	private: bool server_is_started = false;
 	private: StorageServer* serverEngine = nullptr;
 
@@ -169,23 +169,28 @@ namespace TCP_server_test {
 	}
 
 	private: System::Void ServerForm_FormClosing(System::Object^  sender, System::Windows::Forms::FormClosingEventArgs^  e) {
-			
+				 if (this->server_is_started){
+					 this->beforeStopServer();
+					 this->Log("ServerForm", "ServerForm_FormClosing", "server is going to stop");
+					 this->dismissTCPserver();
+					 this->Log("ServerForm", "ServerForm_FormClosing", "server is stopped");
+					 this->afterStopServer();
+				 }
 	}
 
 	private: System::Void btnStart_Click(System::Object^  sender, System::EventArgs^  e) {
-
-				 if (!server_is_started){
-					 beforeStartServer();
-					 Log("ServerForm", "btnStart_Click", "server is going to start");
-					 serverThread = gcnew Thread(gcnew ParameterizedThreadStart(this, &ServerForm::initTCPserver));
-					 serverThread->Start(tbPort->Text);
+				 if (!this->server_is_started){
+					 this->beforeStartServer();
+					 this->Log("ServerForm", "btnStart_Click", "server is going to start");
+					 this->NetworkThread = gcnew Thread(gcnew ParameterizedThreadStart(this, &ServerForm::initTCPserver));
+					 this->NetworkThread->Start(tbPort->Text);
 				 }
 				 else{
-					 beforeStopServer();
-					 Log("ServerForm", "btnStart_Click", "server is going to stop");
-					 dismissTCPserver();
-					 Log("ServerForm", "btnStart_Click", "server is stopped");
-					 afterStopServer();
+					 this->beforeStopServer();
+					 this->Log("ServerForm", "btnStart_Click", "server is going to stop");
+					 this->dismissTCPserver();
+					 this->Log("ServerForm", "btnStart_Click", "server is stopped");
+					 this->afterStopServer();
 				 }
 	}
 
@@ -206,7 +211,7 @@ namespace TCP_server_test {
 					 this->ServerStatusLabel->ForeColor = System::Drawing::Color::Green;
 					 this->btnStart->Text = "Stop";
 					 this->btnStart->Enabled = true;
-					 this->tbPort->Enabled = true;
+					 this->tbPort->Enabled = false;
 					 this->server_is_started = true;
 				 }
 	}
@@ -227,18 +232,15 @@ namespace TCP_server_test {
 				this->server_is_started = false;
 	}
 
-	private: void Log(std::string class_name, std::string func_name, std::string msg){
-				 //thread-safe logging function
-				 if (this->rtbLog->InvokeRequired){
-					 LogDelegate^ d = gcnew LogDelegate(this, &ServerForm::Log);
-					 this->invoke(d, )
-				 }
+	private: void Log(std::string className, std::string funcName, std::string msg){
 				 System::Threading::Monitor::Enter(rtbLog);
-				 std::string dt = currentDateTime();
-				 dt.append(" ").append(class_name).append("::").append(func_name).append(" => ").append(msg).append("\n");
-				 rtbLog->AppendText(gcnew String(dt.c_str()));
+				 std::string toLog = currentDateTime();
+				 toLog.append(" ").append(className).append("::").append(funcName).append(" => ").append(msg).append("\n");
+				 this->LogDelegateMethod(gcnew String(toLog.c_str()));
 				 System::Threading::Monitor::Exit(rtbLog);
 	}
+
+	private: void LogDelegateMethod(String^ strToLog);
 
 	private: void initTCPserver(Object^ data);
 	private: void dismissTCPserver();
