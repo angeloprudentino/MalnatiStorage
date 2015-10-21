@@ -30,9 +30,11 @@ goto release
 
 :debug
 set MODE="debug"
+set DLL=*-mt-gd-1_59.dll
 goto build
 :release
 set MODE="release"
+set DLL=*-mt-1_59.dll
 goto build
 
 :build
@@ -47,7 +49,7 @@ call b2.exe toolset=msvc-12.0 architecture=x86 address-model=%ENV% variant=%MODE
 set BOOST_LIB="..\..\..\Libraries\%ENV_DIR%\lib\%MODE%"
 set BOOST_INC="..\..\..\Libraries\%ENV_DIR%\include"
 mkdir %BOOST_LIB%\boost
-copy /Y stage\lib\*.dll %BOOST_LIB%\boost
+copy /Y stage\lib\%DLL% %BOOST_LIB%\boost
 mkdir %BOOST_INC%\boost
 xcopy /E /Y boost %BOOST_INC%\boost
 goto exit
