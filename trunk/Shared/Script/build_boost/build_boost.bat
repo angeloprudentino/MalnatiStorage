@@ -40,11 +40,11 @@ cd boost_1_59_0
 rem Launching configuration script
 call bootstrap.bat
 rem Launching compilation script
-call b2.exe toolset=msvc-12.0 architecture=x86 address-model=%ENV% variant=%MODE% link=static,shared threading=multi --build-type=complete
+call b2.exe toolset=msvc-12.0 architecture=x86 address-model=%ENV% variant=%MODE% link=shared threading=multi
 
-mkdir %PWD%\..\..\Libraries\%SUB_DIR%\lib\boost
-move /Y stage\* %PWD%\..\..\Libraries\%SUB_DIR%\lib\boost
-copy /Y boost %PWD%\..\..\Libraries\%SUB_DIR%\include
+set BOOST="..\..\..\Libraries\%SUB_DIR%"
+copy /Y stage\lib\* %BOOST%\lib\boost\
+copy /Y boost\* %BOOST%\include\
 goto exit
 
 :error
