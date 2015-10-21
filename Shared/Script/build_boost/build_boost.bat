@@ -15,9 +15,11 @@ goto x64
 
 :x86
 set ENV=32
+set SUB_DIR=x86
 goto check_mode
 :x64
 set ENV=64
+set SUB_DIR=x86_64
 goto check_mode
 
 :check_mode
@@ -39,6 +41,10 @@ rem Launching configuration script
 call bootstrap.bat
 rem Launching compilation script
 call b2.exe toolset=msvc-12.0 architecture=x86 address-model=%ENV% variant=%MODE% link=static,shared threading=multi --build-type=complete
+
+mkdir %PWD%\..\..\Libraries\%SUB_DIR%\lib\boost
+move /Y stage\* %PWD%\..\..\Libraries\%SUB_DIR%\lib\boost
+copy /Y boost %PWD%\..\..\Libraries\%SUB_DIR%\include
 goto exit
 
 :error
