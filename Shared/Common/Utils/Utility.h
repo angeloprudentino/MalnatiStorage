@@ -9,7 +9,18 @@
 
 #include <string>
 
+#include "Message.h"
+
+using namespace std;
+
+#define EMPTY ""
+#define TRUE_STR "true"
+#define FALSE_STR "false"
 #define DEFAULT_TCP_PORT 4700
 
 // Get current date/time, format is [YYYY-MM-DD HH:mm:ss]
-std::string currentDateTime();
+const string currentDateTime();
+
+//Convert time_t to std::string and vice versa
+const string timeToString(const time_t& t);
+const time_t stringToTime(const string& s);

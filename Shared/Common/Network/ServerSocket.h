@@ -11,48 +11,64 @@
 #include <boost/asio.hpp>
 #include <string>
 #include <vcclr.h>
-#include "NetControllerInterface.h"
+#include "NetworkController.h"
 
 using namespace boost;
 using namespace boost::asio;
 using namespace boost::asio::ip;
 
-class ServerSocket;
+class TServerSocket;
 
-public class ServerSockController : public ServerSockControllerInterface{
+//////////////////////////////////////
+//      TServerSockController	    //
+//////////////////////////////////////
+
+// Socket controller class
+public class TServerSockController : public IServerSockController{
 private:
-	int serverPort = -1;
+	int fServerPort = -1;
 
-	ServerSocket* sock;
-	ServerSockControllerInterface* callbackObj = nullptr;
-	io_service MainIoService;
+	TServerSocket* fSock;
+	IServerSockController* fCallbackObj = nullptr;
 public:
-	ServerSockController(int AServerPort, ServerSockControllerInterface* callback);
-	virtual ~ServerSockController();
+	TServerSockController(int AServerPort, IServerSockController* aCallback);
+	virtual ~TServerSockController();
 
 	void StartSocket();
 
 	void onServerSockCreate() override;
-	void onServerSockLog(std::string className, std::string funcName, std::string msg) override;
-	void onServerSockError(std::string className, std::string funcName, std::string msg) override;
-	void onAccept(tcp::socket* sock, tcp::endpoint* endp) override;
+	void onServerSockLog(string aClassName, string aFuncName, string aMsg) override;
+	void onServerSockError(string aClassName, string aFuncName, string aMsg) override;
+	void onServerSockCriticalError(string aClassName, string aFuncName, string aMsg) override;
+	void onServerSockAccept(TConnectionHandle aConnection) override;
+	void onServerSockRead(TConnectionHandle aConnection, string aMsg) override;
 };
 
-public class ServerSocket{
+
+//////////////////////////////////////
+//         TServerSocket	        //
+//////////////////////////////////////
+
+//Boost-asio server socket class 
+public class TServerSocket{
 private:
-	int acceptPort = -1;
-	tcp::endpoint* peerEndPoint;
+	int fAcceptPort = -1;
+	io_service fMainIoService;
+	tcp::acceptor fServerAcceptor;
+	std::list<TConnection> fConnections;
 
-	io_service* MainIoServicePtr;
-	tcp::acceptor* ServerAcceptor;
-	tcp::socket* InternalSocket;
-	
-	ServerSockControllerInterface* callbackObj = nullptr;
+	//Callback object
+	IServerSockController* fCallbackObj = nullptr;
+
+	void doAsyncRead(TConnectionHandle aConnction);
+	void handleAccept(TConnectionHandle aConnection, boost::system::error_code const& aErr);
+	void handleRead(TConnectionHandle aConnection, const boost::system::error_code& aErr, std::size_t aBytes);
+
 public:
-	ServerSocket(io_service& ios, ServerSockControllerInterface* callbackObj);
-	virtual ~ServerSocket();
+	TServerSocket(IServerSockController* aCallbackObj);
+	virtual ~TServerSocket();
 
-	bool setAcceptState(int AcceptPort);
+	bool setAcceptState(int aAcceptPort);
 	void doAccept();
 };
 
