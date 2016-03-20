@@ -30,29 +30,29 @@ set RELEASE_LIB=*-mt-1_59.lib
 set RELEASE_DLL=*-mt-1_59.dll
 
 :build
-set LIB_SUB_DIR="%ENV_DIR%\lib"
-set INC_SUB_DIR="%ENV_DIR%"
 cd boost_1_59_0
 rem Launching configuration script
 call bootstrap.bat
 rem Launching compilation script
 call b2.exe toolset=msvc-12.0 architecture=x86 address-model=%ENV% variant=debug,release link=shared threading=multi define=_BIND_TO_CURRENT_VCLIBS_VERSION
-rem call b2.exe toolset=msvc-12.0 architecture=x86 address-model=32,64 variant=debug,release link=shared threading=multi define=_BIND_TO_CURRENT_VCLIBS_VERSION 
-rem --build-type=complete
 
-set BOOST_LIB="..\..\..\Libraries\%ENV_DIR%\lib"
-set BOOST_INC="..\..\..\Libraries\%ENV_DIR%\include"
+set BOOST_LIB="..\..\..\Libraries\%ENV_DIR%"
+set BOOST_INC="..\..\..\Libraries\include"
 
+mkdir %BOOST_LIB%
+mkdir %BOOST_LIB%\debug
 mkdir %BOOST_LIB%\debug\boost
 mkdir %BOOST_LIB%\debug\boost\static
 copy /Y stage\lib\%DEBUG_LIB% %BOOST_LIB%\debug\boost\static
 copy /Y stage\lib\%DEBUG_DLL% %BOOST_LIB%\debug\boost
 
+mkdir %BOOST_LIB%\release
 mkdir %BOOST_LIB%\release\boost
 mkdir %BOOST_LIB%\release\boost\static
 copy /Y stage\lib\%RELEASE_LIB% %BOOST_LIB%\release\boost\static
 copy /Y stage\lib\%RELEASE_DLL% %BOOST_LIB%\release\boost
 
+mkdir %BOOST_INC%
 mkdir %BOOST_INC%\boost
 xcopy /E /Y boost %BOOST_INC%\boost
 goto exit
