@@ -9,46 +9,54 @@
 #include "StorageServer.h"
 #include "Utility.h"
 
-
-StorageServer::StorageServer(int AServerPort, ManagedServerSockControllerInterface^ callback){
-	this->serverPort = AServerPort;
-	this->callbackObj = callback;
-	onServerSockLog("StorageServer", "constructor", "creating ServerSockController object...");
-	this->sockController = new ServerSockController(this->serverPort, this);
-	onServerSockLog("StorageServer", "constructor", "ServerSockController object created");
+TStorageServer::TStorageServer(int AServerPort, IManagedServerSockController^ aCallback){
+	this->fServerPort = AServerPort;
+	this->fCallbackObj = aCallback;
+	onServerSockLog("TStorageServer", "constructor", "creating TServerSockController object...");
+	this->fSockController = new TServerSockController(this->fServerPort, this);
+	onServerSockLog("TStorageServer", "constructor", "TServerSockController object created");
 }
 
-StorageServer::~StorageServer(){
-	if (sockController != nullptr){
-		onServerSockLog("StorageServer", "destructor", "deleting ServerSockController object...");
-		delete sockController;
-		onServerSockLog("StorageServer", "destructor", "ServerSockController object deleted");
+TStorageServer::~TStorageServer(){
+	if (this->fSockController != nullptr){
+		onServerSockLog("TStorageServer", "destructor", "deleting TServerSockController object...");
+		delete this->fSockController;
+		onServerSockLog("TStorageServer", "destructor", "TServerSockController object deleted");
 	}
-	sockController = nullptr;
-	this->callbackObj = nullptr;
+	this->fSockController = nullptr;
+	this->fCallbackObj = nullptr;
 }
 
-void StorageServer::StartServer(){
-	onServerSockLog("StorageServer", "StartServer", "starting the internal server socket...");
-	this->sockController->StartSocket();
+void TStorageServer::StartServer(){
+	onServerSockLog("TStorageServer", "StartServer", "starting the internal server socket...");
+	this->fSockController->StartSocket();
 }
 
-void StorageServer::onServerSockCreate(){
-	onServerSockLog("StorageServer", "onServerSockCreate", "internal server socket correctly started");
-	if (!System::Object::ReferenceEquals(callbackObj,nullptr))
-		callbackObj->onServerSockCreate();
+void TStorageServer::onServerSockCreate(){
+	onServerSockLog("TStorageServer", "onServerSockCreate", "internal server socket correctly started");
+	if (!System::Object::ReferenceEquals(this->fCallbackObj, nullptr))
+		this->fCallbackObj->onServerSockCreate();
 }
 
-void StorageServer::onServerSockLog(std::string className, std::string funcName, std::string msg){
-	if (!System::Object::ReferenceEquals(callbackObj, nullptr))
-		callbackObj->onServerSockLog(className, funcName, msg);
+void TStorageServer::onServerSockLog(string aClassName, string aFuncName, string aMsg){
+	if (!System::Object::ReferenceEquals(this->fCallbackObj, nullptr))
+		this->fCallbackObj->onServerSockLog(aClassName, aFuncName, aMsg);
 }
 
-void StorageServer::onServerSockError(std::string className, std::string funcName, std::string msg){
-	if (!System::Object::ReferenceEquals(callbackObj, nullptr))
-		callbackObj->onServerSockError(className, funcName, msg);
+void TStorageServer::onServerSockError(string aClassName, string aFuncName, string aMsg){
+	if (!System::Object::ReferenceEquals(this->fCallbackObj, nullptr))
+		this->fCallbackObj->onServerSockError(aClassName, aFuncName, aMsg);
 }
 
-void StorageServer::onAccept(tcp::socket* sock, tcp::endpoint* endp){
+void TStorageServer::onServerSockCriticalError(string aClassName, string aFuncName, string aMsg){
+	if (!System::Object::ReferenceEquals(this->fCallbackObj, nullptr))
+		this->fCallbackObj->onServerSockError(aClassName, aFuncName, aMsg);
+}
+
+void TStorageServer::onServerSockAccept(TConnectionHandle aConnection){
+
+}
+
+void TStorageServer::onServerSockRead(TConnectionHandle aConnection, string aMsg){
 
 }

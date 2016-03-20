@@ -7,29 +7,30 @@
  */
 
 #pragma once
-
 #include <string>
 
 #include "ServerSocket.h"
 
-public class StorageServer : public ServerSockControllerInterface{
+public class TStorageServer : public IServerSockController{
 private:
-	int serverPort = -1;
+	int fServerPort = -1;
 
 	//this is the way to use managed obj inside unmanaged classes
-	gcroot<ManagedServerSockControllerInterface^> callbackObj = nullptr;
+	gcroot<IManagedServerSockController^> fCallbackObj = nullptr;
 	
-	ServerSockController* sockController = nullptr;
+	TServerSockController* fSockController = nullptr;
 
 public:
-	StorageServer(int AServerPort, ManagedServerSockControllerInterface^ callback);
-	~StorageServer();
+	TStorageServer(int AServerPort, IManagedServerSockController^ aCallback);
+	~TStorageServer();
 
 	void StartServer();
 
 	void onServerSockCreate() override;
-	void onServerSockLog(std::string className, std::string funcName, std::string msg) override;
-	void onServerSockError(std::string className, std::string funcName, std::string msg) override;
-	void onAccept(tcp::socket* sock, tcp::endpoint* endp) override;
+	void onServerSockLog(string aClassName, string aFuncName, string aMsg) override;
+	void onServerSockError(string aClassName, string aFuncName, string aMsg) override;
+	void onServerSockCriticalError(string aClassName, string aFuncName, string aMsg) override; 
+	void onServerSockAccept(TConnectionHandle aConnection) override;
+	void onServerSockRead(TConnectionHandle aConnection, string aMsg) override;
 };
 
