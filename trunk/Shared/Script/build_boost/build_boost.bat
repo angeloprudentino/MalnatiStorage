@@ -8,54 +8,57 @@ set PWD=%cd%
 
 rem check first param
 if "%1" EQU "x86" goto x86
-if "%1" EQU "x64" goto x64
+if "%1" EQU "x86_64" goto x86_64
 if "%1" EQU "--help" goto error
 if "%1" NEQ "" goto error
-goto x64
+goto x86_64
 
 :x86
 set ENV=32
 set ENV_DIR=x86
-goto check_mode
-:x64
+
+:x86_64
 set ENV=64
 set ENV_DIR=x86_64
-goto check_mode
-
-:check_mode
-if "%2" EQU "debug" goto debug
-if "%2" EQU "release" goto release
-if "%2" NEQ "" goto error
-goto release
 
 :debug
-set MODE="debug"
-set DLL=*-mt-gd-1_59.dll
-goto build
+set DEBUG_LIB=*-mt-gd-1_59.lib
+set DEBUG_DLL=*-mt-gd-1_59.dll
+
 :release
-set MODE="release"
-set DLL=*-mt-1_59.dll
-goto build
+set RELEASE_LIB=*-mt-1_59.lib
+set RELEASE_DLL=*-mt-1_59.dll
 
 :build
-set LIB_SUB_DIR="%ENV_DIR%\lib\%MODE%"
+set LIB_SUB_DIR="%ENV_DIR%\lib"
 set INC_SUB_DIR="%ENV_DIR%"
 cd boost_1_59_0
 rem Launching configuration script
 call bootstrap.bat
 rem Launching compilation script
-call b2.exe toolset=msvc-12.0 architecture=x86 address-model=%ENV% variant=%MODE% link=shared threading=multi
+call b2.exe toolset=msvc-12.0 architecture=x86 address-model=%ENV% variant=debug,release link=shared threading=multi define=_BIND_TO_CURRENT_VCLIBS_VERSION
+rem call b2.exe toolset=msvc-12.0 architecture=x86 address-model=32,64 variant=debug,release link=shared threading=multi define=_BIND_TO_CURRENT_VCLIBS_VERSION 
+rem --build-type=complete
 
-set BOOST_LIB="..\..\..\Libraries\%ENV_DIR%\lib\%MODE%"
+set BOOST_LIB="..\..\..\Libraries\%ENV_DIR%\lib"
 set BOOST_INC="..\..\..\Libraries\%ENV_DIR%\include"
-mkdir %BOOST_LIB%\boost
-copy /Y stage\lib\%DLL% %BOOST_LIB%\boost
+
+mkdir %BOOST_LIB%\debug\boost
+mkdir %BOOST_LIB%\debug\boost\static
+copy /Y stage\lib\%DEBUG_LIB% %BOOST_LIB%\debug\boost\static
+copy /Y stage\lib\%DEBUG_DLL% %BOOST_LIB%\debug\boost
+
+mkdir %BOOST_LIB%\release\boost
+mkdir %BOOST_LIB%\release\boost\static
+copy /Y stage\lib\%RELEASE_LIB% %BOOST_LIB%\release\boost\static
+copy /Y stage\lib\%RELEASE_DLL% %BOOST_LIB%\release\boost
+
 mkdir %BOOST_INC%\boost
 xcopy /E /Y boost %BOOST_INC%\boost
 goto exit
 
 :error
-echo "usage: build_boost.bat <x86|[x64]> <debug|[release]>"
+echo "usage: build_boost.bat <x86|[x86_64]>"
 echo "parameters are optional; default values are those in square brackets."
 echo "if you want to use debug, you have to specify also the first param"
 
