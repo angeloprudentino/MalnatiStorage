@@ -77,9 +77,9 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Users\Angelo Prudentino\Desktop\Progetto_Malnati\Svn\Network_test\TCP_server_test\TCP_server_test;C:\Users\Angelo Prudentino\Desktop\Progetto_Malnati\Svn\ServerMain;C:\Users\Angelo Prudentino\Desktop\Progetto_Malnati\Svn\Shared\Libraries\x86_64\include;C:\Users\Angelo Prudentino\Desktop\Progetto_Malnati\Svn\Shared\Common\Utils;C:\Users\Angelo Prudentino\Desktop\Progetto_Malnati\Svn\Shared\Common\Network;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\Angelo Prudentino\Desktop\Progetto_Malnati\Svn\Shared\Libraries\x86_64\lib\debug\boost\static;C:\Users\Angelo Prudentino\Desktop\Progetto_Malnati\Svn\Shared\Libraries\x86_64\lib\debug\boost\;$(LibraryPath)</LibraryPath>
-    <ReferencePath>C:\Users\Angelo Prudentino\Desktop\Progetto_Malnati\Svn\Shared\Libraries\x86_64\lib\debug\boost;$(ReferencePath)</ReferencePath>
+    <IncludePath>$(SolutionDir)\TCP_server_test;$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\include;$(SolutionDir)\..\..\..\Shared\Common\Utils;$(SolutionDir)\..\..\..\Shared\Common\Network;$(SolutionDir)\..\..\..\ServerMain;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\lib\debug\boost;$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\lib\debug\boost\static;$(LibraryPath)</LibraryPath>
+    <ReferencePath>$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\lib\debug\boost;$(ReferencePath)</ReferencePath>
     <ExecutablePath>$(ExecutablePath)</ExecutablePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -90,7 +90,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>C:\Users\Angelo Prudentino\Desktop\Progetto_Malnati\Svn\Network_test\TCP_server_test\TCP_server_test;C:\Users\Angelo Prudentino\Desktop\Progetto_Malnati\Svn\ServerMain;C:\Users\Angelo Prudentino\Desktop\Progetto_Malnati\Svn\Shared\Libraries\x86_64\include;C:\Users\Angelo Prudentino\Desktop\Progetto_Malnati\Svn\Shared\Common\Utils;C:\Users\Angelo Prudentino\Desktop\Progetto_Malnati\Svn\Shared\Common\Network;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\Angelo Prudentino\Desktop\Progetto_Malnati\Svn\Shared\Libraries\x86_64\lib\release\boost\static;C:\Users\Angelo Prudentino\Desktop\Progetto_Malnati\Svn\Shared\Libraries\x86_64\lib\debug\boost;$(LibraryPath)</LibraryPath>
+    <LibraryPath>C:\Users\Angelo Prudentino\Desktop\Progetto_Malnati\Svn\Shared\Libraries\x86_64\lib\release\boost\static;C:\Users\Angelo Prudentino\Desktop\Progetto_Malnati\Svn\Shared\Libraries\x86_64\lib\release\boost;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -118,7 +118,7 @@
       </AdditionalDependencies>
       <EntryPointSymbol>main</EntryPointSymbol>
       <SubSystem>Windows</SubSystem>
-      <AdditionalLibraryDirectories>C:\Users\Angelo Prudentino\Desktop\Progetto_Malnati\Svn\Shared\Libraries\x86_64\lib\debug\boost</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\lib\debug\boost</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -143,7 +143,7 @@
       <AdditionalDependencies>
       </AdditionalDependencies>
       <EntryPointSymbol>main</EntryPointSymbol>
-      <AdditionalLibraryDirectories>C:\Users\Angelo Prudentino\Desktop\Progetto_Malnati\Svn\Shared\Libraries\x86_64\lib\debug\boost</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Users\Angelo Prudentino\Desktop\Progetto_Malnati\Svn\Shared\Libraries\x86_64\lib\release\boost</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
