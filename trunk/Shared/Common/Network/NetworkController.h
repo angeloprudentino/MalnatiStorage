@@ -1,13 +1,14 @@
 /*
-* Author: Angelo Prudentino
-* Date: 30/09/2015
-* File: NetworkController.h
-* Description: this file contains interfaces for socket controllers
-*
-*/
+ * Author: Angelo Prudentino
+ * Date: 30/09/2015
+ * File: NetworkController.h
+ * Description: this file contains interfaces for socket controllers
+ *
+ */
 
 #pragma once
 #include <boost/asio.hpp>
+#include "Utility.h"
 
 using namespace std;
 using namespace boost;
@@ -25,32 +26,33 @@ typedef struct Connection{
 
 typedef list<TConnection>::iterator TConnectionHandle;
 
+#ifdef STORAGE_SERVER
 
 //////////////////////////////////////
 //   IManagedServerSockController	//
 //////////////////////////////////////
-
 // Server socket controller interface used in managed code
 public interface class IManagedServerSockController{
 public:
 	void onServerSockCreate();
-	void onServerSockLog(string aClassName, string aFuncName, string aMsg);
-	void onServerSockError(string aClassName, string aFuncName, string aMsg);
-	void onServerSockCriticalError(string aClassName, string aFuncName, string aMsg);
+	void onServerLog(string aClassName, string aFuncName, string aMsg);
+	void onServerWarning(string aClassName, string aFuncName, string aMsg);
+	void onServerError(string aClassName, string aFuncName, string aMsg);
+	void onServerCriticalError(string aClassName, string aFuncName, string aMsg);
 };
-
 
 //////////////////////////////////////
 //      IServerSockController	    //
 //////////////////////////////////////
-
 // Standard server socket controller interface
-public class IServerSockController{
+public class IServerSockController : public IServerBaseController{
 public:
 	virtual void onServerSockCreate() = 0;
-	virtual void onServerSockLog(string aClassName, string aFuncName, string aMsg) = 0;
-	virtual void onServerSockError(string aClassName, string aFuncName, string aMsg) = 0;
-	virtual void onServerSockCriticalError(string aClassName, string aFuncName, string aMsg) = 0;
 	virtual void onServerSockAccept(TConnectionHandle aConnection) = 0;
-	virtual void onServerSockRead(TConnectionHandle aConnection, string aMsg) = 0;
+	virtual void onServerSockRead(TConnectionHandle aConnection, string_ptr aMsg) = 0;
+	virtual void onServerSockWrite() = 0;
 };
+
+#else
+
+#endif

@@ -7,112 +7,175 @@
  */
 
 #include <boost\bind.hpp>
+
 #include "ServerSocket.h"
-#include "Message.h"
 
 //////////////////////////////////////
 //      TServerSockController	    //
 //////////////////////////////////////
+#pragma region "TServerSockController"
 TServerSockController::TServerSockController(int aServerPort, IServerSockController* aCallback){
 	this->fServerPort = aServerPort;
 
 	this->fCallbackObj = aCallback;
-	this->onServerSockLog("TServerSockController", "constructor", "creating TServerSocket object...");
+
+	this->onServerLog("TServerSockController", "constructor", "creating incoming message queue object...");
+	this->fInQueue = new TMessageQueue();
+	this->onServerLog("TServerSockController", "constructor", "incoming message queue object created");
+
+	this->onServerLog("TServerSockController", "constructor", "creating outgoing message queue object...");
+	this->fOutQueue = new TMessageQueue();
+	this->onServerLog("TServerSockController", "constructor", "outgoing message queue object created");
+
+	this->onServerLog("TServerSockController", "constructor", "creating TServerSocket object...");
 	this->fSock = new TServerSocket(this);
-	this->onServerSockLog("TServerSockController", "constructor", "TServerSocket object created");
+	this->onServerLog("TServerSockController", "constructor", "TServerSocket object created");
 }
 
 TServerSockController::~TServerSockController(){
 	if (this->fSock != nullptr){
-		this->onServerSockLog("TServerSockController", "destructor", "deleting TServerSocket object...");
+		this->onServerLog("TServerSockController", "destructor", "deleting TServerSocket object...");
 		delete this->fSock;
-		this->onServerSockLog("TServerSockController", "destructor", "TServerSocket object deleted");
+		this->fSock = nullptr;
+		this->onServerLog("TServerSockController", "destructor", "TServerSocket object deleted");
 	}
-	this->fSock = nullptr;
+
+	if (this->fInQueue != nullptr){
+		this->onServerLog("TServerSockController", "destructor", "deleting incoming message queue object...");
+		delete this->fInQueue;
+		this->fInQueue = nullptr;
+		this->onServerLog("TServerSockController", "destructor", "incoming message queue object deleted");
+	}
+
+	if (this->fOutQueue != nullptr){
+		this->onServerLog("TServerSockController", "destructor", "deleting outgoing message queue object...");
+		delete this->fOutQueue;
+		this->fOutQueue = nullptr;
+		this->onServerLog("TServerSockController", "destructor", "outgoing message queue object deleted");
+	}
+
 	this->fCallbackObj = nullptr;
 }
 
-void TServerSockController::StartSocket(){
-	this->onServerSockLog("TServerSockController", "StartSocket", "setting the internal socket into accepting state...");
+void TServerSockController::startSocket(){
+	this->onServerLog("TServerSockController", "StartSocket", "setting the internal socket into accepting state...");
 	if (!this->fSock->setAcceptState(this->fServerPort)){
 		//server socket not ready; exit
-		this->fCallbackObj->onServerSockError("TServerSockController", "setAcceptState", "unable to open a passive socket");
 		return;
 	}
-	this->onServerSockLog("TServerSockController", "StartSocket", "internal server socket is ready to accept");
+	this->onServerLog("TServerSockController", "StartSocket", "internal server socket is ready to accept");
 	this->fCallbackObj->onServerSockCreate();
 
 	// socket server is created and ready to accept connections	
 	this->fSock->doAccept();
 }
 
+void TServerSockController::sendBaseMessage(TConnectionHandle aConnection, TBaseMessage aMsg){
+	if (this->fSock != NULL){
+		tcp::endpoint peer = aConnection->fPeer;
+		this->onServerLog("TServerSockController", "sendBaseMessage", "preparing to send a " + aMsg.getName() + "message to " + peer.address().to_string() + ":" + std::to_string(peer.port()));
+		this->fSock->doSend(aConnection, aMsg);
+	}
+}
+
+#pragma region "IServerBaseController implementation"
+void TServerSockController::onServerLog(string aClassName, string aFuncName, string aMsg){
+	if (this->fCallbackObj != nullptr)
+		this->fCallbackObj->onServerLog(aClassName, aFuncName, aMsg);
+}
+
+void TServerSockController::onServerWarning(string aClassName, string aFuncName, string aMsg){
+	if (this->fCallbackObj != nullptr)
+		this->fCallbackObj->onServerWarning(aClassName, aFuncName, aMsg);
+}
+
+void TServerSockController::onServerError(string aClassName, string aFuncName, string aMsg){
+	if (this->fCallbackObj != nullptr)
+		this->fCallbackObj->onServerError(aClassName, aFuncName, aMsg);
+}
+
+void TServerSockController::onServerCriticalError(string aClassName, string aFuncName, string aMsg){
+	if (this->fCallbackObj != nullptr)
+		this->fCallbackObj->onServerCriticalError(aClassName, aFuncName, aMsg);
+}
+#pragma endregion
+
+#pragma region "IServerSockController implementation"
 void TServerSockController::onServerSockCreate(){
 	if (this->fCallbackObj != nullptr)
 		this->fCallbackObj->onServerSockCreate();
-}
-
-void TServerSockController::onServerSockLog(string aClassName, string aFuncName, string aMsg){
-	if (this->fCallbackObj != nullptr)
-		this->fCallbackObj->onServerSockLog(aClassName, aFuncName, aMsg);
-}
-
-void TServerSockController::onServerSockError(string aClassName, string aFuncName, string aMsg){
-	if (this->fCallbackObj != nullptr)
-		this->fCallbackObj->onServerSockError(aClassName, aFuncName, aMsg);
-}
-
-void TServerSockController::onServerSockCriticalError(string aClassName, string aFuncName, string aMsg){
-	if (this->fCallbackObj != nullptr)
-		this->fCallbackObj->onServerSockCriticalError(aClassName, aFuncName, aMsg);
 }
 
 void TServerSockController::onServerSockAccept(TConnectionHandle aConnection){
 
 }
 
-void TServerSockController::onServerSockRead(TConnectionHandle aConnection, string aMsg){
+void TServerSockController::onServerSockRead(TConnectionHandle aConnection, string_ptr aMsg){
 	tcp::endpoint peer = aConnection->fPeer;
-	TBaseMessage bmsg;
-	bmsg.decodeMessage(aMsg);
-	int type = bmsg.getID();
+	TBaseMessage bmsg(aMsg);	
+	int msgType = bmsg.getID();
 
-	switch (type){
-	case USER_REG_REQ_ID:
-		break;
-	case UPDATE_START_REQ_ID:
-		break;
-	case ADD_NEW_FILE_ID:
-		break;
-	case UPDATE_FILE_ID:
-		break;
-	case REMOVE_FILE_ID:
-		break;
-	case UPDATE_STOP_REQ_ID:
-		break;
-	case GET_VERSIONS_REQ_ID:
-		break;
-	case RESTORE_VER_REQ_ID:
-		break;
-	case RESTORE_FILE_ACK_ID:
-		break;
-	case PING_REQ_ID:
-		this->fCallbackObj->onServerSockLog("TServerSockController", "onServerSockRead", "received a ping message from" + peer.address().to_string() + ":" + std::to_string(peer.port()));
-		break;
-	default:
-		//ignore message
-		break;
+	if (!isValidMessageID(msgType)){
+		this->onServerWarning("TServerSockController", "onServerSockRead", "received an unknown message from " + peer.address().to_string() + ":" + std::to_string(peer.port()));
+		return;
 	}
+
+	this->onServerLog("TServerSockController", "onServerSockRead", "received a " + getMessageName(msgType) + " message from " + peer.address().to_string() + ":" + std::to_string(peer.port()));
+
+	//check if the message is valid to be received server-side
+	bool valid = ((msgType == USER_REG_REQ_ID) || (msgType == UPDATE_START_REQ_ID) || (msgType == ADD_NEW_FILE_ID)
+		|| (msgType == UPDATE_FILE_ID) || (msgType == REMOVE_FILE_ID) || (msgType == UPDATE_STOP_REQ_ID)
+		|| (msgType == GET_VERSIONS_REQ_ID) || (msgType == RESTORE_VER_REQ_ID) || (msgType == RESTORE_FILE_ACK_ID) || (msgType == PING_REQ_ID));
+
+	if (!valid){
+		//ignore message
+		this->onServerWarning("TServerSockController", "onServerSockRead", getMessageName(msgType) + " message should not be received by the server; ignoring it");
+		return;
+	}
+
+	//enqueue the message to be processed
+	this->fInQueue->pushMessage(TMessageContainer(bmsg, aConnection));
 }
+
+void TServerSockController::onServerSockWrite(){
+	TMessageContainer msg = this->fOutQueue->popMessage();
+	if (!msg.isEmpty())
+		this->fSock->doSend(msg.getConnection(), msg.getMessage());
+}
+#pragma endregion
+
+#pragma region "IBaseExecutorController implementation"
+TMessageContainer TServerSockController::getMessageToProcess(){
+	return this->fInQueue->popMessage();
+}
+
+void TServerSockController::enqueueMessageToSend(TMessageContainer aMsg){
+	this->fOutQueue->pushMessage(aMsg);
+}
+#pragma endregion
+#pragma endregion
+
 
 //////////////////////////////////////
 //         TServerSocket	        //
 //////////////////////////////////////
+#pragma region "TServerSocket"
 TServerSocket::TServerSocket(IServerSockController* aCallbackObj): fMainIoService(), fServerAcceptor(fMainIoService){
 	this->fCallbackObj = aCallbackObj;
 }
 
 TServerSocket::~TServerSocket(){
+	doServerLog(this->fCallbackObj, "TServerSocket", "destructor", "clearing open connections list...");
+	this->fConnections.clear();
+	doServerLog(this->fCallbackObj, "TServerSocket", "destructor", "open connections cleared");
+
+	doServerLog(this->fCallbackObj, "TServerSocket", "destructor", "stopping IO service...");
 	this->fMainIoService.stop();
+	this->fMainIO->join();
+	delete this->fMainIO;
+	this->fMainIO = nullptr;
+	doServerLog(this->fCallbackObj, "TServerSocket", "destructor", "IO service stopped");
+
 	this->fCallbackObj = nullptr;
 }
 
@@ -124,7 +187,7 @@ bool TServerSocket::setAcceptState(int aAcceptPort){
 	if (!this->fServerAcceptor.is_open()){
 		this->fServerAcceptor.open(tcp::v4(), ec);
 		if (ec){
-			this->fCallbackObj->onServerSockLog("TServerSocket", "setAcceptState", "unable to open a passive socket");
+			doServerCriticalError(this->fCallbackObj, "TServerSocket", "setAcceptState", "unable to open a passive socket");
 			return false;
 		}
 	}
@@ -139,15 +202,13 @@ bool TServerSocket::setAcceptState(int aAcceptPort){
 
 	this->fServerAcceptor.bind(AcceptEndPoint, ec);
 	if (ec){
-		string msg("unable to bind port ");
-		msg.append(std::to_string(aAcceptPort));
-		this->fCallbackObj->onServerSockError("TServerSocket", "setAcceptState", msg);
+		doServerCriticalError(this->fCallbackObj, "TServerSocket", "setAcceptState", "unable to bind port " + to_string(aAcceptPort));
 		return false;
 	}
 
 	this->fServerAcceptor.listen(socket_base::max_connections, ec);
 	if (ec){
-		this->fCallbackObj->onServerSockError("TServerSocket", "setAcceptState", "unable to put the socket in listening state");
+		doServerCriticalError(this->fCallbackObj, "TServerSocket", "setAcceptState", "unable to put the socket in listening state");
 		return false;
 	}
 
@@ -159,25 +220,23 @@ void TServerSocket::doAccept(){
 		TConnectionHandle connection = fConnections.emplace(fConnections.begin(), this->fMainIoService);
 		auto handler = bind(&TServerSocket::handleAccept, this, connection, boost::asio::placeholders::error);
 		this->fServerAcceptor.async_accept(connection->fSocket, connection->fPeer, handler);
-		this->fMainIoService.run();
+		this->fMainIoService.reset();
+		fMainIO = new thread([this](){this->fMainIoService.run(); });
 }
 
-void TServerSocket::handleAccept(TConnectionHandle aConnection, boost::system::error_code const& aErr){
+void TServerSocket::handleAccept(TConnectionHandle aConnection, const boost::system::error_code& aErr){
 	tcp::endpoint peer = aConnection->fPeer;
 
 	if (!aErr){
-		this->fCallbackObj->onServerSockLog("TServerSocket", "doAcceptLambda", "connection enstablished with " + peer.address().to_string() + ":" + std::to_string(peer.port()));
+		doServerLog(this->fCallbackObj, "TServerSocket", "handleAccept", "connection enstablished with " + peer.address().to_string() + ":" + std::to_string(peer.port()));
 		this->fCallbackObj->onServerSockAccept(aConnection);
 
-		//auto buff = std::make_shared<std::string>("Hello World!\r\n\r\n");
-		//auto handler = boost::bind(&TServerSocket::handle_write, this, aConnection, buff, boost::asio::placeholders::error);
-		//boost::asio::async_write(aConnection->fSocket, boost::asio::buffer(*buff), handler);
 		this->doAsyncRead(aConnection);
 	}
 	else{
 		//remove this connection
-		fConnections.erase(aConnection);
-		this->fCallbackObj->onServerSockError("TServerSocket", "doAcceptLambda", "Error \"" + aErr.message() + "\" trying to enstablish connection with " + peer.address().to_string() + ":" + std::to_string(peer.port()));
+		this->fConnections.erase(aConnection);
+		doServerError(this->fCallbackObj, "TServerSocket", "handleAccept", "Error \"" + aErr.message() + "\" trying to enstablish connection with " + peer.address().to_string() + ":" + std::to_string(peer.port()));
 	}
 
 	this->doAccept();
@@ -185,26 +244,50 @@ void TServerSocket::handleAccept(TConnectionHandle aConnection, boost::system::e
 
 void TServerSocket::doAsyncRead(TConnectionHandle aConnection) {
 	auto handler = bind(&TServerSocket::handleRead, this, aConnection, boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred);
-	async_read_until(aConnection->fSocket, aConnection->fReadBuffer, MSG_END, handler);
+	async_read_until(aConnection->fSocket, aConnection->fReadBuffer, END_MSG, handler);
 }
 
 void TServerSocket::handleRead(TConnectionHandle aConnection, const boost::system::error_code& aErr, std::size_t aBytes){
 	tcp::endpoint peer = aConnection->fPeer;
 
-	if (aBytes > 0) {
-		istream is(&aConnection->fReadBuffer);
-		string line;
-		getline(is, line);
-		this->fCallbackObj->onServerSockLog("TServerSocket", "doAsyncReadLambda", "Message Received from " + peer.address().to_string() + ":" + std::to_string(peer.port()) + "-> " + line);
-		this->fCallbackObj->onServerSockRead(aConnection, line);
-	}
-
 	if (!aErr) {
+		if (aBytes > 0) {
+			istream is(&aConnection->fReadBuffer);
+			string_ptr line(new string());
+			getline(is, *line);
+			doServerLog(this->fCallbackObj, "TServerSocket", "handleRead", "Message Received from " + peer.address().to_string() + ":" + std::to_string(peer.port()));
+			this->fCallbackObj->onServerSockRead(aConnection, line);
+		}
+
 		this->doAsyncRead(aConnection);
 	}
 	else {
 		this->fConnections.erase(aConnection);
-		this->fCallbackObj->onServerSockError("TServerSocket", "doAsyncReadLambda", "We had an error: " + aErr.message() + "from " + peer.address().to_string() + ":" + std::to_string(peer.port()));
+		doServerError(this->fCallbackObj, "TServerSocket", "handleRead", "Error \"" + aErr.message() + "\" from " + peer.address().to_string() + ":" + std::to_string(peer.port()));
 	}
-
 }
+
+void TServerSocket::doSend(TConnectionHandle aConnection, TBaseMessage aMsg){
+	auto buff = aMsg.encodeMessage();
+	auto handler = boost::bind(&TServerSocket::handle_write, this, aConnection, buff, boost::asio::placeholders::error);
+	boost::asio::async_write(aConnection->fSocket, boost::asio::buffer(*buff), handler);
+}
+
+void TServerSocket::handle_write(TConnectionHandle aConnection, string_ptr aMsgBuffer, const boost::system::error_code& aErr) {
+	tcp::endpoint peer = aConnection->fPeer;
+
+	if (!aErr) {
+		doServerLog(this->fCallbackObj, "TServerSocket", "handle_write", "Finished sending message to " + peer.address().to_string() + ":" + std::to_string(peer.port()));
+		if (aConnection->fSocket.is_open()) {
+			// Write completed successfully and connection is open
+			//auto this->
+			return;
+		}
+	}
+	else {
+		//remove this connection
+		this->fConnections.erase(aConnection);
+		doServerError(this->fCallbackObj, "TServerSocket", "handle_write", "Error \"" + aErr.message() + "\" while sending a message to " + peer.address().to_string() + ":" + std::to_string(peer.port()));
+	}
+}
+#pragma endregion
