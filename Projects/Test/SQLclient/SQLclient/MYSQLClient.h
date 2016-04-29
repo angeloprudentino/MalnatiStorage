@@ -24,7 +24,7 @@ using namespace System::IO;
 #pragma once
 ref class MYSQLClient
 {private:
-	//SqlConnection^ cn;
+	//SqlConnection^ cn;    unsed
 public:
 	MYSQLClient();
 	~MYSQLClient();
