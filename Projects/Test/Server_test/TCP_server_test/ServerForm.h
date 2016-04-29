@@ -52,11 +52,57 @@ namespace Server_test {
 	private: System::Windows::Forms::Label^  label1;
 	private: System::Windows::Forms::Label^  ServerStatusLabel;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	private: System::ComponentModel::IContainer^  components;
+
+
+
+
+
+
+
+
 	private:
 		/// <summary>
 		/// Required designer variable.
 		/// </summary>
-		System::ComponentModel::Container ^components;
+
 
 #pragma region Windows Form Designer generated code
 		/// <summary>
@@ -110,6 +156,7 @@ namespace Server_test {
 			this->rtbLog->Size = System::Drawing::Size(849, 454);
 			this->rtbLog->TabIndex = 2;
 			this->rtbLog->Text = L"";
+			this->rtbLog->WordWrap = false;
 			// 
 			// label1
 			// 
@@ -138,6 +185,7 @@ namespace Server_test {
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
+			this->AutoSizeMode = System::Windows::Forms::AutoSizeMode::GrowAndShrink;
 			this->BackColor = System::Drawing::SystemColors::ControlDark;
 			this->ClientSize = System::Drawing::Size(931, 622);
 			this->Controls->Add(this->ServerStatusLabel);
@@ -145,6 +193,7 @@ namespace Server_test {
 			this->Controls->Add(this->rtbLog);
 			this->Controls->Add(this->tbPort);
 			this->Controls->Add(this->btnStart);
+			this->MaximizeBox = false;
 			this->Name = L"TServerForm";
 			this->Text = L"TServerForm";
 			this->FormClosing += gcnew System::Windows::Forms::FormClosingEventHandler(this, &TServerForm::ServerForm_FormClosing);
@@ -246,10 +295,11 @@ namespace Server_test {
 	private: void dismissTCPserver();
 
 	//Server socket Callbacks 
-	public: void onServerSockCreate() override;
-	public: void onServerSockLog(string aClassName, string aFuncName, string aMsg) override;
-	public: void onServerSockError(string aClassName, string aFuncName, string aMsg) override;
-	public: void onServerSockCriticalError(string aClassName, string aFuncName, string aMsg) override;
+	public: virtual void onServerSockCreate();
+	public: virtual void onServerLog(string aClassName, string aFuncName, string aMsg);
+	public: virtual void onServerWarning(string aClassName, string aFuncName, string aMsg);
+	public: virtual void onServerError(string aClassName, string aFuncName, string aMsg);
+	public: virtual void onServerCriticalError(string aClassName, string aFuncName, string aMsg);
 #pragma endregion
 };
 

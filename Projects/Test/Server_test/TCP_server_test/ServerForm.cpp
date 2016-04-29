@@ -26,7 +26,7 @@ void TServerForm::initTCPserver(Object^ data){
 	this->Log("TServerForm", "initTCPserver", "start creating TStorageServer object...");
 	this->serverEngine = new TStorageServer(port, this);
 	this->Log("TServerForm", "initTCPserver", "TStorageServer object created; starting the server...");
-	this->serverEngine->StartServer();
+	this->serverEngine->startServer();
 }
 
 void TServerForm::dismissTCPserver(){
@@ -48,18 +48,28 @@ void TServerForm::onServerSockCreate(){
 	this->afterStartServer();
 }
 
-void TServerForm::onServerSockLog(std::string aClassName, std::string aFuncName, std::string aMsg){
+void TServerForm::onServerLog(std::string aClassName, std::string aFuncName, std::string aMsg){
 	this->Log(aClassName, aFuncName, aMsg);
 }
 
-void TServerForm::onServerSockError(std::string aClassName, std::string aFuncName, std::string aMsg){
+void TServerForm::onServerWarning(std::string aClassName, std::string aFuncName, std::string aMsg){
+	this->Log(aClassName, aFuncName, "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww");
+	this->Log(aClassName, aFuncName, "w " + aMsg);
+	this->Log(aClassName, aFuncName, "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww");
+}
+
+void TServerForm::onServerError(std::string aClassName, std::string aFuncName, std::string aMsg){
 	this->Log(aClassName, aFuncName, "************************************************");
-	this->Log(aClassName, aFuncName, "* " + aMsg);
+	this->Log(aClassName, aFuncName, "************************************************");
+	this->Log(aClassName, aFuncName, "** ");
+	this->Log(aClassName, aFuncName, "** " + aMsg);
+	this->Log(aClassName, aFuncName, "** ");
+	this->Log(aClassName, aFuncName, "************************************************");
 	this->Log(aClassName, aFuncName, "************************************************");
 }
 
-void TServerForm::onServerSockCriticalError(string aClassName, string aFuncName, string aMsg){
-	this->onServerSockError(aClassName, aFuncName, aMsg);
+void TServerForm::onServerCriticalError(string aClassName, string aFuncName, string aMsg){
+	this->onServerError(aClassName, aFuncName, aMsg);
 	this->dismissTCPserver();
 	this->afterStopServer();
 }
