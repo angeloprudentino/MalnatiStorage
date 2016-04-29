@@ -4,22 +4,24 @@
     <ShowAllFiles>false</ShowAllFiles>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerEnvironment>PATH=%PATH%;$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\debug\boost
+    <LocalDebuggerEnvironment>PATH=%PATH%;$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\debug\boost;$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\debug\openssl
 $(LocalDebuggerEnvironment)</LocalDebuggerEnvironment>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LocalDebuggerEnvironment>PATH=%PATH%;$(SolutionDir)\..\..\..\Shared\Libraries\x86\debug\boost
+    <LocalDebuggerEnvironment>PATH=%PATH%;$(SolutionDir)\..\..\..\Shared\Libraries\x86\debug\boost;$(SolutionDir)\..\..\..\Shared\Libraries\x86\debug\openssl
 $(LocalDebuggerEnvironment)</LocalDebuggerEnvironment>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LocalDebuggerEnvironment>PATH=%PATH%;$(SolutionDir)\..\..\..\Shared\Libraries\x86\release\boost
+;$(SolutionDir)\..\..\..\Shared\Libraries\x86\release\openssl
 $(LocalDebuggerEnvironment)</LocalDebuggerEnvironment>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerEnvironment>PATH=%PATH%;$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\release\boost
+    <LocalDebuggerEnvironment>PATH=%PATH%;$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\release\boost;$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\release\openssl
+
 $(LocalDebuggerEnvironment)</LocalDebuggerEnvironment>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>

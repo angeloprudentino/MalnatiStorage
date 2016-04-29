@@ -73,39 +73,43 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>C:\Users\Angelo Prudentino\Desktop\Progetto_Malnati\Svn\Network_test\TCP_server_test\TCP_server_test;C:\Users\Angelo Prudentino\Desktop\Progetto_Malnati\Svn\ServerMain;C:\Users\Angelo Prudentino\Desktop\Progetto_Malnati\Svn\Shared\Libraries\include;C:\Users\Angelo Prudentino\Desktop\Progetto_Malnati\Svn\Shared\Common\Utils;C:\Users\Angelo Prudentino\Desktop\Progetto_Malnati\Svn\Shared\Common\Network;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)\..\..\..\Shared\Libraries\x86\debug\boost\static;$(SolutionDir)\..\..\..\Shared\Libraries\x86\debug\boost;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)\..\..\..\Shared\Libraries\x86\debug\openssl
+\static;$(SolutionDir)\..\..\..\Shared\Libraries\x86\debug\openssl;$(SolutionDir)\..\..\..\Shared\Libraries\x86\debug\boost\static;$(SolutionDir)\..\..\..\Shared\Libraries\x86\debug\boost;$(LibraryPath)</LibraryPath>
     <ReferencePath>$(SolutionDir)\..\..\..\Shared\Libraries\x86\debug\boost;$(ReferencePath)</ReferencePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)\TCP_server_test;$(SolutionDir)\..\..\..\Shared\Libraries\include;$(SolutionDir)\..\..\..\Shared\Common\Utils;$(SolutionDir)\..\..\..\Shared\Common\Network;$(SolutionDir)\..\..\..\ServerMain;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\debug\boost;$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\debug\boost\static;$(LibraryPath)</LibraryPath>
-    <ReferencePath>$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\debug\boost;$(ReferencePath)</ReferencePath>
+    <IncludePath>$(SolutionDir)\TCP_server_test;$(SolutionDir)\..\..\..\Shared\Libraries\include;$(SolutionDir)\..\..\..\Shared\Common\Executor;$(SolutionDir)\..\..\..\Shared\Common\Utils;$(SolutionDir)\..\..\..\Shared\Common\Network;$(SolutionDir)\..\..\..\ServerMain;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\debug\openssl\static;$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\debug\openssl;$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\debug\boost;$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\debug\boost\static;$(LibraryPath)</LibraryPath>
+    <ReferencePath>$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\debug\openssl;$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\debug\boost;$(ReferencePath)</ReferencePath>
     <ExecutablePath>$(ExecutablePath)</ExecutablePath>
+    <EmbedManifest>false</EmbedManifest>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(SolutionDir)\TCP_server_test;$(SolutionDir)\..\..\..\ServerMain;$(SolutionDir)\..\..\..\Shared\Libraries\include;$(SolutionDir)\..\..\..\Shared\Common\Utils;$(SolutionDir)\..\..\..\Shared\Common\Network;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)\..\..\..\Shared\Libraries\x86\release\boost\static;$(SolutionDir)\..\..\..\Shared\Libraries\x86\release\boost;$(LibraryPath)</LibraryPath>
-    <ReferencePath>$(SolutionDir)\..\..\..\Shared\Libraries\x86\release\boost;$(ReferencePath)</ReferencePath>
+    <LibraryPath>$(SolutionDir)\..\..\..\Shared\Libraries\x86\release\openssl
+\static;$(SolutionDir)\..\..\..\Shared\Libraries\x86\release\openssl;$(SolutionDir)\..\..\..\Shared\Libraries\x86\release\boost\static;$(SolutionDir)\..\..\..\Shared\Libraries\x86\release\boost;$(LibraryPath)</LibraryPath>
+    <ReferencePath>$(SolutionDir)\..\..\..\Shared\Libraries\x86\release\openssl;$(SolutionDir)\..\..\..\Shared\Libraries\x86\release\boost;$(ReferencePath)</ReferencePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)\TCP_server_test;$(SolutionDir)\..\..\..\ServerMain;$(SolutionDir)\..\..\..\Shared\Libraries\include;$(SolutionDir)\..\..\..\Shared\Common\Utils;$(SolutionDir)\..\..\..\Shared\Common\Network;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\release\boost\static;$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\release\boost;$(LibraryPath)</LibraryPath>
-    <ReferencePath>$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\release\boost;$(ReferencePath)</ReferencePath>
+    <IncludePath>$(SolutionDir)\TCP_server_test;$(SolutionDir)\..\..\..\ServerMain;$(SolutionDir)\..\..\..\Shared\Libraries\include;$(SolutionDir)\..\..\..\Shared\Common\Utils;$(SolutionDir)\..\..\..\Shared\Common\Executor;$(SolutionDir)\..\..\..\Shared\Common\Network;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\release\openssl
+\static;$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\release\openssl;$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\release\boost\static;$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\release\boost;$(LibraryPath)</LibraryPath>
+    <ReferencePath>$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\release\openssl;$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\release\boost;$(ReferencePath)</ReferencePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;HAVE_FORM;BOOST_ALL_DYN_LINK;BOOST_THREAD_USE_DLL;BOOST_LIB_DIAGNOSTIC;BOOST_ALL_DYN_LINK;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>STORAGE_SERVER;WIN32;HAVE_FORM;BOOST_ALL_DYN_LINK;BOOST_THREAD_USE_DLL;BOOST_LIB_DIAGNOSTIC;BOOST_ALL_DYN_LINK;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies />
+      <AdditionalDependencies>libeay32.lib;ssleay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <EntryPointSymbol>main</EntryPointSymbol>
-      <AdditionalLibraryDirectories>$(SolutionDir)\..\..\..\Shared\Libraries\x86\debug\boost</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\..\..\..\Shared\Libraries\x86\debug\openssl;$(SolutionDir)\..\..\..\Shared\Libraries\x86\debug\boost</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
     </Link>
   </ItemDefinitionGroup>
@@ -113,40 +117,39 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;HAVE_FORM;BOOST_ALL_DYN_LINK;BOOST_THREAD_USE_DLL;BOOST_LIB_DIAGNOSTIC;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>STORAGE_SERVER;WIN32;HAVE_FORM;BOOST_ALL_DYN_LINK;BOOST_THREAD_USE_DLL;BOOST_LIB_DIAGNOSTIC;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <CompileAsManaged>true</CompileAsManaged>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>
-      </AdditionalDependencies>
+      <AdditionalDependencies>libeay32.lib;ssleay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <EntryPointSymbol>main</EntryPointSymbol>
       <SubSystem>Windows</SubSystem>
-      <AdditionalLibraryDirectories>$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\debug\boost</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\debug\openssl;$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\debug\boost</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>WIN32;HAVE_FORM;BOOST_ALL_DYN_LINK;BOOST_THREAD_USE_DLL;BOOST_LIB_DIAGNOSTIC;BOOST_ALL_DYN_LINK;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>STORAGE_SERVER;WIN32;HAVE_FORM;BOOST_ALL_DYN_LINK;BOOST_THREAD_USE_DLL;BOOST_LIB_DIAGNOSTIC;BOOST_ALL_DYN_LINK;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies />
+      <AdditionalDependencies>libeay32.lib;ssleay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <EntryPointSymbol>main</EntryPointSymbol>
-      <AdditionalLibraryDirectories>$(SolutionDir)\..\..\..\Shared\Libraries\x86\release\boost</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\..\..\..\Shared\Libraries\x86\release\openssl;$(SolutionDir)\..\..\..\Shared\Libraries\x86\release\boost</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>WIN32;HAVE_FORM;BOOST_ALL_DYN_LINK;BOOST_THREAD_USE_DLL;BOOST_LIB_DIAGNOSTIC;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>STORAGE_SERVER;WIN32;HAVE_FORM;BOOST_ALL_DYN_LINK;BOOST_THREAD_USE_DLL;BOOST_LIB_DIAGNOSTIC;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>
-      </AdditionalDependencies>
+      <AdditionalDependencies>libeay32.lib;ssleay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <EntryPointSymbol>main</EntryPointSymbol>
       <AdditionalLibraryDirectories>$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\release\boost</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
@@ -155,12 +158,15 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Data" />
+    <Reference Include="System.DirectoryServices" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\..\ServerMain\StorageServer.cpp" />
+    <ClCompile Include="..\..\..\..\Shared\Common\Executor\Executor.cpp" />
+    <ClCompile Include="..\..\..\..\Shared\Common\Executor\MessageQueue.cpp" />
     <ClCompile Include="..\..\..\..\Shared\Common\Network\Message.cpp" />
     <ClCompile Include="..\..\..\..\Shared\Common\Network\ServerSocket.cpp" />
     <ClCompile Include="..\..\..\..\Shared\Common\Utils\Utility.cpp" />
@@ -168,6 +174,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\ServerMain\StorageServer.h" />
+    <ClInclude Include="..\..\..\..\Shared\Common\Executor\Executor.h" />
+    <ClInclude Include="..\..\..\..\Shared\Common\Executor\MessageQueue.h" />
     <ClInclude Include="..\..\..\..\Shared\Common\Network\Message.h" />
     <ClInclude Include="..\..\..\..\Shared\Common\Network\NetworkController.h" />
     <ClInclude Include="..\..\..\..\Shared\Common\Network\ServerSocket.h" />
