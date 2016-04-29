@@ -10,12 +10,13 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
-#include "ServerSocket.h"
+#include "Utility.h"
 
 using namespace std;
 
-#define MSG_END "END_MSG\n\n"
+#define END_MSG "END_MSG"
 
 //Message ids
 #define NO_ID -1
@@ -39,19 +40,17 @@ using namespace std;
 #define PING_REQ_ID 17
 #define PING_REPLY_ID 18
 
-//Message names
+//Message utilities
 const bool isValidMessage(const string aName);
+const bool isValidMessageID(const int aID);
 const string getMessageName(const int aIndex);
 
 //////////////////////////////////////
 //       EMessageException	        //
 //////////////////////////////////////
-public class EMessageException : public std::exception{
-private:
-	string fMessage;
+public class EMessageException : public EBaseException {
 public:
-	EMessageException(const string aMsg){ this->fMessage = aMsg; }
-	const string getMessage(){ return this->fMessage; }
+	EMessageException(const string aMsg) : EBaseException(aMsg){}
 };
 
 
@@ -59,22 +58,26 @@ public:
 //         TBaseMessage	            //
 //////////////////////////////////////
 public class TBaseMessage{
+private:
+	void decodeMessageID();
+
 protected:
 	int fID;
-	vector<string> fItems;
+	string_ptr fEncodedMsg = NULL;
+	vector<string_ptr> fItems;
 
 public:
 	TBaseMessage();
-	TBaseMessage(const string aMsg);
-	const string getName();
+	TBaseMessage(const string_ptr aMsg);
 
-	virtual const string encodeMessage();
-	virtual void decodeMessage(const string aMsg);
-	virtual void processMessage(TServerSockController* aController);
+	virtual const string_ptr encodeMessage();
+	virtual void decodeMessage();
 
 	// getters
 	const int getID(){ return this->fID; };
-	const vector<string> getTokens(){ return this->fItems; };
+	const vector<string_ptr> getTokens(){ return this->fItems; };
+	const string_ptr getMsg(){ return this->fEncodedMsg; };
+	const string getName(){	return getMessageName(this->fID); };
 };
 
 
@@ -83,20 +86,18 @@ public:
 ////////////////////////////////////////
 public class TUserRegistrReqMessage : public TBaseMessage {
 private:
-	string fUser;
-	string fPass;
+	string_ptr fUser;
+	string_ptr fPass;
 
-	void initFields();
 public:
 	TUserRegistrReqMessage(TBaseMessage& aBase);
 	TUserRegistrReqMessage(const string aUser, const string aPass);
-	const string encodeMessage();
-	void decodeMessage(const string aMsg);
-	void processMessage(TServerSockController* aController);
+	const string_ptr encodeMessage();
+	void decodeMessage();
 
 	//getters
-	const string getUser(){ return this->fUser; }
-	const string getPass(){ return this->fPass; }
+	const string getUser(){ return *(this->fUser); }
+	const string getPass(){ return *(this->fPass); }
 };
 
 
@@ -107,13 +108,11 @@ public class TUserRegistrReplyMessage : public TBaseMessage {
 private:
 	bool fResp;
 
-	void initFields();
 public:
 	TUserRegistrReplyMessage(TBaseMessage& aBase);
 	TUserRegistrReplyMessage(const bool aResp);
-	const string encodeMessage();
-	void decodeMessage(const string aMsg);
-	void processMessage(TServerSockController* aController);
+	const string_ptr encodeMessage();
+	void decodeMessage();
 
 	//getters
 	const bool getResp(){ return this->fResp; }
@@ -125,20 +124,18 @@ public:
 ////////////////////////////////////////
 public class TUpdateStartReqMessage : public TBaseMessage {
 private:
-	string fUser;
-	string fPass;
+	string_ptr fUser;
+	string_ptr fPass;
 
-	void initFields();
 public:
 	TUpdateStartReqMessage(TBaseMessage& aBase);
 	TUpdateStartReqMessage(const string aUser, const string aPass);
-	const string encodeMessage();
-	void decodeMessage(const string aMsg);
-	void processMessage(TServerSockController* aController);
+	const string_ptr encodeMessage();
+	void decodeMessage();
 
 	//getters
-	const string getUser(){ return this->fUser; }
-	const string getPass(){ return this->fPass; }
+	const string getUser(){ return *(this->fUser); }
+	const string getPass(){ return *(this->fPass); }
 };
 
 
@@ -148,19 +145,17 @@ public:
 public class TUpdateStartReplyMessage : public TBaseMessage {
 private:
 	bool fResp;
-	string fToken;
+	string_ptr fToken;
 
-	void initFields();
 public:
 	TUpdateStartReplyMessage(TBaseMessage& aBase);
-	TUpdateStartReplyMessage(const bool aResp, const bool aToken);
-	const string encodeMessage();
-	void decodeMessage(const string aMsg);
-	void processMessage(TServerSockController* aController);
+	TUpdateStartReplyMessage(const bool aResp, const string aToken);
+	const string_ptr encodeMessage();
+	void decodeMessage();
 
 	//getters
 	const bool getResp(){ return this->fResp; }
-	const string getToken(){ return this->fToken; }
+	const string getToken(){ return *(this->fToken); }
 };
 
 
@@ -169,25 +164,24 @@ public:
 ////////////////////////////////////////
 public class TAddNewFileMessage : public TBaseMessage {
 private:
-	string fToken;
-	string fFilePath;
-	string fChecksum;
+	string_ptr fToken;
+	string_ptr fFilePath;
 	time_t fFileDate;
-	//TODO: add file content
+	string_ptr fChecksum;
+	string_ptr fFileContent;
 
-	void initFields();
 public:
 	TAddNewFileMessage(TBaseMessage& aBase);
-	TAddNewFileMessage(const bool aToken, string aFilePath);
-	const string encodeMessage();
-	void decodeMessage(const string aMsg);
-	void processMessage(TServerSockController* aController);
+	TAddNewFileMessage(const string aToken, string aFilePath);
+	const string_ptr encodeMessage();
+	void decodeMessage();
 
 	//getters
-	const string getToken(){ return this->fToken; }
-	const string getFilePath(){ return this->fFilePath; }
-	const string getChecksum(){ return this->fChecksum; }
+	const string getToken(){ return *(this->fToken); }
+	const string getFilePath(){ return *(this->fFilePath); }
 	const time_t getFileDate(){ return this->fFileDate; }
+	const string getChecksum(){ return *(this->fChecksum); }
+	const string getFileContent(){ return *(this->fFileContent); }
 };
 
 
@@ -196,25 +190,24 @@ public:
 ////////////////////////////////////////
 public class TUpdateFileMessage : public TBaseMessage {
 private:
-	string fToken;
-	string fFilePath;
-	string fChecksum;
+	string_ptr fToken;
+	string_ptr fFilePath;
 	time_t fFileDate;
-	//TODO: add file content
+	string_ptr fChecksum;
+	string_ptr fFileContent;
 
-	void initFields();
 public:
 	TUpdateFileMessage(TBaseMessage& aBase);
-	TUpdateFileMessage(const bool aToken, string aFilePath);
-	const string encodeMessage();
-	void decodeMessage(const string aMsg);
-	void processMessage(TServerSockController* aController);
+	TUpdateFileMessage(const string aToken, string aFilePath);
+	const string_ptr encodeMessage();
+	void decodeMessage();
 
 	//getters
-	const string getToken(){ return this->fToken; }
-	const string getFilePath(){ return this->fFilePath; }
-	const string getChecksum(){ return this->fChecksum; }
+	const string getToken(){ return *(this->fToken); }
+	const string getFilePath(){ return *(this->fFilePath); }
 	const time_t getFileDate(){ return this->fFileDate; }
+	const string getChecksum(){ return *(this->fChecksum); }
+	const string getFileContent(){ return *(this->fFileContent); }
 };
 
 
@@ -223,20 +216,18 @@ public:
 ////////////////////////////////////////
 public class TRemoveFileMessage : public TBaseMessage {
 private:
-	string fToken;
-	string fFilePath;
+	string_ptr fToken;
+	string_ptr fFilePath;
 
-	void initFields();
 public:
 	TRemoveFileMessage(TBaseMessage& aBase);
 	TRemoveFileMessage(const string aToken, string aFilePath);
-	const string encodeMessage();
-	void decodeMessage(const string aMsg);
-	void processMessage(TServerSockController* aController);
+	const string_ptr encodeMessage();
+	void decodeMessage();
 
 	//getters
-	const string getToken(){ return this->fToken; }
-	const string getFilePath(){ return this->fFilePath; }
+	const string getToken(){ return *(this->fToken); }
+	const string getFilePath(){ return *(this->fFilePath); }
 };
 
 
@@ -246,19 +237,17 @@ public:
 public class TFileAckMessage : public TBaseMessage {
 private:
 	bool fResp;
-	string fFilePath;
+	string_ptr fFilePath;
 
-	void initFields();
 public:
 	TFileAckMessage(TBaseMessage& aBase);
-	TFileAckMessage(const bool aResp, const bool aFilePath);
-	const string encodeMessage();
-	void decodeMessage(const string aMsg);
-	void processMessage(TServerSockController* aController);
+	TFileAckMessage(const bool aResp, const string aFilePath);
+	const string_ptr encodeMessage();
+	void decodeMessage();
 
 	//getters
 	const bool getResp(){ return this->fResp; }
-	const string getFilePath(){ return this->fFilePath; }
+	const string getFilePath(){ return *(this->fFilePath); }
 };
 
 
@@ -267,18 +256,16 @@ public:
 ////////////////////////////////////////
 public class TUpdateStopReqMessage : public TBaseMessage {
 private:
-	string fToken;
+	string_ptr fToken;
 
-	void initFields();
 public:
 	TUpdateStopReqMessage(TBaseMessage& aBase);
 	TUpdateStopReqMessage(const string aToken);
-	const string encodeMessage();
-	void decodeMessage(const string aMsg);
-	void processMessage(TServerSockController* aController);
+	const string_ptr encodeMessage();
+	void decodeMessage();
 
 	//getters
-	const string getToken(){ return this->fToken; }
+	const string getToken(){ return *(this->fToken); }
 };
 
 
@@ -291,13 +278,11 @@ private:
 	unsigned int fVersion;
 	time_t fTime;
 
-	void initFields();
 public:
 	TUpdateStopReplyMessage(TBaseMessage& aBase);
 	TUpdateStopReplyMessage(const bool aResp, unsigned int aVersion, time_t aTime);
-	const string encodeMessage();
-	void decodeMessage(const string aMsg);
-	void processMessage(TServerSockController* aController);
+	const string_ptr encodeMessage();
+	void decodeMessage();
 
 	//getters
 	const bool getResp(){ return this->fResp; }
@@ -311,20 +296,18 @@ public:
 ////////////////////////////////////////
 public class TGetVersionsReqMessage : public TBaseMessage {
 private:
-	string fUser;
-	string fPass;
+	string_ptr fUser;
+	string_ptr fPass;
 
-	void initFields();
 public:
 	TGetVersionsReqMessage(TBaseMessage& aBase);
 	TGetVersionsReqMessage(const string aUser, const string aPass);
-	const string encodeMessage();
-	void decodeMessage(const string aMsg);
-	void processMessage(TServerSockController* aController);
+	const string_ptr encodeMessage();
+	void decodeMessage();
 
 	//getters
-	const string getUser(){ return this->fUser; }
-	const string getPass(){ return this->fPass; }
+	const string getUser(){ return *(this->fUser); }
+	const string getPass(){ return *(this->fPass); }
 };
 
 
@@ -338,13 +321,11 @@ private:
 	unsigned int fLastVersion;
 	map<unsigned int, time_t> fVersions;
 
-	void initFields();
 public:
 	TGetVersionsReplyMessage(TBaseMessage& aBase);
 	TGetVersionsReplyMessage(const unsigned int aTotVersions, const unsigned int aOldestVersion, const unsigned int aLastVersion, map<unsigned int, time_t> aVersions);
-	const string encodeMessage();
-	void decodeMessage(const string aMsg);
-	void processMessage(TServerSockController* aController);
+	const string_ptr encodeMessage();
+	void decodeMessage();
 
 	//getters
 	const unsigned int getTotVersions(){ return this->fTotVersions; }
@@ -359,21 +340,19 @@ public:
 ////////////////////////////////////////
 public class TRestoreVerReqMessage : public TBaseMessage {
 private:
-	string fUser;
-	string fPass;
+	string_ptr fUser;
+	string_ptr fPass;
 	unsigned int fVersion;
 
-	void initFields();
 public:
 	TRestoreVerReqMessage(TBaseMessage& aBase);
 	TRestoreVerReqMessage(const string aUser, const string aPass, const unsigned int aVersion);
-	const string encodeMessage();
-	void decodeMessage(const string aMsg);
-	void processMessage(TServerSockController* aController);
+	const string_ptr encodeMessage();
+	void decodeMessage();
 
 	//getters
-	const string getUser(){ return this->fUser; }
-	const string getPass(){ return this->fPass; }
+	const string getUser(){ return *(this->fUser); }
+	const string getPass(){ return *(this->fPass); }
 	const unsigned int getVersion(){ return this->fVersion; }
 };
 
@@ -384,19 +363,17 @@ public:
 public class TRestoreVerReplyMessage : public TBaseMessage {
 private:
 	bool fResp;
-	string fToken;
+	string_ptr fToken;
 
-	void initFields();
 public:
 	TRestoreVerReplyMessage(TBaseMessage& aBase);
-	TRestoreVerReplyMessage(const bool aResp, const bool aToken);
-	const string encodeMessage();
-	void decodeMessage(const string aMsg);
-	void processMessage(TServerSockController* aController);
+	TRestoreVerReplyMessage(const bool aResp, const string aToken);
+	const string_ptr encodeMessage();
+	void decodeMessage();
 
 	//getters
 	const bool getResp(){ return this->fResp; }
-	const string getToken(){ return this->fToken; }
+	const string getToken(){ return *(this->fToken); }
 };
 
 
@@ -405,22 +382,21 @@ public:
 ////////////////////////////////////////
 public class TRestoreFileMessage : public TBaseMessage {
 private:
-	string fFilePath;
-	string fChecksum;
+	string_ptr fFilePath;
 	time_t fFileDate;
-	//TODO: add file content
+	string_ptr fChecksum;
+	string_ptr fFileContent;
 
-	void initFields();
 public:
 	TRestoreFileMessage(TBaseMessage& aBase);
 	TRestoreFileMessage(string aFilePath);
-	const string encodeMessage();
-	void decodeMessage(const string aMsg);
-	void processMessage(TServerSockController* aController);
+	const string_ptr encodeMessage();
+	void decodeMessage();
 
 	//getters
-	const string getFilePath(){ return this->fFilePath; }
-	const string getChecksum(){ return this->fChecksum; }
+	const string getFilePath(){ return *(this->fFilePath); }
+	const string getChecksum(){ return *(this->fChecksum); }
+	const string getFileContent(){ return *(this->fFileContent); }
 	const time_t getFileDate(){ return this->fFileDate; }
 };
 
@@ -430,22 +406,20 @@ public:
 //////////////////////////////////////////
 public class TRestoreFileAckMessage : public TBaseMessage {
 private:
-	string fToken;
+	string_ptr fToken;
 	bool fResp;
-	string fFilePath;
+	string_ptr fFilePath;
 
-	void initFields();
 public:
 	TRestoreFileAckMessage(TBaseMessage& aBase);
-	TRestoreFileAckMessage(const string aToken, const bool aResp, const bool aFilePath);
-	const string encodeMessage();
-	void decodeMessage(const string aMsg);
-	void processMessage(TServerSockController* aController);
+	TRestoreFileAckMessage(const string aToken, const bool aResp, const string aFilePath);
+	const string_ptr encodeMessage();
+	void decodeMessage();
 
 	//getters
-	const string getToken(){ return this->fToken; }
+	const string getToken(){ return *(this->fToken); }
 	const bool getResp(){ return this->fResp; }
-	const string getFilePath(){ return this->fFilePath; }
+	const string getFilePath(){ return *(this->fFilePath); }
 };
 
 
@@ -457,13 +431,11 @@ private:
 	unsigned int fVersion;
 	time_t fTime;
 
-	void initFields();
 public:
 	TRestoreStopMessage(TBaseMessage& aBase);
 	TRestoreStopMessage(unsigned int aVersion, time_t aTime);
-	const string encodeMessage();
-	void decodeMessage(const string aMsg);
-	void processMessage(TServerSockController* aController);
+	const string_ptr encodeMessage();
+	void decodeMessage();
 
 	//getters
 	const unsigned int getVersion(){ return this->fVersion; }
@@ -478,13 +450,11 @@ public class TPingReqMessage : public TBaseMessage {
 private:
 	time_t fTime;
 
-	void initFields();
 public:
 	TPingReqMessage(TBaseMessage& aBase);
 	TPingReqMessage();
-	const string encodeMessage();
-	void decodeMessage(const string aMsg);
-	void processMessage(TServerSockController* aController);
+	const string_ptr encodeMessage();
+	void decodeMessage();
 
 	//getters
 	const time_t getTime(){ return this->fTime; }
@@ -498,13 +468,11 @@ public class TPingReplyMessage : public TBaseMessage {
 private:
 	time_t fTime;
 
-	void initFields();
 public:
 	TPingReplyMessage(TBaseMessage& aBase);
 	TPingReplyMessage();
-	const string encodeMessage();
-	void decodeMessage(const string aMsg);
-	void processMessage(TServerSockController* aController);
+	const string_ptr encodeMessage();
+	void decodeMessage();
 
 	//getters
 	const time_t getTime(){ return this->fTime; }
