@@ -32,11 +32,16 @@ void TServerForm::initTCPserver(Object^ data){
 void TServerForm::dismissTCPserver(){
 
 	if (this->serverEngine != nullptr){
+		this->Log("TServerForm", "dismissTCPserver", "stopping serverEngine object...");
+		this->serverEngine->stopServer();
+		this->Log("TServerForm", "dismissTCPserver", "serverEngine stopped");
+		beforeStopServer();
+
 		this->Log("TServerForm", "dismissTCPserver", "start deleting TStorageServer object...");
 		delete this->serverEngine;
 		this->Log("TServerForm", "dismissTCPserver", "TStorageServer object deleted");
+		this->serverEngine = nullptr;
 	}
-	this->serverEngine = nullptr;
 
 	//wait for all secondary threads to terminate
 	NetworkThread->Join();

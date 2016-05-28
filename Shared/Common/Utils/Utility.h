@@ -17,7 +17,14 @@ using namespace std;
 #define FALSE_STR "false"
 #define DEFAULT_PORT 4700
 
-typedef std::shared_ptr<string> string_ptr;
+//typedef std::shared_ptr<string> string_ptr;
+//#define make_string_ptr(ptr) std::make_shared<string>(ptr)
+//#define move_string_ptr(ptr) (ptr)
+
+typedef std::unique_ptr<string> string_ptr;
+#define make_string_ptr(ptr) std::make_unique<string>(ptr)
+#define new_string_ptr() std::make_unique<string>()
+#define move_string_ptr(ptr) std::move(ptr)
 
 typedef struct{
 	int size;
@@ -52,7 +59,7 @@ private:
 	string fMessage;
 public:
 	EBaseException(const string aMsg){ this->fMessage = aMsg; }
-	const string getMessage(){ return this->fMessage; }
+	virtual const string getMessage(){ return this->fMessage; }
 };
 
 //////////////////////////////////////
@@ -77,10 +84,10 @@ void initCrypto();
 // Base64 encode/decode functions
 string_ptr opensslB64Encode(char* aContent, int aLen); //throws EOpensslException
 B64result opensslB64Decode(const string& aString); //throws EOpensslException
-string_ptr opensslB64EncodeFile(const string aFileName); //throws EOpensslException
+string_ptr opensslB64EncodeFile(const string& aFileName); //throws EOpensslException
 
 // Evaluate a file and make its checksum
 //string_ptr opensslChecksum(char* aContent, int aLen); //throws EOpensslException
 //string_ptr opensslFileChecksum(const string aFileName); //throws EOpensslException
-string_ptr opensslB64Checksum(const string_ptr aString); //throws EOpensslException
+string_ptr opensslB64Checksum(const string& aString); //throws EOpensslException
 

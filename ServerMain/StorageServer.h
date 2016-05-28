@@ -32,6 +32,7 @@ public:
 	~TStorageServer();
 
 	void startServer();
+	void stopServer();
 
 	void onServerLog(string aClassName, string aFuncName, string aMsg) override;
 	void onServerWarning(string aClassName, string aFuncName, string aMsg) override;
@@ -39,20 +40,21 @@ public:
 	void onServerCriticalError(string aClassName, string aFuncName, string aMsg) override; 
 	void onServerSockCreate() override;
 	void onServerSockAccept(TConnectionHandle aConnection) override;
-	void onServerSockRead(TConnectionHandle aConnection, string_ptr aMsg) override;
+	void onServerSockRead(TConnectionHandle aConnection, string_ptr& aMsg) override;
 	void onServerSockWrite() override;
 
-	TMessageContainer getMessageToProcess() override;
-	void enqueueMessageToSend(TMessageContainer aMsg) override;
-	void processRegistrationRequest(TConnectionHandle aConnection, TUserRegistrReqMessage aMsg) override;
-	void processUpdateStartRequest(TConnectionHandle aConnection, TUpdateStartReqMessage aMsg) override;
-	void processAddNewFile(TConnectionHandle aConnection, TAddNewFileMessage aMsg) override;
-	void processUpdateFile(TConnectionHandle aConnection, TUpdateFileMessage aMsg) override;
-	void processRemoveFile(TConnectionHandle aConnection, TRemoveFileMessage aMsg) override;
-	void processUpdateStopRequest(TConnectionHandle aConnection, TUpdateStopReqMessage aMsg) override;
-	void processGetVersions(TConnectionHandle aConnection, TGetVersionsReqMessage aMsg) override;
-	void processRestoreVersion(TConnectionHandle aConnection, TRestoreVerReqMessage aMsg) override;
-	void processRestoreFileAck(TConnectionHandle aConnection, TRestoreFileAckMessage aMsg) override;
-	void processPingRequest(TConnectionHandle aConnection, TPingReqMessage aMsg) override;
+	bool isInQueueEmpty() override;
+	TMessageContainer_ptr getMessageToProcess() override;
+	void enqueueMessageToSend(TMessageContainer_ptr& aMsg) override;
+	void processRegistrationRequest(TConnectionHandle aConnection, TUserRegistrReqMessage_ptr& aMsg) override;
+	void processUpdateStartRequest(TConnectionHandle aConnection, TUpdateStartReqMessage_ptr& aMsg) override;
+	void processAddNewFile(TConnectionHandle aConnection, TAddNewFileMessage_ptr& aMsg) override;
+	void processUpdateFile(TConnectionHandle aConnection, TUpdateFileMessage_ptr& aMsg) override;
+	void processRemoveFile(TConnectionHandle aConnection, TRemoveFileMessage_ptr& aMsg) override;
+	void processUpdateStopRequest(TConnectionHandle aConnection, TUpdateStopReqMessage_ptr& aMsg) override;
+	void processGetVersions(TConnectionHandle aConnection, TGetVersionsReqMessage_ptr& aMsg) override;
+	void processRestoreVersion(TConnectionHandle aConnection, TRestoreVerReqMessage_ptr& aMsg) override;
+	void processRestoreFileAck(TConnectionHandle aConnection, TRestoreFileAckMessage_ptr& aMsg) override;
+	void processPingRequest(TConnectionHandle aConnection, TPingReqMessage_ptr& aMsg) override;
 };
 

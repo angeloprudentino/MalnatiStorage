@@ -49,7 +49,7 @@ public class IServerSockController : public IServerBaseController{
 public:
 	virtual void onServerSockCreate() = 0;
 	virtual void onServerSockAccept(TConnectionHandle aConnection) = 0;
-	virtual void onServerSockRead(TConnectionHandle aConnection, string_ptr aMsg) = 0;
+	virtual void onServerSockRead(TConnectionHandle aConnection, string_ptr& aMsg) = 0;
 	virtual void onServerSockWrite() = 0;
 };
 

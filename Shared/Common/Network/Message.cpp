@@ -21,24 +21,24 @@ using namespace std;
 #define MSG_INVALID "invalid"
 
 //Message tokens
-#define USER_REG_REQ_TOK_NUM 3
-#define USER_REG_REPLY_TOK_NUM 2
-#define UPDATE_START_REQ_TOK_NUM 3
-#define UPDATE_START_REPLY_TOK_NUM 3
-#define ADD_NEW_FILE_TOK_NUM 6
-#define UPDATE_FILE_TOK_NUM 6
-#define REMOVE_FILE_TOK_NUM 3
-#define FILE_ACK_TOK_NUM 3
-#define UPDATE_STOP_REQ_TOK_NUM 2
-#define UPDATE_STOP_REPLY_TOK_NUM 4
-#define GET_VERSIONS_REQ_TOK_NUM 3
-#define GET_VERSIONS_REPLY_MIN_TOK_NUM 4
-#define RESTORE_VER_REQ_TOK_NUM 4
-#define RESTORE_VER_REPLY_TOK_NUM 3
-#define RESTORE_FILE_TOK_NUM 5
-#define RESTORE_FILE_ACK_TOK_NUM 4
-#define RESTORE_STOP_TOK_NUM 3
-#define PING_TOK_NUM 2
+#define USER_REG_REQ_TOK_NUM 4
+#define USER_REG_REPLY_TOK_NUM 3
+#define UPDATE_START_REQ_TOK_NUM 4
+#define UPDATE_START_REPLY_TOK_NUM 4
+#define ADD_NEW_FILE_TOK_NUM 7
+#define UPDATE_FILE_TOK_NUM 7
+#define REMOVE_FILE_TOK_NUM 4
+#define FILE_ACK_TOK_NUM 4
+#define UPDATE_STOP_REQ_TOK_NUM 3
+#define UPDATE_STOP_REPLY_TOK_NUM 5
+#define GET_VERSIONS_REQ_TOK_NUM 4
+#define GET_VERSIONS_REPLY_MIN_TOK_NUM 5
+#define RESTORE_VER_REQ_TOK_NUM 5
+#define RESTORE_VER_REPLY_TOK_NUM 4
+#define RESTORE_FILE_TOK_NUM 6
+#define RESTORE_FILE_ACK_TOK_NUM 5
+#define RESTORE_STOP_TOK_NUM 4
+#define PING_TOK_NUM 3
 
 //Message names
 #define MSG_NUM 19
@@ -88,21 +88,23 @@ const string getMessageName(const int aIndex){
 }
 
 // Utility functions to escape/unescape messages
-void escape(string_ptr aMsg){
-	if (aMsg != NULL){
+void escape(string_ptr& aMsg){
+	if (aMsg != nullptr){
 		string from = to_string(MSG_SEP);
 		string to = MSG_SEP_ESC;
 		boost::replace_all(*aMsg, from, to);
 	}
 }
 
-void unescape(string_ptr aMsg){
-	if (aMsg != NULL){
+void unescape(string_ptr& aMsg){
+	if (aMsg != nullptr){
 		string from = MSG_SEP_ESC;
 		string to = to_string(MSG_SEP);
 		boost::replace_all(*aMsg, from, to);
 	}
 }
+
+
 #pragma endregion
 
 
@@ -112,18 +114,26 @@ void unescape(string_ptr aMsg){
 #pragma region "TBaseMessage"
 TBaseMessage::TBaseMessage(){
 	this->fID = NO_ID;
-	this->fEncodedMsg = NULL;
+	this->fEncodedMsg = nullptr;
+	this->fItems = new_string_vector_ptr();
 }
 
-TBaseMessage::TBaseMessage(const string_ptr aMsg){
+TBaseMessage::TBaseMessage(string_ptr& aMsg){
 	this->fID = NO_ID;
-	this->fEncodedMsg = aMsg;
+	this->fEncodedMsg = move_string_ptr(aMsg);
 	this->decodeMessageID();
 }
 
+TBaseMessage::~TBaseMessage() {
+	if (this->fItems != nullptr){
+		this->fItems.reset();
+		this->fItems = nullptr;
+	}
+}
+
 void TBaseMessage::decodeMessageID(){
-	if (this->fEncodedMsg == NULL)
-		throw new EMessageException("fEncodedMsg field is NULL");
+	if (this->fEncodedMsg == nullptr)
+		throw EMessageException("fEncodedMsg field is nullptr");
 
 	// Turn the string into a stream.
 	stringstream ss(*(this->fEncodedMsg));
@@ -139,39 +149,39 @@ void TBaseMessage::decodeMessageID(){
 	}
 }
 
-const string_ptr TBaseMessage::encodeMessage(){
-	int len = (int)this->fItems.size();
+string_ptr TBaseMessage::encodeMessage(){
+	int len = (int)this->fItems->size();
 	string_ptr msg(new string());
 	int i = 0;
 	for (i = 0; i < len; i++){
-		if (this->fItems[i] == NULL)
-			throw new EMessageException("item " + to_string(i) + " is NULL");
+		if (this->fItems->at(i) == nullptr)
+			throw new EMessageException("item " + to_string(i) + " is nullptr");
 
-		escape(this->fItems[i]);
-		*msg += *(this->fItems[i]) + MSG_SEP;
+		escape(this->fItems->at(i));
+		*msg += *(this->fItems->at(i)) + MSG_SEP;
 	}
 
-	*msg +=  END_MSG;
-	return msg;
+	*msg += END_MSG;
+	return move_string_ptr(msg);
 }
 
 void TBaseMessage::decodeMessage(){
-	if (this->fEncodedMsg == NULL)
-		throw new EMessageException("fEncodedMsg field is NULL");
+	if (this->fEncodedMsg == nullptr)
+		throw EMessageException("fEncodedMsg field is nullptr");
 
 	// Turn the string into a stream.
 	stringstream ss(*(this->fEncodedMsg));
 	string tok;
 
 	while (getline(ss, tok, MSG_SEP)) {
-		string_ptr tok_ptr = make_shared<string>(tok);
+		string_ptr tok_ptr = make_string_ptr(tok);
 		unescape(tok_ptr);
-		this->fItems.push_back(tok_ptr);
+		this->fItems->push_back(move_string_ptr(tok_ptr));
 	}
 
-	int len = (int)this->fItems.size();
-	if (*(this->fItems[len - 1]) != END_MSG)
-		throw new EMessageException("The given " + *(this->fItems[0]) + " message is not properly terminated");
+	int len = (int)this->fItems->size();
+	if (*(this->fItems->at(len - 1)) != END_MSG)
+		throw EMessageException("The given " + *(this->fItems->at(0)) + " message is not properly terminated");
 }
 #pragma endregion
 
@@ -180,24 +190,24 @@ void TBaseMessage::decodeMessage(){
 //      TUserRegistrReqMessage        //
 ////////////////////////////////////////
 #pragma region "TUserRegistrReqMessage"
-TUserRegistrReqMessage::TUserRegistrReqMessage(TBaseMessage& aBase){
-	this->fID = aBase.getID();
-	this->fItems = aBase.getTokens();
-	this->fEncodedMsg = aBase.getMsg();
+TUserRegistrReqMessage::TUserRegistrReqMessage(TBaseMessage_ptr& aBase){
+	this->fID = aBase->getID();
+	this->fItems = aBase->getTokens();
+	this->fEncodedMsg = aBase->getMsg();
 
 	this->decodeMessage();
 }
 
 TUserRegistrReqMessage::TUserRegistrReqMessage(const string aUser, const string aPass){
 	this->fID = USER_REG_REQ_ID;
-	this->fUser = make_shared<string>(aUser);
-	this->fPass = make_shared<string>(aPass);
+	this->fUser = make_string_ptr(aUser);
+	this->fPass = make_string_ptr(aPass);
 }
 
-const string_ptr TUserRegistrReqMessage::encodeMessage(){
-	this->fItems.push_back(make_shared<string>(getMessageName(this->fID)));
-	this->fItems.push_back(this->fUser);
-	this->fItems.push_back(this->fPass);
+string_ptr TUserRegistrReqMessage::encodeMessage(){
+	this->fItems->push_back(make_string_ptr(getMessageName(this->fID)));
+	this->fItems->push_back(move_string_ptr(this->fUser));
+	this->fItems->push_back(move_string_ptr(this->fPass));
 
 	return TBaseMessage::encodeMessage();
 }
@@ -210,26 +220,28 @@ void TUserRegistrReqMessage::decodeMessage(){
 	*/
 	TBaseMessage::decodeMessage();
 
-	int size = (int)this->fItems.size();
+	int size = (int)this->fItems->size();
 	if (size != USER_REG_REQ_TOK_NUM)
-		throw new EMessageException("USER_REG_REQ message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(USER_REG_REQ_TOK_NUM) + ")");
+		throw EMessageException("USER_REG_REQ message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(USER_REG_REQ_TOK_NUM) + ")");
 
 	for (int i = 0; i < size; i++)
-		if (this->fItems[i] == NULL)
-			throw new EMessageException("item " + to_string(i) + " is NULL");
+		if (this->fItems->at(i) == nullptr)
+			throw EMessageException("item " + to_string(i) + " is nullptr");
 
 	if (this->fID != USER_REG_REQ_ID)
-		throw new EMessageException("The given message is not a USER_REG_REQ message");
+		throw EMessageException("The given message is not a USER_REG_REQ message");
 
 	//username
-	if (*(this->fItems[1]) == EMPTY)
-		throw new EMessageException("The user name field cannot be empty");
-	this->fUser = this->fItems[1];
+	if (*(this->fItems->at(1)) == EMPTY)
+		throw EMessageException("The user name field cannot be empty");
+	this->fUser = move_string_ptr(this->fItems->at(1));
 
 	//password
-	if (*(this->fItems[2]) == EMPTY)
-		throw new EMessageException("The password field cannot be empty");
-	this->fPass = this->fItems[2];
+	if (*(this->fItems->at(2)) == EMPTY)
+		throw EMessageException("The password field cannot be empty");
+	this->fPass = move_string_ptr(this->fItems->at(2));
+
+	this->fItems->erase(this->fItems->begin(), this->fItems->end());
 }
 #pragma endregion
 
@@ -238,10 +250,10 @@ void TUserRegistrReqMessage::decodeMessage(){
 //      TUserRegistrReplyMessage      //
 ////////////////////////////////////////
 #pragma region "TUserRegistrReplyMessage"
-TUserRegistrReplyMessage::TUserRegistrReplyMessage(TBaseMessage& aBase){
-	this->fID = aBase.getID();
-	this->fItems = aBase.getTokens();
-	this->fEncodedMsg = aBase.getMsg();
+TUserRegistrReplyMessage::TUserRegistrReplyMessage(TBaseMessage_ptr& aBase){
+	this->fID = aBase->getID();
+	this->fItems = aBase->getTokens();
+	this->fEncodedMsg = aBase->getMsg();
 
 	this->decodeMessage();
 }
@@ -251,15 +263,15 @@ TUserRegistrReplyMessage::TUserRegistrReplyMessage(const bool aResp){
 	this->fResp = aResp;
 }
 
-const string_ptr TUserRegistrReplyMessage::encodeMessage(){
+string_ptr TUserRegistrReplyMessage::encodeMessage(){
 	string resp = "";
 	if (this->fResp)
 		resp = TRUE_STR;
 	else
 		resp = FALSE_STR;
 
-	this->fItems.push_back(make_shared<string>(getMessageName(this->fID)));
-	this->fItems.push_back(make_shared<string>(resp));
+	this->fItems->push_back(make_string_ptr(getMessageName(this->fID)));
+	this->fItems->push_back(make_string_ptr(resp));
 
 	return TBaseMessage::encodeMessage();
 }
@@ -271,27 +283,29 @@ void TUserRegistrReplyMessage::decodeMessage(){
 	*/
 	TBaseMessage::decodeMessage();
 
-	int size = (int)this->fItems.size();
+	int size = (int)this->fItems->size();
 	if (size != USER_REG_REPLY_TOK_NUM)
-		throw new EMessageException("USER_REG_REPLY message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(USER_REG_REPLY_TOK_NUM) + ")");
+		throw EMessageException("USER_REG_REPLY message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(USER_REG_REPLY_TOK_NUM) + ")");
 
 	for (int i = 0; i < size; i++)
-		if (this->fItems[i] == NULL)
-			throw new EMessageException("item " + to_string(i) + " is NULL");
+		if (this->fItems->at(i) == nullptr)
+			throw EMessageException("item " + to_string(i) + " is nullptr");
 
 	if (this->fID != USER_REG_REPLY_ID)
-		throw new EMessageException("The given message is not a USER_REG_REPLY message");
+		throw EMessageException("The given message is not a USER_REG_REPLY message");
 
 	//response
-	if (*(this->fItems[1]) == EMPTY)
-		throw new EMessageException("The response field cannot be empty");
-	if (*(this->fItems[1]) != TRUE_STR && *(this->fItems[1]) != FALSE_STR)
-		throw new EMessageException("The response field could be only true or false");
+	if (*(this->fItems->at(1)) == EMPTY)
+		throw EMessageException("The response field cannot be empty");
+	if (*(this->fItems->at(1)) != TRUE_STR && *(this->fItems->at(1)) != FALSE_STR)
+		throw EMessageException("The response field could be only true or false");
 
-	if (*(this->fItems[1]) == TRUE_STR)
+	if (*(this->fItems->at(1)) == TRUE_STR)
 		this->fResp = true;
 	else
 		this->fResp = false;
+
+	this->fItems->erase(this->fItems->begin(), this->fItems->end());
 }
 #pragma endregion
 
@@ -300,24 +314,24 @@ void TUserRegistrReplyMessage::decodeMessage(){
 //      TUpdateStartReqMessage        //
 ////////////////////////////////////////
 #pragma region "TUpdateStartReqMessage"
-TUpdateStartReqMessage::TUpdateStartReqMessage(TBaseMessage& aBase){
-	this->fID = aBase.getID();
-	this->fItems = aBase.getTokens();
-	this->fEncodedMsg = aBase.getMsg();
+TUpdateStartReqMessage::TUpdateStartReqMessage(TBaseMessage_ptr& aBase){
+	this->fID = aBase->getID();
+	this->fItems = aBase->getTokens();
+	this->fEncodedMsg = aBase->getMsg();
 
 	this->decodeMessage();
 }
 
 TUpdateStartReqMessage::TUpdateStartReqMessage(const string aUser, const string aPass){
 	this->fID = UPDATE_START_REQ_ID;
-	this->fUser = make_shared<string>(aUser);
-	this->fPass = make_shared<string>(aPass);
+	this->fUser = make_string_ptr(aUser);
+	this->fPass = make_string_ptr(aPass);
 }
 
-const string_ptr TUpdateStartReqMessage::encodeMessage(){
-	this->fItems.push_back(make_shared<string>(getMessageName(this->fID)));
-	this->fItems.push_back(this->fUser);
-	this->fItems.push_back(this->fPass);
+string_ptr TUpdateStartReqMessage::encodeMessage(){
+	this->fItems->push_back(make_string_ptr(getMessageName(this->fID)));
+	this->fItems->push_back(move_string_ptr(this->fUser));
+	this->fItems->push_back(move_string_ptr(this->fPass));
 
 	return TBaseMessage::encodeMessage();
 }
@@ -330,26 +344,28 @@ void TUpdateStartReqMessage::decodeMessage(){
 	*/
 	TBaseMessage::decodeMessage();
 
-	int size = (int)this->fItems.size();
+	int size = (int)this->fItems->size();
 	if (size != UPDATE_START_REQ_TOK_NUM)
-		throw new EMessageException("UPDATE_START_REQ message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(UPDATE_START_REQ_TOK_NUM) + ")");
+		throw EMessageException("UPDATE_START_REQ message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(UPDATE_START_REQ_TOK_NUM) + ")");
 
 	for (int i = 0; i < size; i++)
-		if (this->fItems[i] == NULL)
-			throw new EMessageException("item " + to_string(i) + " is NULL");
+		if (this->fItems->at(i) == nullptr)
+			throw EMessageException("item " + to_string(i) + " is nullptr");
 
 	if (this->fID != UPDATE_START_REQ_ID)
-		throw new EMessageException("The given message is not a UPDATE_START_REQ message");
+		throw EMessageException("The given message is not a UPDATE_START_REQ message");
 
 	//username
-	if (*(this->fItems[1]) == EMPTY)
-		throw new EMessageException("The user name field cannot be empty");
-	this->fUser = this->fItems[1];
+	if (*(this->fItems->at(1)) == EMPTY)
+		throw EMessageException("The user name field cannot be empty");
+	this->fUser = move_string_ptr(this->fItems->at(1));
 
 	//password
-	if (*(this->fItems[2]) == EMPTY)
-		throw new EMessageException("The password field cannot be empty");
-	this->fPass = this->fItems[2];
+	if (*(this->fItems->at(2)) == EMPTY)
+		throw EMessageException("The password field cannot be empty");
+	this->fPass = move_string_ptr(this->fItems->at(2));
+
+	this->fItems->erase(this->fItems->begin(), this->fItems->end());
 }
 #pragma endregion
 
@@ -358,10 +374,10 @@ void TUpdateStartReqMessage::decodeMessage(){
 //      TUpdateStartReplyMessage      //
 ////////////////////////////////////////
 #pragma region "TUpdateStartReplyMessage"
-TUpdateStartReplyMessage::TUpdateStartReplyMessage(TBaseMessage& aBase){
-	this->fID = aBase.getID();
-	this->fItems = aBase.getTokens();
-	this->fEncodedMsg = aBase.getMsg();
+TUpdateStartReplyMessage::TUpdateStartReplyMessage(TBaseMessage_ptr& aBase){
+	this->fID = aBase->getID();
+	this->fItems = aBase->getTokens();
+	this->fEncodedMsg = aBase->getMsg();
 
 	this->decodeMessage();
 }
@@ -369,19 +385,19 @@ TUpdateStartReplyMessage::TUpdateStartReplyMessage(TBaseMessage& aBase){
 TUpdateStartReplyMessage::TUpdateStartReplyMessage(const bool aResp, const string aToken){
 	this->fID = UPDATE_START_REPLY_ID;
 	this->fResp = aResp;
-	this->fToken = make_shared<string>(aToken);
+	this->fToken = make_string_ptr(aToken);
 }
 
-const string_ptr TUpdateStartReplyMessage::encodeMessage(){
+string_ptr TUpdateStartReplyMessage::encodeMessage(){
 	string resp = "";
 	if (this->fResp)
 		resp = TRUE_STR;
 	else
 		resp = FALSE_STR;
 
-	this->fItems.push_back(make_shared<string>(getMessageName(this->fID)));
-	this->fItems.push_back(make_shared<string>(resp));
-	this->fItems.push_back(this->fToken);
+	this->fItems->push_back(make_string_ptr(getMessageName(this->fID)));
+	this->fItems->push_back(make_string_ptr(resp));
+	this->fItems->push_back(move_string_ptr(this->fToken));
 
 	return TBaseMessage::encodeMessage();
 }
@@ -394,32 +410,34 @@ void TUpdateStartReplyMessage::decodeMessage(){
 	*/
 	TBaseMessage::decodeMessage();
 
-	int size = (int)this->fItems.size();
+	int size = (int)this->fItems->size();
 	if (size != UPDATE_START_REPLY_TOK_NUM)
-		throw new EMessageException("UPDATE_START_REPLY message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(UPDATE_START_REPLY_TOK_NUM) + ")");
+		throw EMessageException("UPDATE_START_REPLY message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(UPDATE_START_REPLY_TOK_NUM) + ")");
 
 	for (int i = 0; i < size; i++)
-		if (this->fItems[i] == NULL)
-			throw new EMessageException("item " + to_string(i) + " is NULL");
+		if (this->fItems->at(i) == nullptr)
+			throw EMessageException("item " + to_string(i) + " is nullptr");
 
 	if (this->fID != UPDATE_START_REPLY_ID)
-		throw new EMessageException("The given message is not a UPDATE_START_REPLY message");
+		throw EMessageException("The given message is not a UPDATE_START_REPLY message");
 
 	//response
-	if (*(this->fItems[1]) == EMPTY)
-		throw new EMessageException("The response field cannot be empty");
-	if (*(this->fItems[1]) != TRUE_STR && *(this->fItems[1]) != FALSE_STR)
-		throw new EMessageException("The response field could be only true or false");
+	if (*(this->fItems->at(1)) == EMPTY)
+		throw EMessageException("The response field cannot be empty");
+	if (*(this->fItems->at(1)) != TRUE_STR && *(this->fItems->at(1)) != FALSE_STR)
+		throw EMessageException("The response field could be only true or false");
 
-	if (*(this->fItems[1]) == TRUE_STR)
+	if (*(this->fItems->at(1)) == TRUE_STR)
 		this->fResp = true;
 	else
 		this->fResp = false;
 
 	//user token
-	if (*(this->fItems[2]) == EMPTY)
-		throw new EMessageException("The token field cannot be empty");
-	this->fToken = this->fItems[2]; //TODO: implement -> checkToken(this->fItems[2]);
+	if (*(this->fItems->at(2)) == EMPTY)
+		throw EMessageException("The token field cannot be empty");
+	this->fToken = move_string_ptr(this->fItems->at(2)); //TODO: implement -> checkToken(this->fItems->at(2));
+
+	this->fItems->erase(this->fItems->begin(), this->fItems->end());
 }
 #pragma endregion
 
@@ -428,35 +446,34 @@ void TUpdateStartReplyMessage::decodeMessage(){
 //        TAddNewFileMessage          //
 ////////////////////////////////////////
 #pragma region "TAddNewFileMessage"
-TAddNewFileMessage::TAddNewFileMessage(TBaseMessage& aBase){
-	this->fID = aBase.getID();
-	this->fItems = aBase.getTokens();
-	this->fEncodedMsg = aBase.getMsg();
+TAddNewFileMessage::TAddNewFileMessage(TBaseMessage_ptr& aBase){
+	this->fID = aBase->getID();
+	this->fItems = aBase->getTokens();
+	this->fEncodedMsg = aBase->getMsg();
 
 	this->decodeMessage();
 }
 
 TAddNewFileMessage::TAddNewFileMessage(const string aToken, string aFilePath){
 	this->fID = ADD_NEW_FILE_ID;
-	this->fToken = make_shared<string>(aToken);
-	this->fFilePath = make_shared<string>(aFilePath);
-	this->fFileContent = NULL;
-	this->fChecksum = NULL;
-	this->fFileDate = time(NULL);
+	this->fToken = make_string_ptr(aToken);
+	this->fFilePath = make_string_ptr(aFilePath);
+	this->fFileContent = nullptr;
+	this->fChecksum = nullptr;
+	this->fFileDate = time(nullptr);
 }
 
-const string_ptr TAddNewFileMessage::encodeMessage(){
-	this->fItems.push_back(make_shared<string>(getMessageName(this->fID)));
-	this->fItems.push_back(this->fToken);
-	this->fItems.push_back(this->fFilePath);
-
+string_ptr TAddNewFileMessage::encodeMessage(){
 	//read file, encode it and calculate checksum
 	this->fFileContent = opensslB64EncodeFile(*(this->fFilePath));
-	this->fChecksum = opensslB64Checksum(this->fFileContent);
+	this->fChecksum = opensslB64Checksum(*(this->fFileContent));
 
-	this->fItems.push_back(this->fChecksum);
-	this->fItems.push_back(make_shared<string>(timeToString(this->fFileDate)));
-	this->fItems.push_back(this->fFileContent);
+	this->fItems->push_back(make_string_ptr(getMessageName(this->fID)));
+	this->fItems->push_back(move_string_ptr(this->fToken));
+	this->fItems->push_back(move_string_ptr(this->fFilePath));
+	this->fItems->push_back(move_string_ptr(this->fChecksum));
+	this->fItems->push_back(make_string_ptr(timeToString(this->fFileDate)));
+	this->fItems->push_back(move_string_ptr(this->fFileContent));
 
 	return TBaseMessage::encodeMessage();
 }
@@ -472,52 +489,61 @@ void TAddNewFileMessage::decodeMessage(){
 	*/
 	TBaseMessage::decodeMessage();
 
-	int size = (int)this->fItems.size();
+	int size = (int)this->fItems->size();
 	if (size != ADD_NEW_FILE_TOK_NUM)
-		throw new EMessageException("ADD_NEW_FILE message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(ADD_NEW_FILE_TOK_NUM) + ")");
+		throw EMessageException("ADD_NEW_FILE message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(ADD_NEW_FILE_TOK_NUM) + ")");
 
 	for (int i = 0; i < size; i++)
-		if (this->fItems[i] == NULL)
-			throw new EMessageException("item " + to_string(i) + " is NULL");
+		if (this->fItems->at(i) == nullptr)
+			throw EMessageException("item " + to_string(i) + " is nullptr");
 
 	//message id
 	if (this->fID != ADD_NEW_FILE_ID)
-		throw new EMessageException("The given message is not a ADD_NEW_FILE message");
+		throw EMessageException("The given message is not a ADD_NEW_FILE message");
 
 	//user token
-	if (*(this->fItems[1]) == EMPTY)
-		throw new EMessageException("The token field cannot be empty");
-	this->fToken = this->fItems[1]; //TODO: implement -> checkToken(this->fItems[2]);
+	if (*(this->fItems->at(1)) == EMPTY)
+		throw EMessageException("The token field cannot be empty");
+	this->fToken = move_string_ptr(this->fItems->at(1)); //TODO: implement -> checkToken(this->fItems->at(2));
 
 	//file path
-	if (*(this->fItems[2]) == EMPTY)
-		throw new EMessageException("The token field cannot be empty");
-	if (*(this->fItems[2]) == EMPTY)
-		throw new EMessageException("The file path field cannot be empty");
+	if (*(this->fItems->at(2)) == EMPTY)
+		throw EMessageException("The token field cannot be empty");
+	if (*(this->fItems->at(2)) == EMPTY)
+		throw EMessageException("The file path field cannot be empty");
 	//TODO: check se il path è valido
 	//if (!isValidPath(this->fFilePath))
-	//	throw new EMessageException("The file path field must contain a valid path");
-	this->fFilePath = this->fItems[2];
+	//	throw EMessageException("The file path field must contain a valid path");
+	this->fFilePath = move_string_ptr(this->fItems->at(2));
 
 	//file checksum
-	if (*(this->fItems[3]) == EMPTY)
-		throw new EMessageException("The file checksum field cannot be empty");
-	this->fChecksum = this->fItems[3];
+	if (*(this->fItems->at(3)) == EMPTY)
+		throw EMessageException("The file checksum field cannot be empty");
+	this->fChecksum = move_string_ptr(this->fItems->at(3));
 
 	//file date
-	if (*(this->fItems[4]) == EMPTY)
-		throw new EMessageException("The file date field cannot be empty");
-	this->fFileDate = stringToTime(*(this->fItems[4]));
+	if (*(this->fItems->at(4)) == EMPTY)
+		throw EMessageException("The file date field cannot be empty");
+	this->fFileDate = stringToTime(*(this->fItems->at(4)));
 
 	//file content
-	if (*(this->fItems[5]) == EMPTY)
-		throw new EMessageException("The file content field cannot be empty");
-	this->fFileContent = this->fItems[5];
+	if (*(this->fItems->at(5)) == EMPTY)
+		throw EMessageException("The file content field cannot be empty");
+	this->fFileContent = move_string_ptr(this->fItems->at(5));
+
+	this->fItems->erase(this->fItems->begin(), this->fItems->end());
 
 	//verify file correctness
-	string_ptr myChecksum = opensslB64Checksum(this->fFileContent);
+	string_ptr myChecksum = nullptr;
+	try{
+		myChecksum = opensslB64Checksum(*(this->fFileContent));
+	}
+	catch (EOpensslException& e){
+		throw EMessageException("error calculating file checksum: " + e.getMessage());
+	}
+
 	if (*(myChecksum) != *(this->fChecksum))
-		throw new EMessageException("The received file could be corrupted; checksums do not match");
+		throw EMessageException("The received file could be corrupted; checksums do not match");
 }
 #pragma endregion
 
@@ -526,35 +552,34 @@ void TAddNewFileMessage::decodeMessage(){
 //        TUpdateFileMessage          //
 ////////////////////////////////////////
 #pragma region "TUpdateFileMessage"
-TUpdateFileMessage::TUpdateFileMessage(TBaseMessage& aBase){
-	this->fID = aBase.getID();
-	this->fItems = aBase.getTokens();
-	this->fEncodedMsg = aBase.getMsg();
+TUpdateFileMessage::TUpdateFileMessage(TBaseMessage_ptr& aBase){
+	this->fID = aBase->getID();
+	this->fItems = aBase->getTokens();
+	this->fEncodedMsg = aBase->getMsg();
 
 	this->decodeMessage();
 }
 
 TUpdateFileMessage::TUpdateFileMessage(const string aToken, string aFilePath){
 	this->fID = UPDATE_FILE_ID;
-	this->fToken = make_shared<string>(aToken);
-	this->fFilePath = make_shared<string>(aFilePath);
-	this->fFileContent = NULL;
-	this->fChecksum = NULL;
-	this->fFileDate = time(NULL);
+	this->fToken = make_string_ptr(aToken);
+	this->fFilePath = make_string_ptr(aFilePath);
+	this->fFileContent = nullptr;
+	this->fChecksum = nullptr;
+	this->fFileDate = time(nullptr);
 }
 
-const string_ptr TUpdateFileMessage::encodeMessage(){
-	this->fItems.push_back(make_shared<string>(getMessageName(this->fID)));
-	this->fItems.push_back(this->fToken);
-	this->fItems.push_back(this->fFilePath);
-
+string_ptr TUpdateFileMessage::encodeMessage(){
 	//read file, encode it and calculate checksum
 	this->fFileContent = opensslB64EncodeFile(*(this->fFilePath));
-	this->fChecksum = opensslB64Checksum(this->fFileContent);
+	this->fChecksum = opensslB64Checksum(*(this->fFileContent));
 
-	this->fItems.push_back(this->fChecksum);
-	this->fItems.push_back(make_shared<string>(timeToString(this->fFileDate)));
-	this->fItems.push_back(this->fFileContent);
+	this->fItems->push_back(make_string_ptr(getMessageName(this->fID)));
+	this->fItems->push_back(move_string_ptr(this->fToken));
+	this->fItems->push_back(move_string_ptr(this->fFilePath));
+	this->fItems->push_back(move_string_ptr(this->fChecksum));
+	this->fItems->push_back(make_string_ptr(timeToString(this->fFileDate)));
+	this->fItems->push_back(move_string_ptr(this->fFileContent));
 
 	return TBaseMessage::encodeMessage();
 }
@@ -570,52 +595,61 @@ void TUpdateFileMessage::decodeMessage(){
 	*/
 	TBaseMessage::decodeMessage();
 
-	int size = (int)this->fItems.size();
+	int size = (int)this->fItems->size();
 	if (size != UPDATE_FILE_TOK_NUM)
-		throw new EMessageException("UPDATE_FILE message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(UPDATE_FILE_TOK_NUM) + ")");
+		throw EMessageException("UPDATE_FILE message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(UPDATE_FILE_TOK_NUM) + ")");
 
 	for (int i = 0; i < size; i++)
-		if (this->fItems[i] == NULL)
-			throw new EMessageException("item " + to_string(i) + " is NULL");
+		if (this->fItems->at(i) == nullptr)
+			throw EMessageException("item " + to_string(i) + " is nullptr");
 
 	//message id
 	if (this->fID != UPDATE_FILE_ID)
-		throw new EMessageException("The given message is not a UPDATE_FILE message");
+		throw EMessageException("The given message is not a UPDATE_FILE message");
 
 	//user token
-	if (*(this->fItems[1]) == EMPTY)
-		throw new EMessageException("The token field cannot be empty");
-	this->fToken = this->fItems[1]; //TODO: implement -> checkToken(this->fItems[2]);
+	if (*(this->fItems->at(1)) == EMPTY)
+		throw EMessageException("The token field cannot be empty");
+	this->fToken = move_string_ptr(this->fItems->at(1)); //TODO: implement -> checkToken(this->fItems->at(2));
 
 	//file path
-	if (*(this->fItems[2]) == EMPTY)
-		throw new EMessageException("The token field cannot be empty");
-	if (*(this->fItems[2]) == EMPTY)
-		throw new EMessageException("The file path field cannot be empty");
+	if (*(this->fItems->at(2)) == EMPTY)
+		throw EMessageException("The token field cannot be empty");
+	if (*(this->fItems->at(2)) == EMPTY)
+		throw EMessageException("The file path field cannot be empty");
 	//TODO: check se il path è valido
 	//if (!isValidPath(this->fFilePath))
-	//	throw new EMessageException("The file path field must contain a valid path");
-	this->fFilePath = this->fItems[2];
+	//	throw EMessageException("The file path field must contain a valid path");
+	this->fFilePath = move_string_ptr(this->fItems->at(2));
 
 	//file checksum
-	if (*(this->fItems[3]) == EMPTY)
-		throw new EMessageException("The file checksum field cannot be empty");
-	this->fChecksum = this->fItems[3];
+	if (*(this->fItems->at(3)) == EMPTY)
+		throw EMessageException("The file checksum field cannot be empty");
+	this->fChecksum = move_string_ptr(this->fItems->at(3));
 
 	//file date
-	if (*(this->fItems[4]) == EMPTY)
-		throw new EMessageException("The file date field cannot be empty");
-	this->fFileDate = stringToTime(*(this->fItems[4]));
+	if (*(this->fItems->at(4)) == EMPTY)
+		throw EMessageException("The file date field cannot be empty");
+	this->fFileDate = stringToTime(*(this->fItems->at(4)));
 
 	//file content
-	if (*(this->fItems[5]) == EMPTY)
-		throw new EMessageException("The file content field cannot be empty");
-	this->fFileContent = this->fItems[5];
+	if (*(this->fItems->at(5)) == EMPTY)
+		throw EMessageException("The file content field cannot be empty");
+	this->fFileContent = move_string_ptr(this->fItems->at(5));
+
+	this->fItems->erase(this->fItems->begin(), this->fItems->end());
 
 	//verify file correctness
-	string_ptr myChecksum = opensslB64Checksum(this->fFileContent);
+	string_ptr myChecksum = nullptr;
+	try{
+		myChecksum = opensslB64Checksum(*(this->fFileContent));
+	}
+	catch (EOpensslException& e){
+		throw EMessageException("error calculating file checksum: " + e.getMessage());
+	}
+
 	if (*(myChecksum) != *(this->fChecksum))
-		throw new EMessageException("The received file could be corrupted; checksums do not match");
+		throw EMessageException("The received file could be corrupted; checksums do not match");
 }
 #pragma endregion
 
@@ -624,24 +658,24 @@ void TUpdateFileMessage::decodeMessage(){
 //        TRemoveFileMessage          //
 ////////////////////////////////////////
 #pragma region "TRemoveFileMessage"
-TRemoveFileMessage::TRemoveFileMessage(TBaseMessage& aBase){
-	this->fID = aBase.getID();
-	this->fItems = aBase.getTokens();
-	this->fEncodedMsg = aBase.getMsg();
+TRemoveFileMessage::TRemoveFileMessage(TBaseMessage_ptr& aBase){
+	this->fID = aBase->getID();
+	this->fItems = aBase->getTokens();
+	this->fEncodedMsg = aBase->getMsg();
 
 	this->decodeMessage();
 }
 
 TRemoveFileMessage::TRemoveFileMessage(const string aToken, string aFilePath){
 	this->fID = REMOVE_FILE_ID;
-	this->fToken = make_shared<string>(aToken);
-	this->fFilePath = make_shared<string>(aFilePath);
+	this->fToken = make_string_ptr(aToken);
+	this->fFilePath = make_string_ptr(aFilePath);
 }
 
-const string_ptr TRemoveFileMessage::encodeMessage(){
-	this->fItems.push_back(make_shared<string>(getMessageName(this->fID)));
-	this->fItems.push_back(this->fToken);
-	this->fItems.push_back(this->fFilePath);
+string_ptr TRemoveFileMessage::encodeMessage(){
+	this->fItems->push_back(make_string_ptr(getMessageName(this->fID)));
+	this->fItems->push_back(move_string_ptr(this->fToken));
+	this->fItems->push_back(move_string_ptr(this->fFilePath));
 
 	return TBaseMessage::encodeMessage();
 }
@@ -654,32 +688,34 @@ void TRemoveFileMessage::decodeMessage(){
 	*/
 	TBaseMessage::decodeMessage();
 
-	int size = (int)this->fItems.size();
+	int size = (int)this->fItems->size();
 	if (size != REMOVE_FILE_TOK_NUM)
-		throw new EMessageException("REMOVE_FILE message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(REMOVE_FILE_TOK_NUM) + ")");
+		throw EMessageException("REMOVE_FILE message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(REMOVE_FILE_TOK_NUM) + ")");
 
 	for (int i = 0; i < size; i++)
-		if (this->fItems[i] == NULL)
-			throw new EMessageException("item " + to_string(i) + " is NULL");
+		if (this->fItems->at(i) == nullptr)
+			throw EMessageException("item " + to_string(i) + " is nullptr");
 
 	//message id
 	if (this->fID != REMOVE_FILE_ID)
-		throw new EMessageException("The given message is not a REMOVE_FILE message");
+		throw EMessageException("The given message is not a REMOVE_FILE message");
 
 	//user token
-	if (*(this->fItems[1]) == EMPTY)
-		throw new EMessageException("The token field cannot be empty");
-	this->fToken = this->fItems[1]; //TODO: implement -> checkToken(this->fItems[2]);
+	if (*(this->fItems->at(1)) == EMPTY)
+		throw EMessageException("The token field cannot be empty");
+	this->fToken = move_string_ptr(this->fItems->at(1)); //TODO: implement -> checkToken(this->fItems->at(2));
 
 	//file path
-	if (*(this->fItems[2]) == EMPTY)
-		throw new EMessageException("The token field cannot be empty");
-	if (*(this->fItems[2]) == EMPTY)
-		throw new EMessageException("The file path field cannot be empty");
+	if (*(this->fItems->at(2)) == EMPTY)
+		throw EMessageException("The token field cannot be empty");
+	if (*(this->fItems->at(2)) == EMPTY)
+		throw EMessageException("The file path field cannot be empty");
 	//TODO: check se il path è valido
 	//if (!isValidPath(this->fFilePath))
-	//	throw new EMessageException("The file path field must contain a valid path");
-	this->fFilePath = this->fItems[2];
+	//	throw EMessageException("The file path field must contain a valid path");
+	this->fFilePath = move_string_ptr(this->fItems->at(2));
+
+	this->fItems->erase(this->fItems->begin(), this->fItems->end());
 }
 #pragma endregion
 
@@ -688,10 +724,10 @@ void TRemoveFileMessage::decodeMessage(){
 //        TFileAckMessage        //
 ///////////////////////////////////
 #pragma region "TFileAckMessage"
-TFileAckMessage::TFileAckMessage(TBaseMessage& aBase){
-	this->fID = aBase.getID();
-	this->fItems = aBase.getTokens();
-	this->fEncodedMsg = aBase.getMsg();
+TFileAckMessage::TFileAckMessage(TBaseMessage_ptr& aBase){
+	this->fID = aBase->getID();
+	this->fItems = aBase->getTokens();
+	this->fEncodedMsg = aBase->getMsg();
 
 	this->decodeMessage();
 }
@@ -699,19 +735,19 @@ TFileAckMessage::TFileAckMessage(TBaseMessage& aBase){
 TFileAckMessage::TFileAckMessage(const bool aResp, const string aFilePath){
 	this->fID = FILE_ACK_ID;
 	this->fResp = aResp;
-	this->fFilePath = make_shared<string>(aFilePath);
+	this->fFilePath = make_string_ptr(aFilePath);
 }
 
-const string_ptr TFileAckMessage::encodeMessage(){
+string_ptr TFileAckMessage::encodeMessage(){
 	string resp = "";
 	if (this->fResp)
 		resp = TRUE_STR;
 	else
 		resp = FALSE_STR;
 
-	this->fItems.push_back(make_shared<string>(getMessageName(this->fID)));
-	this->fItems.push_back(make_shared<string>(resp));
-	this->fItems.push_back(this->fFilePath);
+	this->fItems->push_back(make_string_ptr(getMessageName(this->fID)));
+	this->fItems->push_back(make_string_ptr(resp));
+	this->fItems->push_back(move_string_ptr(this->fFilePath));
 
 	return TBaseMessage::encodeMessage();
 }
@@ -724,35 +760,37 @@ void TFileAckMessage::decodeMessage(){
 	*/
 	TBaseMessage::decodeMessage();
 
-	int size = (int)this->fItems.size();
+	int size = (int)this->fItems->size();
 	if (size != FILE_ACK_TOK_NUM)
-		throw new EMessageException("FILE_ACK message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(FILE_ACK_TOK_NUM) + ")");
+		throw EMessageException("FILE_ACK message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(FILE_ACK_TOK_NUM) + ")");
 
 	for (int i = 0; i < size; i++)
-		if (this->fItems[i] == NULL)
-			throw new EMessageException("item " + to_string(i) + " is NULL");
+		if (this->fItems->at(i) == nullptr)
+			throw EMessageException("item " + to_string(i) + " is nullptr");
 
 	if (this->fID != FILE_ACK_ID)
-		throw new EMessageException("The given message is not a FILE_ACK message");
+		throw EMessageException("The given message is not a FILE_ACK message");
 
 	//response
-	if (*(this->fItems[1]) == EMPTY)
-		throw new EMessageException("The response field cannot be empty");
-	if (*(this->fItems[1]) != TRUE_STR && *(this->fItems[1]) != FALSE_STR)
-		throw new EMessageException("The response field could be only true or false");
+	if (*(this->fItems->at(1)) == EMPTY)
+		throw EMessageException("The response field cannot be empty");
+	if (*(this->fItems->at(1)) != TRUE_STR && *(this->fItems->at(1)) != FALSE_STR)
+		throw EMessageException("The response field could be only true or false");
 
-	if (*(this->fItems[1]) == TRUE_STR)
+	if (*(this->fItems->at(1)) == TRUE_STR)
 		this->fResp = true;
 	else
 		this->fResp = false;
 
 	//file path
-	if (*(this->fItems[2]) == EMPTY)
-		throw new EMessageException("The token field cannot be empty");
+	if (*(this->fItems->at(2)) == EMPTY)
+		throw EMessageException("The token field cannot be empty");
 	//TODO: check se il path è valido
 	//if (!isValidPath(this->fFilePath))
-	//	throw new EMessageException("The file path field must contain a valid path");
-	this->fFilePath = this->fItems[2];
+	//	throw EMessageException("The file path field must contain a valid path");
+	this->fFilePath = move_string_ptr(this->fItems->at(2));
+
+	this->fItems->erase(this->fItems->begin(), this->fItems->end());
 }
 #pragma endregion
 
@@ -761,22 +799,22 @@ void TFileAckMessage::decodeMessage(){
 //       TUpdateStopReqMessage        //
 ////////////////////////////////////////
 #pragma region "TUpdateStopReqMessage"
-TUpdateStopReqMessage::TUpdateStopReqMessage(TBaseMessage& aBase){
-	this->fID = aBase.getID();
-	this->fItems = aBase.getTokens();
-	this->fEncodedMsg = aBase.getMsg();
+TUpdateStopReqMessage::TUpdateStopReqMessage(TBaseMessage_ptr& aBase){
+	this->fID = aBase->getID();
+	this->fItems = aBase->getTokens();
+	this->fEncodedMsg = aBase->getMsg();
 
 	this->decodeMessage();
 }
 
 TUpdateStopReqMessage::TUpdateStopReqMessage(const string aToken){
 	this->fID = UPDATE_STOP_REQ_ID;
-	this->fToken = make_shared<string>(aToken);
+	this->fToken = make_string_ptr(aToken);
 }
 
-const string_ptr TUpdateStopReqMessage::encodeMessage(){
-	this->fItems.push_back(make_shared<string>(getMessageName(this->fID)));
-	this->fItems.push_back(this->fToken);
+string_ptr TUpdateStopReqMessage::encodeMessage(){
+	this->fItems->push_back(make_string_ptr(getMessageName(this->fID)));
+	this->fItems->push_back(move_string_ptr(this->fToken));
 
 	return TBaseMessage::encodeMessage();
 }
@@ -788,21 +826,23 @@ void TUpdateStopReqMessage::decodeMessage(){
 	*/
 	TBaseMessage::decodeMessage();
 
-	int size = (int)this->fItems.size();
+	int size = (int)this->fItems->size();
 	if (size != UPDATE_STOP_REQ_TOK_NUM)
-		throw new EMessageException("UPDATE_STOP_REQ message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(UPDATE_STOP_REQ_TOK_NUM) + ")");
+		throw EMessageException("UPDATE_STOP_REQ message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(UPDATE_STOP_REQ_TOK_NUM) + ")");
 
 	for (int i = 0; i < size; i++)
-		if (this->fItems[i] == NULL)
-			throw new EMessageException("item " + to_string(i) + " is NULL");
+		if (this->fItems->at(i) == nullptr)
+			throw EMessageException("item " + to_string(i) + " is nullptr");
 
 	if (this->fID != UPDATE_STOP_REQ_ID)
-		throw new EMessageException("The given message is not a UPDATE_STOP_REQ message");
+		throw EMessageException("The given message is not a UPDATE_STOP_REQ message");
 
 	//user token
-	if (*(this->fItems[1]) == EMPTY)
-		throw new EMessageException("The token field cannot be empty");
-	this->fToken = this->fItems[1]; //TODO: implement -> checkToken(this->fItems[2]);
+	if (*(this->fItems->at(1)) == EMPTY)
+		throw EMessageException("The token field cannot be empty");
+	this->fToken = move_string_ptr(this->fItems->at(1)); //TODO: implement -> checkToken(this->fItems->at(2));
+
+	this->fItems->erase(this->fItems->begin(), this->fItems->end());
 }
 #pragma endregion
 
@@ -811,10 +851,10 @@ void TUpdateStopReqMessage::decodeMessage(){
 //      TUpdateStopReplyMessage       //
 ////////////////////////////////////////
 #pragma region "TUpdateStopReplyMessage"
-TUpdateStopReplyMessage::TUpdateStopReplyMessage(TBaseMessage& aBase){
-	this->fID = aBase.getID();
-	this->fItems = aBase.getTokens();
-	this->fEncodedMsg = aBase.getMsg();
+TUpdateStopReplyMessage::TUpdateStopReplyMessage(TBaseMessage_ptr& aBase){
+	this->fID = aBase->getID();
+	this->fItems = aBase->getTokens();
+	this->fEncodedMsg = aBase->getMsg();
 
 	this->decodeMessage();
 }
@@ -826,17 +866,17 @@ TUpdateStopReplyMessage::TUpdateStopReplyMessage(const bool aResp, unsigned int 
 	this->fTime = aTime;
 }
 
-const string_ptr TUpdateStopReplyMessage::encodeMessage(){
+string_ptr TUpdateStopReplyMessage::encodeMessage(){
 	string resp = "";
 	if (this->fResp)
 		resp = TRUE_STR;
 	else
 		resp = FALSE_STR;
 
-	this->fItems.push_back(make_shared<string>(getMessageName(this->fID)));
-	this->fItems.push_back(make_shared<string>(resp));
-	this->fItems.push_back(make_shared<string>(to_string(this->fVersion)));
-	this->fItems.push_back(make_shared<string>(timeToString(this->fTime)));
+	this->fItems->push_back(make_string_ptr(getMessageName(this->fID)));
+	this->fItems->push_back(make_string_ptr(resp));
+	this->fItems->push_back(make_string_ptr(to_string(this->fVersion)));
+	this->fItems->push_back(make_string_ptr(timeToString(this->fTime)));
 
 	return TBaseMessage::encodeMessage();
 }
@@ -850,38 +890,40 @@ void TUpdateStopReplyMessage::decodeMessage(){
 	*/
 	TBaseMessage::decodeMessage();
 
-	int size = (int)this->fItems.size();
+	int size = (int)this->fItems->size();
 	if (size != UPDATE_STOP_REPLY_TOK_NUM)
-		throw new EMessageException("UPDATE_STOP_REPLY message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(UPDATE_STOP_REPLY_TOK_NUM) + ")");
+		throw EMessageException("UPDATE_STOP_REPLY message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(UPDATE_STOP_REPLY_TOK_NUM) + ")");
 
 	for (int i = 0; i < size; i++)
-		if (this->fItems[i] == NULL)
-			throw new EMessageException("item " + to_string(i) + " is NULL");
+		if (this->fItems->at(i) == nullptr)
+			throw EMessageException("item " + to_string(i) + " is nullptr");
 
 	if (this->fID != UPDATE_STOP_REPLY_ID)
-		throw new EMessageException("The given message is not a UPDATE_STOP_REPLY message");
+		throw EMessageException("The given message is not a UPDATE_STOP_REPLY message");
 
 	//response
-	if (*(this->fItems[1]) == EMPTY)
-		throw new EMessageException("The response field cannot be empty");
-	if (*(this->fItems[1]) != TRUE_STR && *(this->fItems[1]) != FALSE_STR)
-		throw new EMessageException("The response field could be only true or false");
+	if (*(this->fItems->at(1)) == EMPTY)
+		throw EMessageException("The response field cannot be empty");
+	if (*(this->fItems->at(1)) != TRUE_STR && *(this->fItems->at(1)) != FALSE_STR)
+		throw EMessageException("The response field could be only true or false");
 
-	if (*(this->fItems[1]) == TRUE_STR)
+	if (*(this->fItems->at(1)) == TRUE_STR)
 		this->fResp = true;
 	else
 		this->fResp = false;
 
 	//version number
-	if (*(this->fItems[2]) == EMPTY)
-		throw new EMessageException("The version field cannot be empty");
-	//TODO: check if this->fItems[2] contains a number
-	this->fVersion = stoi(*(this->fItems[2]));
+	if (*(this->fItems->at(2)) == EMPTY)
+		throw EMessageException("The version field cannot be empty");
+	//TODO: check if this->fItems->at(2) contains a number
+	this->fVersion = stoi(*(this->fItems->at(2)));
 
 	//version timestamp
-	if (*(this->fItems[3]) == EMPTY)
-		throw new EMessageException("The version timestamp field cannot be empty");
-	this->fTime = stringToTime(*(this->fItems[3]));
+	if (*(this->fItems->at(3)) == EMPTY)
+		throw EMessageException("The version timestamp field cannot be empty");
+	this->fTime = stringToTime(*(this->fItems->at(3)));
+
+	this->fItems->erase(this->fItems->begin(), this->fItems->end());
 }
 #pragma endregion
 
@@ -890,24 +932,24 @@ void TUpdateStopReplyMessage::decodeMessage(){
 //      TGetVersionsReqMessage        //
 ////////////////////////////////////////
 #pragma region "TGetVersionsReqMessage"
-TGetVersionsReqMessage::TGetVersionsReqMessage(TBaseMessage& aBase){
-	this->fID = aBase.getID();
-	this->fItems = aBase.getTokens();
-	this->fEncodedMsg = aBase.getMsg();
+TGetVersionsReqMessage::TGetVersionsReqMessage(TBaseMessage_ptr& aBase){
+	this->fID = aBase->getID();
+	this->fItems = aBase->getTokens();
+	this->fEncodedMsg = aBase->getMsg();
 
 	this->decodeMessage();
 }
 
 TGetVersionsReqMessage::TGetVersionsReqMessage(const string aUser, const string aPass){
 	this->fID = GET_VERSIONS_REQ_ID;
-	this->fUser = make_shared<string>(aUser);
-	this->fPass = make_shared<string>(aPass);
+	this->fUser = make_string_ptr(aUser);
+	this->fPass = make_string_ptr(aPass);
 }
 
-const string_ptr TGetVersionsReqMessage::encodeMessage(){
-	this->fItems.push_back(make_shared<string>(getMessageName(this->fID)));
-	this->fItems.push_back(this->fUser);
-	this->fItems.push_back(this->fPass);
+string_ptr TGetVersionsReqMessage::encodeMessage(){
+	this->fItems->push_back(make_string_ptr(getMessageName(this->fID)));
+	this->fItems->push_back(move_string_ptr(this->fUser));
+	this->fItems->push_back(move_string_ptr(this->fPass));
 
 	return TBaseMessage::encodeMessage();
 }
@@ -920,26 +962,28 @@ void TGetVersionsReqMessage::decodeMessage(){
 	*/
 	TBaseMessage::decodeMessage();
 	
-	int size = (int)this->fItems.size();
+	int size = (int)this->fItems->size();
 	if (size != GET_VERSIONS_REQ_TOK_NUM)
-		throw new EMessageException("GET_VERSIONS_REQ message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(GET_VERSIONS_REQ_TOK_NUM) + ")");
+		throw EMessageException("GET_VERSIONS_REQ message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(GET_VERSIONS_REQ_TOK_NUM) + ")");
 
 	for (int i = 0; i < size; i++)
-		if (this->fItems[i] == NULL)
-			throw new EMessageException("item " + to_string(i) + " is NULL");
+		if (this->fItems->at(i) == nullptr)
+			throw EMessageException("item " + to_string(i) + " is nullptr");
 
 	if (this->fID != GET_VERSIONS_REQ_ID)
-		throw new EMessageException("The given message is not a GET_VERSIONS_REQ message");
+		throw EMessageException("The given message is not a GET_VERSIONS_REQ message");
 
 	//username
-	if (*(this->fItems[1]) == EMPTY)
-		throw new EMessageException("The user name field cannot be empty");
-	this->fUser = this->fItems[1];
+	if (*(this->fItems->at(1)) == EMPTY)
+		throw EMessageException("The user name field cannot be empty");
+	this->fUser = move_string_ptr(this->fItems->at(1));
 
 	//password
-	if (*(this->fItems[2]) == EMPTY)
-		throw new EMessageException("The password field cannot be empty");
-	this->fPass = this->fItems[2];
+	if (*(this->fItems->at(2)) == EMPTY)
+		throw EMessageException("The password field cannot be empty");
+	this->fPass = move_string_ptr(this->fItems->at(2));
+
+	this->fItems->erase(this->fItems->begin(), this->fItems->end());
 }
 #pragma endregion
 
@@ -948,10 +992,10 @@ void TGetVersionsReqMessage::decodeMessage(){
 //      TGetVersionsReplyMessage      //
 ////////////////////////////////////////
 #pragma region "TGetVersionsReplyMessage"
-TGetVersionsReplyMessage::TGetVersionsReplyMessage(TBaseMessage& aBase){
-	this->fID = aBase.getID();
-	this->fItems = aBase.getTokens();
-	this->fEncodedMsg = aBase.getMsg();
+TGetVersionsReplyMessage::TGetVersionsReplyMessage(TBaseMessage_ptr& aBase){
+	this->fID = aBase->getID();
+	this->fItems = aBase->getTokens();
+	this->fEncodedMsg = aBase->getMsg();
 
 	this->decodeMessage();
 }
@@ -964,15 +1008,15 @@ TGetVersionsReplyMessage::TGetVersionsReplyMessage(const unsigned int aTotVersio
 	this->fVersions = aVersions;
 }
 
-const string_ptr TGetVersionsReplyMessage::encodeMessage(){
-	this->fItems.push_back(make_shared<string>(getMessageName(this->fID)));
-	this->fItems.push_back(make_shared<string>(to_string(this->fTotVersions)));
-	this->fItems.push_back(make_shared<string>(to_string(this->fOldestVersion)));
-	this->fItems.push_back(make_shared<string>(to_string(this->fLastVersion)));
+string_ptr TGetVersionsReplyMessage::encodeMessage(){
+	this->fItems->push_back(make_string_ptr(getMessageName(this->fID)));
+	this->fItems->push_back(make_string_ptr(to_string(this->fTotVersions)));
+	this->fItems->push_back(make_string_ptr(to_string(this->fOldestVersion)));
+	this->fItems->push_back(make_string_ptr(to_string(this->fLastVersion)));
 
 	int size = (int)this->fVersions.size();
 	for (int i = GET_VERSIONS_REPLY_MIN_TOK_NUM + 1; i < size; i++){
-		this->fItems.push_back(make_shared<string>(timeToString(this->fVersions.at(i))));
+		this->fItems->push_back(make_string_ptr(timeToString(this->fVersions.at(i))));
 	}
 
 	return TBaseMessage::encodeMessage();
@@ -988,43 +1032,45 @@ void TGetVersionsReplyMessage::decodeMessage(){
 	*/
 	TBaseMessage::decodeMessage();
 
-	int size = (int)this->fItems.size();
+	int size = (int)this->fItems->size();
 	if (size < GET_VERSIONS_REPLY_MIN_TOK_NUM)
-		throw new EMessageException("GET_VERSIONS_REPLY message does not contain the minimum number of tokens(" + to_string(GET_VERSIONS_REPLY_MIN_TOK_NUM) + ")");
+		throw EMessageException("GET_VERSIONS_REPLY message does not contain the minimum number of tokens(" + to_string(GET_VERSIONS_REPLY_MIN_TOK_NUM) + ")");
 
 	for (int i = 0; i < size; i++)
-		if (this->fItems[i] == NULL)
-			throw new EMessageException("item " + to_string(i) + " is NULL");
+		if (this->fItems->at(i) == nullptr)
+			throw EMessageException("item " + to_string(i) + " is nullptr");
 
 	if (this->fID != GET_VERSIONS_REPLY_ID)
-		throw new EMessageException("The given message is not a GET_VERSIONS_REPLY message");
+		throw EMessageException("The given message is not a GET_VERSIONS_REPLY message");
 
 	//tot number of versions
-	if (*(this->fItems[1]) == EMPTY)
-		throw new EMessageException("The total versions number field cannot be empty");
-	//TODO: check if this->fItems[1] contains a number
-	this->fTotVersions = stoi(*(this->fItems[1]));
+	if (*(this->fItems->at(1)) == EMPTY)
+		throw EMessageException("The total versions number field cannot be empty");
+	//TODO: check if this->fItems->at(1) contains a number
+	this->fTotVersions = stoi(*(this->fItems->at(1)));
 
 	//oldest version
-	if (*(this->fItems[2]) == EMPTY)
-		throw new EMessageException("The oldest version number field cannot be empty");
-	//TODO: check if this->fItems[2] contains a number
-	this->fOldestVersion = stoi(*(this->fItems[2]));
+	if (*(this->fItems->at(2)) == EMPTY)
+		throw EMessageException("The oldest version number field cannot be empty");
+	//TODO: check if this->fItems->at(2) contains a number
+	this->fOldestVersion = stoi(*(this->fItems->at(2)));
 
 	//last version
-	if (*(this->fItems[3]) == EMPTY)
-		throw new EMessageException("The last version number field cannot be empty");
-	//TODO: check if this->fItems[3] contains a number
-	this->fLastVersion = stoi(*(this->fItems[3]));
+	if (*(this->fItems->at(3)) == EMPTY)
+		throw EMessageException("The last version number field cannot be empty");
+	//TODO: check if this->fItems->at(3) contains a number
+	this->fLastVersion = stoi(*(this->fItems->at(3)));
 
 	int totSize = GET_VERSIONS_REPLY_MIN_TOK_NUM + (this->fLastVersion - this->fOldestVersion);
 	if (size != totSize)
-		throw new EMessageException("GET_VERSIONS_REPLY message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(totSize) + ")");
+		throw EMessageException("GET_VERSIONS_REPLY message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(totSize) + ")");
 
 	int i, j;
 	for (i = GET_VERSIONS_REPLY_MIN_TOK_NUM + 1, j = this->fOldestVersion; i < totSize; i++, j++){
-		this->fVersions.emplace(j, stringToTime(*(this->fItems[i])));
+		this->fVersions.emplace(j, stringToTime(*(this->fItems->at(i))));
 	}
+
+	this->fItems->erase(this->fItems->begin(), this->fItems->end());
 }
 #pragma endregion
 
@@ -1033,26 +1079,26 @@ void TGetVersionsReplyMessage::decodeMessage(){
 //       TRestoreVerReqMessage        //
 ////////////////////////////////////////
 #pragma region "TRestoreVerReqMessage"
-TRestoreVerReqMessage::TRestoreVerReqMessage(TBaseMessage& aBase){
-	this->fID = aBase.getID();
-	this->fItems = aBase.getTokens();
-	this->fEncodedMsg = aBase.getMsg();
+TRestoreVerReqMessage::TRestoreVerReqMessage(TBaseMessage_ptr& aBase){
+	this->fID = aBase->getID();
+	this->fItems = aBase->getTokens();
+	this->fEncodedMsg = aBase->getMsg();
 
 	this->decodeMessage();
 }
 
 TRestoreVerReqMessage::TRestoreVerReqMessage(const string aUser, const string aPass, const unsigned int aVersion){
 	this->fID = RESTORE_VER_REQ_ID;
-	this->fUser = make_shared<string>(aUser);
-	this->fPass = make_shared<string>(aPass);
+	this->fUser = make_string_ptr(aUser);
+	this->fPass = make_string_ptr(aPass);
 	this->fVersion = aVersion;
 }
 
-const string_ptr TRestoreVerReqMessage::encodeMessage(){
-	this->fItems.push_back(make_shared<string>(getMessageName(this->fID)));
-	this->fItems.push_back(this->fUser);
-	this->fItems.push_back(this->fPass);
-	this->fItems.push_back(make_shared<string>(to_string(this->fVersion)));
+string_ptr TRestoreVerReqMessage::encodeMessage(){
+	this->fItems->push_back(make_string_ptr(getMessageName(this->fID)));
+	this->fItems->push_back(move_string_ptr(this->fUser));
+	this->fItems->push_back(move_string_ptr(this->fPass));
+	this->fItems->push_back(make_string_ptr(to_string(this->fVersion)));
 
 	return TBaseMessage::encodeMessage();
 }
@@ -1066,33 +1112,35 @@ void TRestoreVerReqMessage::decodeMessage(){
 	*/
 	TBaseMessage::decodeMessage();
 	
-	int size = (int)this->fItems.size();
+	int size = (int)this->fItems->size();
 	if (size != RESTORE_VER_REQ_TOK_NUM)
-		throw new EMessageException("RESTORE_VER_REQ message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(RESTORE_VER_REQ_TOK_NUM) + ")");
+		throw EMessageException("RESTORE_VER_REQ message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(RESTORE_VER_REQ_TOK_NUM) + ")");
 
 	for (int i = 0; i < size; i++)
-		if (this->fItems[i] == NULL)
-			throw new EMessageException("item " + to_string(i) + " is NULL");
+		if (this->fItems->at(i) == nullptr)
+			throw EMessageException("item " + to_string(i) + " is nullptr");
 
 	if (this->fID != RESTORE_VER_REQ_ID)
-		throw new EMessageException("The given message is not a RESTORE_VER_REQ message");
+		throw EMessageException("The given message is not a RESTORE_VER_REQ message");
 
 	//username
-	if (*(this->fItems[1]) == EMPTY)
-		throw new EMessageException("The user name field cannot be empty");
-	this->fUser = this->fItems[1];
+	if (*(this->fItems->at(1)) == EMPTY)
+		throw EMessageException("The user name field cannot be empty");
+	this->fUser = move_string_ptr(this->fItems->at(1));
 
 	//password
-	if (*(this->fItems[2]) == EMPTY)
-		throw new EMessageException("The password field cannot be empty");
-	this->fPass = this->fItems[2];
+	if (*(this->fItems->at(2)) == EMPTY)
+		throw EMessageException("The password field cannot be empty");
+	this->fPass = move_string_ptr(this->fItems->at(2));
 
 
 	//version
-	if (*(this->fItems[3]) == EMPTY)
-		throw new EMessageException("The version number field cannot be empty");
-	//TODO: check if this->fItems[3] contains a number
-	this->fVersion = stoi(*(this->fItems[3]));
+	if (*(this->fItems->at(3)) == EMPTY)
+		throw EMessageException("The version number field cannot be empty");
+	//TODO: check if this->fItems->at(3) contains a number
+	this->fVersion = stoi(*(this->fItems->at(3)));
+
+	this->fItems->erase(this->fItems->begin(), this->fItems->end());
 }
 #pragma endregion
 
@@ -1101,10 +1149,10 @@ void TRestoreVerReqMessage::decodeMessage(){
 //      TRestoreVerReplyMessage       //
 ////////////////////////////////////////
 #pragma region "TRestoreVerReplyMessage"
-TRestoreVerReplyMessage::TRestoreVerReplyMessage(TBaseMessage& aBase){
-	this->fID = aBase.getID();
-	this->fItems = aBase.getTokens();
-	this->fEncodedMsg = aBase.getMsg();
+TRestoreVerReplyMessage::TRestoreVerReplyMessage(TBaseMessage_ptr& aBase){
+	this->fID = aBase->getID();
+	this->fItems = aBase->getTokens();
+	this->fEncodedMsg = aBase->getMsg();
 
 	this->decodeMessage();
 }
@@ -1112,19 +1160,19 @@ TRestoreVerReplyMessage::TRestoreVerReplyMessage(TBaseMessage& aBase){
 TRestoreVerReplyMessage::TRestoreVerReplyMessage(const bool aResp, const string aToken){
 	this->fID = RESTORE_VER_REPLY_ID;
 	this->fResp = aResp;
-	this->fToken = make_shared<string>(aToken);
+	this->fToken = make_string_ptr(aToken);
 }
 
-const string_ptr TRestoreVerReplyMessage::encodeMessage(){
+string_ptr TRestoreVerReplyMessage::encodeMessage(){
 	string resp = "";
 	if (this->fResp)
 		resp = TRUE_STR;
 	else
 		resp = FALSE_STR;
 
-	this->fItems.push_back(make_shared<string>(getMessageName(this->fID)));
-	this->fItems.push_back(make_shared<string>(resp));
-	this->fItems.push_back(this->fToken);
+	this->fItems->push_back(make_string_ptr(getMessageName(this->fID)));
+	this->fItems->push_back(make_string_ptr(resp));
+	this->fItems->push_back(move_string_ptr(this->fToken));
 
 	return TBaseMessage::encodeMessage();
 }
@@ -1137,32 +1185,34 @@ void TRestoreVerReplyMessage::decodeMessage(){
 	*/
 	TBaseMessage::decodeMessage();
 
-	int size = (int)this->fItems.size();
+	int size = (int)this->fItems->size();
 	if (size != RESTORE_VER_REPLY_TOK_NUM)
-		throw new EMessageException("RESTORE_VER_REPLY message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(RESTORE_VER_REPLY_TOK_NUM) + ")");
+		throw EMessageException("RESTORE_VER_REPLY message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(RESTORE_VER_REPLY_TOK_NUM) + ")");
 
 	for (int i = 0; i < size; i++)
-		if (this->fItems[i] == NULL)
-			throw new EMessageException("item " + to_string(i) + " is NULL");
+		if (this->fItems->at(i) == nullptr)
+			throw EMessageException("item " + to_string(i) + " is nullptr");
 
 	if (this->fID != RESTORE_VER_REPLY_ID)
-		throw new EMessageException("The given message is not a UPDATE_START_REPLY message");
+		throw EMessageException("The given message is not a UPDATE_START_REPLY message");
 
 	//response
-	if (*(this->fItems[1]) == EMPTY)
-		throw new EMessageException("The response field cannot be empty");
-	if (*(this->fItems[1]) != TRUE_STR && *(this->fItems[1]) != FALSE_STR)
-		throw new EMessageException("The response field could be only true or false");
+	if (*(this->fItems->at(1)) == EMPTY)
+		throw EMessageException("The response field cannot be empty");
+	if (*(this->fItems->at(1)) != TRUE_STR && *(this->fItems->at(1)) != FALSE_STR)
+		throw EMessageException("The response field could be only true or false");
 
-	if (*(this->fItems[1]) == TRUE_STR)
+	if (*(this->fItems->at(1)) == TRUE_STR)
 		this->fResp = true;
 	else
 		this->fResp = false;
 
 	//user token
-	if (*(this->fItems[2]) == EMPTY)
-		throw new EMessageException("The token field cannot be empty");
-	this->fToken = this->fItems[2]; //TODO: implement -> checkToken(this->fItems[2]);
+	if (*(this->fItems->at(2)) == EMPTY)
+		throw EMessageException("The token field cannot be empty");
+	this->fToken = move_string_ptr(this->fItems->at(2)); //TODO: implement -> checkToken(this->fItems->at(2));
+
+	this->fItems->erase(this->fItems->begin(), this->fItems->end());
 }
 #pragma endregion
 
@@ -1171,33 +1221,32 @@ void TRestoreVerReplyMessage::decodeMessage(){
 //        TRestoreFileMessage         //
 ////////////////////////////////////////
 #pragma region "TRestoreFileMessage"
-TRestoreFileMessage::TRestoreFileMessage(TBaseMessage& aBase){
-	this->fID = aBase.getID();
-	this->fItems = aBase.getTokens();
-	this->fEncodedMsg = aBase.getMsg();
+TRestoreFileMessage::TRestoreFileMessage(TBaseMessage_ptr& aBase){
+	this->fID = aBase->getID();
+	this->fItems = aBase->getTokens();
+	this->fEncodedMsg = aBase->getMsg();
 
 	this->decodeMessage();
 }
 
 TRestoreFileMessage::TRestoreFileMessage(string aFilePath){
 	this->fID = RESTORE_FILE_ID;
-	this->fFilePath = make_shared<string>(aFilePath);
-	this->fFileContent = NULL;
-	this->fChecksum = NULL;
-	this->fFileDate = time(NULL);
+	this->fFilePath = make_string_ptr(aFilePath);
+	this->fFileContent = nullptr;
+	this->fChecksum = nullptr;
+	this->fFileDate = time(nullptr);
 }
 
-const string_ptr TRestoreFileMessage::encodeMessage(){
-	this->fItems.push_back(make_shared<string>(getMessageName(this->fID)));
-	this->fItems.push_back(this->fFilePath);
-
+string_ptr TRestoreFileMessage::encodeMessage(){
 	//read file, encode it and calculate checksum
 	this->fFileContent = opensslB64EncodeFile(*(this->fFilePath));
-	this->fChecksum = opensslB64Checksum(this->fFileContent);
+	this->fChecksum = opensslB64Checksum(*(this->fFileContent));
 
-	this->fItems.push_back(this->fChecksum);
-	this->fItems.push_back(make_shared<string>(timeToString(this->fFileDate)));
-	this->fItems.push_back(this->fFileContent);
+	this->fItems->push_back(make_string_ptr(getMessageName(this->fID)));
+	this->fItems->push_back(move_string_ptr(this->fFilePath));
+	this->fItems->push_back(move_string_ptr(this->fChecksum));
+	this->fItems->push_back(make_string_ptr(timeToString(this->fFileDate)));
+	this->fItems->push_back(move_string_ptr(this->fFileContent));
 
 	return TBaseMessage::encodeMessage();
 }
@@ -1212,47 +1261,56 @@ void TRestoreFileMessage::decodeMessage(){
 	*/
 	TBaseMessage::decodeMessage();
 
-	int size = (int)this->fItems.size();
+	int size = (int)this->fItems->size();
 	if (size != RESTORE_FILE_TOK_NUM)
-		throw new EMessageException("RESTORE_FILE message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(RESTORE_FILE_TOK_NUM) + ")");
+		throw EMessageException("RESTORE_FILE message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(RESTORE_FILE_TOK_NUM) + ")");
 
 	for (int i = 0; i < size; i++)
-		if (this->fItems[i] == NULL)
-			throw new EMessageException("item " + to_string(i) + " is NULL");
+		if (this->fItems->at(i) == nullptr)
+			throw EMessageException("item " + to_string(i) + " is nullptr");
 
 	//message id
 	if (this->fID != RESTORE_FILE_ID)
-		throw new EMessageException("The given message is not a RESTORE_FILE message");
+		throw EMessageException("The given message is not a RESTORE_FILE message");
 
 	//file path
-	if (*(this->fItems[2]) == EMPTY)
-		throw new EMessageException("The token field cannot be empty");
-	if (*(this->fItems[2]) == EMPTY)
-		throw new EMessageException("The file path field cannot be empty");
+	if (*(this->fItems->at(1)) == EMPTY)
+		throw EMessageException("The token field cannot be empty");
+	if (*(this->fItems->at(1)) == EMPTY)
+		throw EMessageException("The file path field cannot be empty");
 	//TODO: check se il path è valido
 	//if (!isValidPath(this->fFilePath))
-	//	throw new EMessageException("The file path field must contain a valid path");
-	this->fFilePath = this->fItems[2];
+	//	throw EMessageException("The file path field must contain a valid path");
+	this->fFilePath = move_string_ptr(this->fItems->at(1));
 
 	//file checksum
-	if (*(this->fItems[3]) == EMPTY)
-		throw new EMessageException("The file checksum field cannot be empty");
-	this->fChecksum = this->fItems[3];
+	if (*(this->fItems->at(2)) == EMPTY)
+		throw EMessageException("The file checksum field cannot be empty");
+	this->fChecksum = move_string_ptr(this->fItems->at(2));
 
 	//file date
-	if (*(this->fItems[4]) == EMPTY)
-		throw new EMessageException("The file date field cannot be empty");
-	this->fFileDate = stringToTime(*(this->fItems[4]));
+	if (*(this->fItems->at(3)) == EMPTY)
+		throw EMessageException("The file date field cannot be empty");
+	this->fFileDate = stringToTime(*(this->fItems->at(3)));
 
 	//file content
-	if (*(this->fItems[5]) == EMPTY)
-		throw new EMessageException("The file content field cannot be empty");
-	this->fFileContent = this->fItems[5];
+	if (*(this->fItems->at(4)) == EMPTY)
+		throw EMessageException("The file content field cannot be empty");
+	this->fFileContent = move_string_ptr(this->fItems->at(4));
+
+	this->fItems->erase(this->fItems->begin(), this->fItems->end());
 
 	//verify file correctness
-	string_ptr myChecksum = opensslB64Checksum(this->fFileContent);
+	string_ptr myChecksum = nullptr;
+	try{
+		myChecksum = opensslB64Checksum(*(this->fFileContent));
+	}
+	catch (EOpensslException& e){
+		throw EMessageException("error calculating file checksum: " + e.getMessage());
+	}
+
 	if (*(myChecksum) != *(this->fChecksum))
-		throw new EMessageException("The received file could be corrupted; checksums do not match");
+		throw EMessageException("The received file could be corrupted; checksums do not match");
 }
 #pragma endregion
 
@@ -1261,32 +1319,32 @@ void TRestoreFileMessage::decodeMessage(){
 //        TRestoreFileAckMessage        //
 //////////////////////////////////////////
 #pragma region "TRestoreFileAckMessage"
-TRestoreFileAckMessage::TRestoreFileAckMessage(TBaseMessage& aBase){
-	this->fID = aBase.getID();
-	this->fItems = aBase.getTokens();
-	this->fEncodedMsg = aBase.getMsg();
+TRestoreFileAckMessage::TRestoreFileAckMessage(TBaseMessage_ptr& aBase){
+	this->fID = aBase->getID();
+	this->fItems = aBase->getTokens();
+	this->fEncodedMsg = aBase->getMsg();
 
 	this->decodeMessage();
 }
 
 TRestoreFileAckMessage::TRestoreFileAckMessage(const string aToken, const bool aResp, const string aFilePath){
 	this->fID = RESTORE_FILE_ACK_ID;
-	this->fToken = make_shared<string>(aToken);
-	this->fFilePath = make_shared<string>(aFilePath);
+	this->fToken = make_string_ptr(aToken);
+	this->fFilePath = make_string_ptr(aFilePath);
 	this->fResp = aResp;
 }
 
-const string_ptr TRestoreFileAckMessage::encodeMessage(){
+string_ptr TRestoreFileAckMessage::encodeMessage(){
 	string resp = "";
 	if (this->fResp)
 		resp = TRUE_STR;
 	else
 		resp = FALSE_STR;
 
-	this->fItems.push_back(make_shared<string>(getMessageName(this->fID)));
-	this->fItems.push_back(this->fToken);
-	this->fItems.push_back(make_shared<string>(resp));
-	this->fItems.push_back(this->fFilePath);
+	this->fItems->push_back(make_string_ptr(getMessageName(this->fID)));
+	this->fItems->push_back(move_string_ptr(this->fToken));
+	this->fItems->push_back(make_string_ptr(resp));
+	this->fItems->push_back(move_string_ptr(this->fFilePath));
 
 	return TBaseMessage::encodeMessage();
 }
@@ -1300,40 +1358,42 @@ void TRestoreFileAckMessage::decodeMessage(){
 	*/
 	TBaseMessage::decodeMessage();
 
-	int size = (int)this->fItems.size();
+	int size = (int)this->fItems->size();
 	if (size != RESTORE_FILE_ACK_TOK_NUM)
-		throw new EMessageException("RESTORE_FILE_ACK message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(RESTORE_FILE_ACK_TOK_NUM) + ")");
+		throw EMessageException("RESTORE_FILE_ACK message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(RESTORE_FILE_ACK_TOK_NUM) + ")");
 
 	for (int i = 0; i < size; i++)
-		if (this->fItems[i] == NULL)
-			throw new EMessageException("item " + to_string(i) + " is NULL");
+		if (this->fItems->at(i) == nullptr)
+			throw EMessageException("item " + to_string(i) + " is nullptr");
 
 	if (this->fID != RESTORE_FILE_ACK_ID)
-		throw new EMessageException("The given message is not a RESTORE_FILE_ACK message");
+		throw EMessageException("The given message is not a RESTORE_FILE_ACK message");
 
 	//user token
-	if (*(this->fItems[1]) == EMPTY)
-		throw new EMessageException("The token field cannot be empty");
-	this->fToken = this->fItems[1]; //TODO: implement -> checkToken(this->fItems[1]);
+	if (*(this->fItems->at(1)) == EMPTY)
+		throw EMessageException("The token field cannot be empty");
+	this->fToken = move_string_ptr(this->fItems->at(1)); //TODO: implement -> checkToken(this->fItems->at(1));
 
 	//response
-	if (*(this->fItems[1]) == EMPTY)
-		throw new EMessageException("The response field cannot be empty");
-	if (*(this->fItems[1]) != TRUE_STR && *(this->fItems[1]) != FALSE_STR)
-		throw new EMessageException("The response field could be only true or false");
+	if (*(this->fItems->at(2)) == EMPTY)
+		throw EMessageException("The response field cannot be empty");
+	if (*(this->fItems->at(2)) != TRUE_STR && *(this->fItems->at(2)) != FALSE_STR)
+		throw EMessageException("The response field could be only true or false");
 
-	if (*(this->fItems[1]) == TRUE_STR)
+	if (*(this->fItems->at(2)) == TRUE_STR)
 		this->fResp = true;
 	else
 		this->fResp = false;
 
 	//file path
-	if (*(this->fItems[3]) == EMPTY)
-		throw new EMessageException("The token field cannot be empty");
+	if (*(this->fItems->at(3)) == EMPTY)
+		throw EMessageException("The token field cannot be empty");
 	//TODO: check se il path è valido
 	//if (!isValidPath(this->fFilePath))
-	//	throw new EMessageException("The file path field must contain a valid path");
-	this->fFilePath = this->fItems[3];
+	//	throw EMessageException("The file path field must contain a valid path");
+	this->fFilePath = move_string_ptr(this->fItems->at(3));
+
+	this->fItems->erase(this->fItems->begin(), this->fItems->end());
 }
 #pragma endregion
 
@@ -1342,10 +1402,10 @@ void TRestoreFileAckMessage::decodeMessage(){
 //      TRestoreStopMessage       //
 ////////////////////////////////////
 #pragma region "TRestoreStopMessage"
-TRestoreStopMessage::TRestoreStopMessage(TBaseMessage& aBase){
-	this->fID = aBase.getID();
-	this->fItems = aBase.getTokens();
-	this->fEncodedMsg = aBase.getMsg();
+TRestoreStopMessage::TRestoreStopMessage(TBaseMessage_ptr& aBase){
+	this->fID = aBase->getID();
+	this->fItems = aBase->getTokens();
+	this->fEncodedMsg = aBase->getMsg();
 
 	this->decodeMessage();
 }
@@ -1356,10 +1416,10 @@ TRestoreStopMessage::TRestoreStopMessage(unsigned int aVersion, time_t aTime){
 	this->fTime = aTime;
 }
 
-const string_ptr TRestoreStopMessage::encodeMessage(){
-	this->fItems.push_back(make_shared<string>(getMessageName(this->fID)));
-	this->fItems.push_back(make_shared<string>(to_string(this->fVersion)));
-	this->fItems.push_back(make_shared<string>(timeToString(this->fTime)));
+string_ptr TRestoreStopMessage::encodeMessage(){
+	this->fItems->push_back(make_string_ptr(getMessageName(this->fID)));
+	this->fItems->push_back(make_string_ptr(to_string(this->fVersion)));
+	this->fItems->push_back(make_string_ptr(timeToString(this->fTime)));
 
 	return TBaseMessage::encodeMessage();
 }
@@ -1372,27 +1432,29 @@ void TRestoreStopMessage::decodeMessage(){
 	*/
 	TBaseMessage::decodeMessage();
 
-	int size = (int)this->fItems.size();
+	int size = (int)this->fItems->size();
 	if (size != RESTORE_STOP_TOK_NUM)
-		throw new EMessageException("RESTORE_STOP message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(RESTORE_STOP_TOK_NUM) + ")");
+		throw EMessageException("RESTORE_STOP message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(RESTORE_STOP_TOK_NUM) + ")");
 
 	for (int i = 0; i < size; i++)
-		if (this->fItems[i] == NULL)
-			throw new EMessageException("item " + to_string(i) + " is NULL");
+		if (this->fItems->at(i) == nullptr)
+			throw EMessageException("item " + to_string(i) + " is nullptr");
 
 	if (this->fID != RESTORE_STOP_ID)
-		throw new EMessageException("The given message is not a RESTORE_STOP message");
+		throw EMessageException("The given message is not a RESTORE_STOP message");
 
 	//version number
-	if (*(this->fItems[1]) == EMPTY)
-		throw new EMessageException("The version field cannot be empty");
-	//TODO: check if this->fItems[1] contains a number
-	this->fVersion = stoi(*(this->fItems[1]));
+	if (*(this->fItems->at(1)) == EMPTY)
+		throw EMessageException("The version field cannot be empty");
+	//TODO: check if this->fItems->at(1) contains a number
+	this->fVersion = stoi(*(this->fItems->at(1)));
 
 	//version timestamp
-	if (*(this->fItems[2]) == EMPTY)
-		throw new EMessageException("The version timestamp field cannot be empty");
-	this->fTime = stringToTime(*(this->fItems[2]));
+	if (*(this->fItems->at(2)) == EMPTY)
+		throw EMessageException("The version timestamp field cannot be empty");
+	this->fTime = stringToTime(*(this->fItems->at(2)));
+
+	this->fItems->erase(this->fItems->begin(), this->fItems->end());
 }
 #pragma endregion
 
@@ -1401,22 +1463,22 @@ void TRestoreStopMessage::decodeMessage(){
 //        TPingReqMessage           //
 //////////////////////////////////////
 #pragma region "TPingReqMessage"
-TPingReqMessage::TPingReqMessage(TBaseMessage& aBase){
-	this->fID = aBase.getID();
-	this->fItems = aBase.getTokens();
-	this->fEncodedMsg = aBase.getMsg();
+TPingReqMessage::TPingReqMessage(TBaseMessage_ptr& aBase){
+	this->fID = aBase->getID();
+	this->fItems = aBase->getTokens();
+	this->fEncodedMsg = aBase->getMsg();
 
 	this->decodeMessage();
 }
 
 TPingReqMessage::TPingReqMessage(){
 	this->fID = PING_REQ_ID;
-	this->fTime = time(NULL);
+	this->fTime = time(nullptr);
 }
 
-const string_ptr TPingReqMessage::encodeMessage(){
-	this->fItems.push_back(make_shared<string>(getMessageName(this->fID)));
-	this->fItems.push_back(make_shared<string>(timeToString(this->fTime)));
+string_ptr TPingReqMessage::encodeMessage(){
+	this->fItems->push_back(make_string_ptr(getMessageName(this->fID)));
+	this->fItems->push_back(make_string_ptr(timeToString(this->fTime)));
 
 	return TBaseMessage::encodeMessage();
 }
@@ -1428,21 +1490,23 @@ void TPingReqMessage::decodeMessage(){
 	*/
 	TBaseMessage::decodeMessage();
 	
-	int size = (int)this->fItems.size();
+	int size = (int)this->fItems->size();
 	if (size != PING_TOK_NUM)
-		throw new EMessageException("PING_REQ message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(PING_TOK_NUM) + ")");
+		throw EMessageException("PING_REQ message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(PING_TOK_NUM) + ")");
 
 	for (int i = 0; i < size; i++)
-		if (this->fItems[i] == NULL)
-			throw new EMessageException("item " + to_string(i) + " is NULL");
+		if (this->fItems->at(i) == nullptr)
+			throw EMessageException("item " + to_string(i) + " is nullptr");
 
 	if (this->fID != PING_REQ_ID)
-		throw new EMessageException("The given message is not a PING_REQ message");
+		throw EMessageException("The given message is not a PING_REQ message");
 
 	//timestamp
-	if (*(this->fItems[1]) == EMPTY)
-		throw new EMessageException("The time-stamp field cannot be empty");
-	this->fTime = stringToTime(*(this->fItems[1]));
+	if (*(this->fItems->at(1)) == EMPTY)
+		throw EMessageException("The time-stamp field cannot be empty");
+	this->fTime = stringToTime(*(this->fItems->at(1)));
+
+	this->fItems->erase(this->fItems->begin(), this->fItems->end());
 }
 #pragma endregion
 
@@ -1451,22 +1515,22 @@ void TPingReqMessage::decodeMessage(){
 //        TPingReplyMessage         //
 //////////////////////////////////////
 #pragma region "TPingReplyMessage"
-TPingReplyMessage::TPingReplyMessage(TBaseMessage& aBase){
-	this->fID = aBase.getID();
-	this->fItems = aBase.getTokens();
-	this->fEncodedMsg = aBase.getMsg();
+TPingReplyMessage::TPingReplyMessage(TBaseMessage_ptr& aBase){
+	this->fID = aBase->getID();
+	this->fItems = aBase->getTokens();
+	this->fEncodedMsg = aBase->getMsg();
 
 	this->decodeMessage();
 }
 
 TPingReplyMessage::TPingReplyMessage(){
 	this->fID = PING_REPLY_ID;
-	this->fTime = time(NULL);
+	this->fTime = time(nullptr);
 }
 
-const string_ptr TPingReplyMessage::encodeMessage(){
-	this->fItems.push_back(make_shared<string>(getMessageName(this->fID)));
-	this->fItems.push_back(make_shared<string>(timeToString(this->fTime)));
+string_ptr TPingReplyMessage::encodeMessage(){
+	this->fItems->push_back(make_string_ptr(getMessageName(this->fID)));
+	this->fItems->push_back(make_string_ptr(timeToString(this->fTime)));
 
 	return TBaseMessage::encodeMessage();
 }
@@ -1478,20 +1542,22 @@ void TPingReplyMessage::decodeMessage(){
 	*/
 	TBaseMessage::decodeMessage();
 
-	int size = (int)this->fItems.size();
+	int size = (int)this->fItems->size();
 	if (size != PING_TOK_NUM)
-		throw new EMessageException("PING_REPLY message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(PING_TOK_NUM) + ")");
+		throw EMessageException("PING_REPLY message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(PING_TOK_NUM) + ")");
 
 	for (int i = 0; i < size; i++)
-		if (this->fItems[i] == NULL)
-			throw new EMessageException("item " + to_string(i) + " is NULL");
+		if (this->fItems->at(i) == nullptr)
+			throw EMessageException("item " + to_string(i) + " is nullptr");
 
 	if (this->fID != PING_REPLY_ID)
-		throw new EMessageException("The given message is not a PING_REPLY message");
+		throw EMessageException("The given message is not a PING_REPLY message");
 
 	//timestamp
-	if (*(this->fItems[1]) == EMPTY)
-		throw new EMessageException("The time-stamp field cannot be empty");
-	this->fTime = stringToTime(*(this->fItems[1]));
+	if (*(this->fItems->at(1)) == EMPTY)
+		throw EMessageException("The time-stamp field cannot be empty");
+	this->fTime = stringToTime(*(this->fItems->at(1)));
+
+	this->fItems->erase(this->fItems->begin(), this->fItems->end());
 }
 #pragma endregion

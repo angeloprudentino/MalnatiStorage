@@ -11,12 +11,19 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <memory>
 
 #include "Utility.h"
 
 using namespace std;
 
 #define END_MSG "END_MSG"
+
+//type definitions
+typedef std::vector<string_ptr> string_vector;
+typedef std::unique_ptr<string_vector> string_vector_ptr;
+#define new_string_vector_ptr() std::make_unique<string_vector>()
+#define move_string_vector_ptr(ptr) std::move(ptr)
 
 //Message ids
 #define NO_ID -1
@@ -63,22 +70,24 @@ private:
 
 protected:
 	int fID;
-	string_ptr fEncodedMsg = NULL;
-	vector<string_ptr> fItems;
+	string_ptr fEncodedMsg = nullptr;
+	string_vector_ptr fItems = nullptr;
 
 public:
 	TBaseMessage();
-	TBaseMessage(const string_ptr aMsg);
+	TBaseMessage(string_ptr& aMsg);
+	~TBaseMessage();
 
-	virtual const string_ptr encodeMessage();
+	virtual string_ptr encodeMessage();
 	virtual void decodeMessage();
 
 	// getters
 	const int getID(){ return this->fID; };
-	const vector<string_ptr> getTokens(){ return this->fItems; };
-	const string_ptr getMsg(){ return this->fEncodedMsg; };
 	const string getName(){	return getMessageName(this->fID); };
+	string_vector_ptr getTokens(){ return move_string_vector_ptr(this->fItems); };
+	string_ptr getMsg(){ return move_string_ptr(this->fEncodedMsg); };
 };
+typedef std::unique_ptr<TBaseMessage> TBaseMessage_ptr;
 
 
 ////////////////////////////////////////
@@ -90,15 +99,16 @@ private:
 	string_ptr fPass;
 
 public:
-	TUserRegistrReqMessage(TBaseMessage& aBase);
+	TUserRegistrReqMessage(TBaseMessage_ptr& aBase);
 	TUserRegistrReqMessage(const string aUser, const string aPass);
-	const string_ptr encodeMessage();
+	string_ptr encodeMessage();
 	void decodeMessage();
 
 	//getters
 	const string getUser(){ return *(this->fUser); }
 	const string getPass(){ return *(this->fPass); }
 };
+typedef std::unique_ptr<TUserRegistrReqMessage> TUserRegistrReqMessage_ptr;
 
 
 ////////////////////////////////////////
@@ -109,14 +119,15 @@ private:
 	bool fResp;
 
 public:
-	TUserRegistrReplyMessage(TBaseMessage& aBase);
+	TUserRegistrReplyMessage(TBaseMessage_ptr& aBase);
 	TUserRegistrReplyMessage(const bool aResp);
-	const string_ptr encodeMessage();
+	string_ptr encodeMessage();
 	void decodeMessage();
 
 	//getters
 	const bool getResp(){ return this->fResp; }
 };
+typedef std::unique_ptr<TUserRegistrReplyMessage> TUserRegistrReplyMessage_ptr;
 
 
 ////////////////////////////////////////
@@ -128,15 +139,16 @@ private:
 	string_ptr fPass;
 
 public:
-	TUpdateStartReqMessage(TBaseMessage& aBase);
+	TUpdateStartReqMessage(TBaseMessage_ptr& aBase);
 	TUpdateStartReqMessage(const string aUser, const string aPass);
-	const string_ptr encodeMessage();
+	string_ptr encodeMessage();
 	void decodeMessage();
 
 	//getters
 	const string getUser(){ return *(this->fUser); }
 	const string getPass(){ return *(this->fPass); }
 };
+typedef std::unique_ptr<TUpdateStartReqMessage> TUpdateStartReqMessage_ptr;
 
 
 ////////////////////////////////////////
@@ -148,15 +160,16 @@ private:
 	string_ptr fToken;
 
 public:
-	TUpdateStartReplyMessage(TBaseMessage& aBase);
+	TUpdateStartReplyMessage(TBaseMessage_ptr& aBase);
 	TUpdateStartReplyMessage(const bool aResp, const string aToken);
-	const string_ptr encodeMessage();
+	string_ptr encodeMessage();
 	void decodeMessage();
 
 	//getters
 	const bool getResp(){ return this->fResp; }
 	const string getToken(){ return *(this->fToken); }
 };
+typedef std::unique_ptr<TUpdateStartReplyMessage> TUpdateStartReplyMessage_ptr;
 
 
 ////////////////////////////////////////
@@ -171,9 +184,9 @@ private:
 	string_ptr fFileContent;
 
 public:
-	TAddNewFileMessage(TBaseMessage& aBase);
+	TAddNewFileMessage(TBaseMessage_ptr& aBase);
 	TAddNewFileMessage(const string aToken, string aFilePath);
-	const string_ptr encodeMessage();
+	string_ptr encodeMessage();
 	void decodeMessage();
 
 	//getters
@@ -183,6 +196,7 @@ public:
 	const string getChecksum(){ return *(this->fChecksum); }
 	const string getFileContent(){ return *(this->fFileContent); }
 };
+typedef std::unique_ptr<TAddNewFileMessage> TAddNewFileMessage_ptr;
 
 
 ////////////////////////////////////////
@@ -197,9 +211,9 @@ private:
 	string_ptr fFileContent;
 
 public:
-	TUpdateFileMessage(TBaseMessage& aBase);
+	TUpdateFileMessage(TBaseMessage_ptr& aBase);
 	TUpdateFileMessage(const string aToken, string aFilePath);
-	const string_ptr encodeMessage();
+	string_ptr encodeMessage();
 	void decodeMessage();
 
 	//getters
@@ -209,6 +223,7 @@ public:
 	const string getChecksum(){ return *(this->fChecksum); }
 	const string getFileContent(){ return *(this->fFileContent); }
 };
+typedef std::unique_ptr<TUpdateFileMessage> TUpdateFileMessage_ptr;
 
 
 ////////////////////////////////////////
@@ -220,15 +235,16 @@ private:
 	string_ptr fFilePath;
 
 public:
-	TRemoveFileMessage(TBaseMessage& aBase);
+	TRemoveFileMessage(TBaseMessage_ptr& aBase);
 	TRemoveFileMessage(const string aToken, string aFilePath);
-	const string_ptr encodeMessage();
+	string_ptr encodeMessage();
 	void decodeMessage();
 
 	//getters
 	const string getToken(){ return *(this->fToken); }
 	const string getFilePath(){ return *(this->fFilePath); }
 };
+typedef std::unique_ptr<TRemoveFileMessage> TRemoveFileMessage_ptr;
 
 
 ///////////////////////////////////
@@ -240,15 +256,16 @@ private:
 	string_ptr fFilePath;
 
 public:
-	TFileAckMessage(TBaseMessage& aBase);
+	TFileAckMessage(TBaseMessage_ptr& aBase);
 	TFileAckMessage(const bool aResp, const string aFilePath);
-	const string_ptr encodeMessage();
+	string_ptr encodeMessage();
 	void decodeMessage();
 
 	//getters
 	const bool getResp(){ return this->fResp; }
 	const string getFilePath(){ return *(this->fFilePath); }
 };
+typedef std::unique_ptr<TFileAckMessage> TFileAckMessage_ptr;
 
 
 ////////////////////////////////////////
@@ -259,14 +276,15 @@ private:
 	string_ptr fToken;
 
 public:
-	TUpdateStopReqMessage(TBaseMessage& aBase);
+	TUpdateStopReqMessage(TBaseMessage_ptr& aBase);
 	TUpdateStopReqMessage(const string aToken);
-	const string_ptr encodeMessage();
+	string_ptr encodeMessage();
 	void decodeMessage();
 
 	//getters
 	const string getToken(){ return *(this->fToken); }
 };
+typedef std::unique_ptr<TUpdateStopReqMessage> TUpdateStopReqMessage_ptr;
 
 
 ////////////////////////////////////////
@@ -279,9 +297,9 @@ private:
 	time_t fTime;
 
 public:
-	TUpdateStopReplyMessage(TBaseMessage& aBase);
+	TUpdateStopReplyMessage(TBaseMessage_ptr& aBase);
 	TUpdateStopReplyMessage(const bool aResp, unsigned int aVersion, time_t aTime);
-	const string_ptr encodeMessage();
+	string_ptr encodeMessage();
 	void decodeMessage();
 
 	//getters
@@ -289,6 +307,7 @@ public:
 	const unsigned int getVersion(){ return this->fVersion; }
 	const time_t getTime(){ return this->fTime; }
 };
+typedef std::unique_ptr<TUpdateStopReplyMessage> TUpdateStopReplyMessage_ptr;
 
 
 ////////////////////////////////////////
@@ -300,15 +319,16 @@ private:
 	string_ptr fPass;
 
 public:
-	TGetVersionsReqMessage(TBaseMessage& aBase);
+	TGetVersionsReqMessage(TBaseMessage_ptr& aBase);
 	TGetVersionsReqMessage(const string aUser, const string aPass);
-	const string_ptr encodeMessage();
+	string_ptr encodeMessage();
 	void decodeMessage();
 
 	//getters
 	const string getUser(){ return *(this->fUser); }
 	const string getPass(){ return *(this->fPass); }
 };
+typedef std::unique_ptr<TGetVersionsReqMessage> TGetVersionsReqMessage_ptr;
 
 
 ////////////////////////////////////////
@@ -322,9 +342,9 @@ private:
 	map<unsigned int, time_t> fVersions;
 
 public:
-	TGetVersionsReplyMessage(TBaseMessage& aBase);
+	TGetVersionsReplyMessage(TBaseMessage_ptr& aBase);
 	TGetVersionsReplyMessage(const unsigned int aTotVersions, const unsigned int aOldestVersion, const unsigned int aLastVersion, map<unsigned int, time_t> aVersions);
-	const string_ptr encodeMessage();
+	string_ptr encodeMessage();
 	void decodeMessage();
 
 	//getters
@@ -333,6 +353,7 @@ public:
 	const unsigned int getLastVersion(){ return this->fLastVersion; }
 	const time_t getVersion(const unsigned int aVersion){ return this->fVersions.at(aVersion); }
 };
+typedef std::unique_ptr<TGetVersionsReplyMessage> TGetVersionsReplyMessage_ptr;
 
 
 ////////////////////////////////////////
@@ -345,9 +366,9 @@ private:
 	unsigned int fVersion;
 
 public:
-	TRestoreVerReqMessage(TBaseMessage& aBase);
+	TRestoreVerReqMessage(TBaseMessage_ptr& aBase);
 	TRestoreVerReqMessage(const string aUser, const string aPass, const unsigned int aVersion);
-	const string_ptr encodeMessage();
+	string_ptr encodeMessage();
 	void decodeMessage();
 
 	//getters
@@ -355,6 +376,7 @@ public:
 	const string getPass(){ return *(this->fPass); }
 	const unsigned int getVersion(){ return this->fVersion; }
 };
+typedef std::unique_ptr<TRestoreVerReqMessage> TRestoreVerReqMessage_ptr;
 
 
 ////////////////////////////////////////
@@ -366,15 +388,16 @@ private:
 	string_ptr fToken;
 
 public:
-	TRestoreVerReplyMessage(TBaseMessage& aBase);
+	TRestoreVerReplyMessage(TBaseMessage_ptr& aBase);
 	TRestoreVerReplyMessage(const bool aResp, const string aToken);
-	const string_ptr encodeMessage();
+	string_ptr encodeMessage();
 	void decodeMessage();
 
 	//getters
 	const bool getResp(){ return this->fResp; }
 	const string getToken(){ return *(this->fToken); }
 };
+typedef std::unique_ptr<TRestoreVerReplyMessage> TRestoreVerReplyMessage_ptr;
 
 
 ////////////////////////////////////////
@@ -388,9 +411,9 @@ private:
 	string_ptr fFileContent;
 
 public:
-	TRestoreFileMessage(TBaseMessage& aBase);
+	TRestoreFileMessage(TBaseMessage_ptr& aBase);
 	TRestoreFileMessage(string aFilePath);
-	const string_ptr encodeMessage();
+	string_ptr encodeMessage();
 	void decodeMessage();
 
 	//getters
@@ -399,6 +422,7 @@ public:
 	const string getFileContent(){ return *(this->fFileContent); }
 	const time_t getFileDate(){ return this->fFileDate; }
 };
+typedef std::unique_ptr<TRestoreFileMessage> TRestoreFileMessage_ptr;
 
 
 //////////////////////////////////////////
@@ -411,9 +435,9 @@ private:
 	string_ptr fFilePath;
 
 public:
-	TRestoreFileAckMessage(TBaseMessage& aBase);
+	TRestoreFileAckMessage(TBaseMessage_ptr& aBase);
 	TRestoreFileAckMessage(const string aToken, const bool aResp, const string aFilePath);
-	const string_ptr encodeMessage();
+	string_ptr encodeMessage();
 	void decodeMessage();
 
 	//getters
@@ -421,6 +445,7 @@ public:
 	const bool getResp(){ return this->fResp; }
 	const string getFilePath(){ return *(this->fFilePath); }
 };
+typedef std::unique_ptr<TRestoreFileAckMessage> TRestoreFileAckMessage_ptr;
 
 
 ////////////////////////////////////
@@ -432,15 +457,16 @@ private:
 	time_t fTime;
 
 public:
-	TRestoreStopMessage(TBaseMessage& aBase);
+	TRestoreStopMessage(TBaseMessage_ptr& aBase);
 	TRestoreStopMessage(unsigned int aVersion, time_t aTime);
-	const string_ptr encodeMessage();
+	string_ptr encodeMessage();
 	void decodeMessage();
 
 	//getters
 	const unsigned int getVersion(){ return this->fVersion; }
 	const time_t getTime(){ return this->fTime; }
 };
+typedef std::unique_ptr<TRestoreStopMessage> TRestoreStopMessage_ptr;
 
 
 //////////////////////////////////////
@@ -451,14 +477,15 @@ private:
 	time_t fTime;
 
 public:
-	TPingReqMessage(TBaseMessage& aBase);
+	TPingReqMessage(TBaseMessage_ptr& aBase);
 	TPingReqMessage();
-	const string_ptr encodeMessage();
+	string_ptr encodeMessage();
 	void decodeMessage();
 
 	//getters
 	const time_t getTime(){ return this->fTime; }
 };
+typedef std::unique_ptr<TPingReqMessage> TPingReqMessage_ptr;
 
 
 //////////////////////////////////////
@@ -469,11 +496,12 @@ private:
 	time_t fTime;
 
 public:
-	TPingReplyMessage(TBaseMessage& aBase);
+	TPingReplyMessage(TBaseMessage_ptr& aBase);
 	TPingReplyMessage();
-	const string_ptr encodeMessage();
+	string_ptr encodeMessage();
 	void decodeMessage();
 
 	//getters
 	const time_t getTime(){ return this->fTime; }
 };
+typedef std::unique_ptr<TPingReplyMessage> TPingReplyMessage_ptr;

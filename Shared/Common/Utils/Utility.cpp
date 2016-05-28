@@ -78,7 +78,7 @@ BIO* fillOpensslBIO(BIO* aBio, char* aContent, int aLen){
 		if (ret == -2) {
 			//not implemented for that bio
 			string err = "BIO_write returns -2 (not implemented for that bio): ";
-			throw EOpensslException(err + ERR_error_string(ERR_get_error(), NULL));
+			throw EOpensslException(err + ERR_error_string(ERR_get_error(), nullptr));
 		}
 		else if (ret == 0 || ret == -1){
 			//maybe have something more to write
@@ -88,7 +88,7 @@ BIO* fillOpensslBIO(BIO* aBio, char* aContent, int aLen){
 			}
 			else{
 				string err = "BIO_should_retry signals an error: ";
-				throw EOpensslException(err + ERR_error_string(ERR_get_error(), NULL));
+				throw EOpensslException(err + ERR_error_string(ERR_get_error(), nullptr));
 			}
 		}
 		else
@@ -97,34 +97,34 @@ BIO* fillOpensslBIO(BIO* aBio, char* aContent, int aLen){
 
 	if (BIO_flush(aBio) != 1){
 		string err = "BIO_flush returns -1: ";
-		throw EOpensslException(err + ERR_error_string(ERR_get_error(), NULL));
+		throw EOpensslException(err + ERR_error_string(ERR_get_error(), nullptr));
 	}
 
 	return aBio;
 }
 
 string_ptr opensslB64Encode(char* aContent, int aLen){
-	BIO *bio = NULL;
-	BIO *b64 = NULL;
-	char* ret_data = NULL;
-	BUF_MEM *bufferPtr = NULL;
+	BIO *bio = nullptr;
+	BIO *b64 = nullptr;
+	char* ret_data = nullptr;
+	BUF_MEM *bufferPtr = nullptr;
 
-	if (aContent == NULL) {
-		return NULL;
+	if (aContent == nullptr) {
+		return nullptr;
 	}
 
 	try {
 		/* setup input BIO chain */
 		bio = BIO_new(BIO_s_mem());
-		if (bio == NULL){
-			string err = "BIO_new(BIO_s_mem()) returns NULL: ";
-			throw EOpensslException(err + ERR_error_string(ERR_get_error(), NULL));
+		if (bio == nullptr){
+			string err = "BIO_new(BIO_s_mem()) returns nullptr: ";
+			throw EOpensslException(err + ERR_error_string(ERR_get_error(), nullptr));
 		}
 
 		b64 = BIO_new(BIO_f_base64());
-		if (b64 == NULL){
-			string err = "BIO_new(BIO_f_base64()) returns NULL: ";
-			throw EOpensslException(err + ERR_error_string(ERR_get_error(), NULL));
+		if (b64 == nullptr){
+			string err = "BIO_new(BIO_f_base64()) returns nullptr: ";
+			throw EOpensslException(err + ERR_error_string(ERR_get_error(), nullptr));
 		}
 
 		bio = BIO_push(b64, bio);
@@ -139,22 +139,22 @@ string_ptr opensslB64Encode(char* aContent, int aLen){
 
 		ret_data = (*bufferPtr).data;
 		ret_data[(*bufferPtr).length] = '\0';
-		return make_shared<string>(ret_data);
+		return make_string_ptr(ret_data);
 	}
 	catch (const EOpensslException& e) {
-		if (bio != NULL)
+		if (bio != nullptr)
 			BIO_free_all(bio);
 		throw e;
 	}
 }
 
 B64result opensslB64Decode(const string& aString){
-	BIO *bio_in = NULL;
-	BIO *bio_out = NULL;
-	BIO *b64 = NULL;
+	BIO *bio_in = nullptr;
+	BIO *bio_out = nullptr;
+	BIO *b64 = nullptr;
 	int ret;
 	char buffer[1024];
-	BUF_MEM *bufferPtr = NULL;
+	BUF_MEM *bufferPtr = nullptr;
 	B64result res;
 
 	if (aString.empty()) {
@@ -166,27 +166,27 @@ B64result opensslB64Decode(const string& aString){
 	try {
 		/* setup input BIO chain */
 		bio_in = BIO_new(BIO_s_mem());
-		if (bio_in == NULL){
-			string err = "bio_in = BIO_new(BIO_s_mem()) returns NULL: ";
-			throw EOpensslException(err + ERR_error_string(ERR_get_error(), NULL));
+		if (bio_in == nullptr){
+			string err = "bio_in = BIO_new(BIO_s_mem()) returns nullptr: ";
+			throw EOpensslException(err + ERR_error_string(ERR_get_error(), nullptr));
 		}
 
 		bio_in = fillOpensslBIO(bio_in, (char*)aString.c_str(), (int)aString.length());
 		BIO_set_close(bio_in, BIO_NOCLOSE);
 
 		b64 = BIO_new(BIO_f_base64());
-		if (b64 == NULL){
-			string err = "BIO_new(BIO_f_base64()) returns NULL: ";
-			throw EOpensslException(err + ERR_error_string(ERR_get_error(), NULL));
+		if (b64 == nullptr){
+			string err = "BIO_new(BIO_f_base64()) returns nullptr: ";
+			throw EOpensslException(err + ERR_error_string(ERR_get_error(), nullptr));
 		}
 
 		bio_in = BIO_push(b64, bio_in);
 		BIO_set_flags(bio_in, BIO_FLAGS_BASE64_NO_NL); //Ignore newlines - write everything in one line
 
 		bio_out = BIO_new(BIO_s_mem());
-		if (bio_out == NULL) {
-			string err = "bio_out = BIO_new(BIO_s_mem()) returns NULL: ";
-			throw EOpensslException(err + ERR_error_string(ERR_get_error(), NULL));
+		if (bio_out == nullptr) {
+			string err = "bio_out = BIO_new(BIO_s_mem()) returns nullptr: ";
+			throw EOpensslException(err + ERR_error_string(ERR_get_error(), nullptr));
 		}
 
 		while ((ret = BIO_read(b64, (void*)buffer, sizeof buffer)) > 0) {
@@ -194,7 +194,7 @@ B64result opensslB64Decode(const string& aString){
 		}
 		if (BIO_flush(bio_out) != 1){
 			string err = "BIO_flush(bio_out) returns -1: ";
-			throw EOpensslException(err + ERR_error_string(ERR_get_error(), NULL));
+			throw EOpensslException(err + ERR_error_string(ERR_get_error(), nullptr));
 		}
 
 		BIO_get_mem_ptr(bio_out, &bufferPtr);
@@ -210,13 +210,17 @@ B64result opensslB64Decode(const string& aString){
 		return res;
 	}
 	catch (const EOpensslException& e) {
-		BIO_free_all(bio_in);
-		BIO_free_all(bio_out);
+		if (bio_in != nullptr)
+			BIO_free_all(bio_in);
+		
+		if (bio_out != nullptr)
+			BIO_free_all(bio_out);
+		
 		throw e;
 	}
 }
 
-string_ptr opensslB64EncodeFile(const string aFileName){
+string_ptr opensslB64EncodeFile(const string& aFileName){
 	string* contents = new string();
 	ifstream file(aFileName, ios::in | ios::binary);
 	if (file){
@@ -247,14 +251,14 @@ string_ptr opensslCoreChecksum(BIO* aInputBio){
 	int mdlen;
 	
 	md = BIO_new(BIO_f_md());
-	if (md == NULL){
-		string err = "BIO_new(BIO_f_md()) returns NULL: ";
-		throw EOpensslException(err + ERR_error_string(ERR_get_error(), NULL));
+	if (md == nullptr){
+		string err = "BIO_new(BIO_f_md()) returns nullptr: ";
+		throw EOpensslException(err + ERR_error_string(ERR_get_error(), nullptr));
 	}
 
 	if (BIO_set_md(md, EVP_sha224()) == 0){
 		string err = "BIO_set_md() returns an error: ";
-		throw EOpensslException(err + ERR_error_string(ERR_get_error(), NULL));
+		throw EOpensslException(err + ERR_error_string(ERR_get_error(), nullptr));
 	}
 
 	aInputBio = BIO_push(md, aInputBio);
@@ -269,7 +273,7 @@ string_ptr opensslCoreChecksum(BIO* aInputBio){
 		if (mdlen == -2) {
 			//not implemented for that bio
 			string err = "BIO_gets returns -2 (not implemented for that bio): ";
-			throw EOpensslException(err + ERR_error_string(ERR_get_error(), NULL));
+			throw EOpensslException(err + ERR_error_string(ERR_get_error(), nullptr));
 		}
 		else if (mdlen == 0 || mdlen == -1){
 			//maybe have something more to read
@@ -279,7 +283,7 @@ string_ptr opensslCoreChecksum(BIO* aInputBio){
 			}
 			else{
 				string err = "BIO_should_retry signals an error: ";
-				throw EOpensslException(err + ERR_error_string(ERR_get_error(), NULL));
+				throw EOpensslException(err + ERR_error_string(ERR_get_error(), nullptr));
 			}
 		}
 		else
@@ -290,19 +294,19 @@ string_ptr opensslCoreChecksum(BIO* aInputBio){
 }
 
 //string_ptr opensslChecksum(char* aContent, int aLen){
-//	BIO *bio_in = NULL;
+//	BIO *bio_in = nullptr;
 //	bool try_again = false;
 //
-//	if (aContent == NULL) {
-//		return NULL;
+//	if (aContent == nullptr) {
+//		return nullptr;
 //	}
 //
 //	try {
 //		/* setup input BIO chain */
 //		bio_in = BIO_new(BIO_s_mem());
-//		if (bio_in == NULL){
-//			string err = "bio_in = BIO_new(BIO_s_mem()) returns NULL: ";
-//			throw EOpensslException(err + ERR_error_string(ERR_get_error(), NULL));
+//		if (bio_in == nullptr){
+//			string err = "bio_in = BIO_new(BIO_s_mem()) returns nullptr: ";
+//			throw EOpensslException(err + ERR_error_string(ERR_get_error(), nullptr));
 //		}
 //
 //		bio_in = fillOpensslBIO(bio_in, aContent, aLen);
@@ -324,14 +328,14 @@ string_ptr opensslCoreChecksum(BIO* aInputBio){
 //	try {
 //		/* setup input BIO chain */
 //		bio_in = BIO_new(BIO_s_file());
-//		if (bio_in == NULL){
-//			string err = "BIO_new(BIO_s_file()) returns NULL: ";
-//			throw EOpensslException(err + ERR_error_string(ERR_get_error(), NULL));
+//		if (bio_in == nullptr){
+//			string err = "BIO_new(BIO_s_file()) returns nullptr: ";
+//			throw EOpensslException(err + ERR_error_string(ERR_get_error(), nullptr));
 //		}
 //
 //		if (BIO_read_filename(bio_in, aFileName.c_str()) == 0){
 //			string err = "BIO_read_filename() returns an error: ";
-//			throw EOpensslException(err + ERR_error_string(ERR_get_error(), NULL));
+//			throw EOpensslException(err + ERR_error_string(ERR_get_error(), nullptr));
 //		}
 //
 //		string_ptr result = opensslCoreChecksum(bio_in);
@@ -344,23 +348,23 @@ string_ptr opensslCoreChecksum(BIO* aInputBio){
 //	}
 //}
 
-string_ptr opensslB64Checksum(const string_ptr aString){
-	BIO *bio_in = NULL;
+string_ptr opensslB64Checksum(const string& aString){
+	BIO *bio_in = nullptr;
 	bool try_again = false;
 
-	if (aString->empty()) {
-		return NULL;
+	if (aString.empty()) {
+		return nullptr;
 	}
 
 	try {
 		/* setup input BIO chain */
 		bio_in = BIO_new(BIO_s_mem());
-		if (bio_in == NULL){
-			string err = "bio_in = BIO_new(BIO_s_mem()) returns NULL: ";
-			throw EOpensslException(err + ERR_error_string(ERR_get_error(), NULL));
+		if (bio_in == nullptr){
+			string err = "bio_in = BIO_new(BIO_s_mem()) returns nullptr: ";
+			throw EOpensslException(err + ERR_error_string(ERR_get_error(), nullptr));
 		}
 
-		bio_in = fillOpensslBIO(bio_in, (char*)aString->c_str(), (int)aString->length());
+		bio_in = fillOpensslBIO(bio_in, (char*)aString.c_str(), (int)aString.length());
 		BIO_set_close(bio_in, BIO_NOCLOSE);
 
 		string_ptr result = opensslCoreChecksum(bio_in);
@@ -368,7 +372,7 @@ string_ptr opensslB64Checksum(const string_ptr aString){
 		return result;
 	}
 	catch (const EOpensslException& e) {
-		if (bio_in != NULL)
+		if (bio_in != nullptr)
 			BIO_free_all(bio_in);
 		throw e;
 	}
