@@ -9,6 +9,7 @@
 #pragma once
 #include <boost/asio.hpp>
 #include <boost/thread/thread.hpp>
+#include <boost\bind.hpp>
 #include <string>
 #include <vcclr.h>
 #include "NetworkController.h"
@@ -35,13 +36,16 @@ private:
 	TMessageQueue* fInQueue = nullptr;
 	TMessageQueue* fOutQueue = nullptr;
 	IServerSockController* fCallbackObj = nullptr;
+	boost::thread* fSender = nullptr;
+
+	void sendBaseMessage();
 
 public:
 	TServerSockController(int AServerPort, IServerSockController* aCallback);
 	virtual ~TServerSockController();
 
 	void startSocket();
-	void sendBaseMessage(TConnectionHandle aConnection, TBaseMessage aMsg);
+	void stopSocketIn();
 	
 	void onServerLog(string aClassName, string aFuncName, string aMsg) override;
 	void onServerWarning(string aClassName, string aFuncName, string aMsg) override;
@@ -49,11 +53,12 @@ public:
 	void onServerCriticalError(string aClassName, string aFuncName, string aMsg) override;
 	void onServerSockCreate() override;
 	void onServerSockAccept(TConnectionHandle aConnection) override;
-	void onServerSockRead(TConnectionHandle aConnection, string_ptr aMsg) override;
+	void onServerSockRead(TConnectionHandle aConnection, string_ptr& aMsg) override;
 	void onServerSockWrite() override;
 
-	TMessageContainer getMessageToProcess() override;
-	void enqueueMessageToSend(TMessageContainer aMsg) override;
+	bool isInQueueEmpty() override;
+	TMessageContainer_ptr getMessageToProcess() override;
+	void enqueueMessageToSend(TMessageContainer_ptr& aMsg) override;
 };
 
 
@@ -76,13 +81,14 @@ private:
 	void doAsyncRead(TConnectionHandle aConnction);
 	void handleAccept(TConnectionHandle aConnection, const boost::system::error_code& aErr);
 	void handleRead(TConnectionHandle aConnection, const boost::system::error_code& aErr, std::size_t aBytes);
-	void handle_write(TConnectionHandle aConnection, string_ptr aMsgBuffer, const boost::system::error_code& aErr);
+	void handle_write(TConnectionHandle aConnection, const boost::system::error_code& aErr);
 public:
 	TServerSocket(IServerSockController* aCallbackObj);
 	virtual ~TServerSocket();
 
 	bool setAcceptState(int aAcceptPort);
 	void doAccept();
-	void doSend(TConnectionHandle aConnection, TBaseMessage aMsg);
+	void doSend(TConnectionHandle aConnection, TBaseMessage_ptr& aMsg);
+	void stopIncoming();
 };
 

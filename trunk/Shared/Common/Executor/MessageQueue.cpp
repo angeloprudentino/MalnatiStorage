@@ -13,9 +13,34 @@
 //       TMessageContainer          //
 //////////////////////////////////////
 #pragma region "TMessageContainer"
-TMessageContainer::TMessageContainer(TBaseMessage aMsg, TConnectionHandle aConnection){
-	this->fMsg = aMsg;
+TMessageContainer::TMessageContainer(TBaseMessage_ptr& aMsg, TConnectionHandle aConnection){
+	this->fMsg = std::move(aMsg);
 	this->fConnection = aConnection;
+}
+
+TMessageContainer::~TMessageContainer(){
+	if (this->fMsg != nullptr){
+		this->fMsg.reset();
+		this->fMsg = nullptr;
+	}
+}
+
+TBaseMessage_ptr TMessageContainer::getMessage(){
+	if (this->fMsg != nullptr)
+		return std::move(this->fMsg);
+	else
+		return nullptr;
+}
+
+const TConnectionHandle TMessageContainer::getConnection(){
+	return this->fConnection; 
+}
+
+const bool TMessageContainer::isEmpty(){
+	if (this->fMsg != nullptr)
+		return this->fMsg->getID() == NO_ID;
+	else
+		return true;
 }
 #pragma endregion
 
@@ -24,23 +49,28 @@ TMessageContainer::TMessageContainer(TBaseMessage aMsg, TConnectionHandle aConne
 //        TMessageQueue	            //
 //////////////////////////////////////
 #pragma region "TMessageQueue"
-const TMessageContainer TMessageQueue::popMessage(){
+bool TMessageQueue::isEmpty(){
+	unique_lock<mutex> lock(this->fMutex);
+	return this->fQueue.empty();
+}
+
+TMessageContainer_ptr TMessageQueue::popMessage(){
 	unique_lock<mutex> lock(this->fMutex);
 
 	while (this->fQueue.empty()){
 		this->fCond.wait(lock);
 	}
-	TMessageContainer res = this->fQueue.front();
+	TMessageContainer_ptr res = std::move(this->fQueue.front());
 	this->fQueue.pop();
 
 	return res;
 }
 
-void TMessageQueue::pushMessage(const TMessageContainer aMsg){
+void TMessageQueue::pushMessage(TMessageContainer_ptr& aMsg){
 	try{
 		unique_lock<mutex> lock(this->fMutex);
 
-		this->fQueue.push(aMsg);
+		this->fQueue.push(std::move(aMsg));
 	}
 	catch (...){
 		//try-catch block to automatically release lock

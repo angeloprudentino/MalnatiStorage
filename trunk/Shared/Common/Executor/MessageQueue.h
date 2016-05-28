@@ -9,6 +9,7 @@
 #pragma once
 
 #include <queue>
+#include <memory>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 
@@ -20,19 +21,20 @@
 //////////////////////////////////////
 public class TMessageContainer{
 private:
-	TBaseMessage fMsg;
+	TBaseMessage_ptr fMsg = nullptr;
 	TConnectionHandle fConnection;
 
 public:
-	TMessageContainer() : fMsg(), fConnection(){};
-	TMessageContainer(TBaseMessage aMsg, TConnectionHandle aConnection);
-	//~TMessageContainer();
+	TMessageContainer() : fConnection(){};
+	TMessageContainer(TBaseMessage_ptr& aMsg, TConnectionHandle aConnection);
+	~TMessageContainer();
 	
 	//getters
-	const TBaseMessage getMessage(){ return this->fMsg; }
-	const TConnectionHandle getConnection(){ return this->fConnection; }
-	const bool isEmpty() { return this->fMsg.getID() == NO_ID; }
+	TBaseMessage_ptr getMessage();
+	const TConnectionHandle getConnection();
+	const bool isEmpty();
 };
+typedef std::unique_ptr<TMessageContainer> TMessageContainer_ptr;
 
 
 
@@ -41,15 +43,17 @@ public:
 //////////////////////////////////////
 public class TMessageQueue{
 private:
-	queue<TMessageContainer> fQueue;
+	queue<TMessageContainer_ptr> fQueue;
 	mutex fMutex;
 	condition_variable fCond;
 
 public:
 	TMessageQueue() = default;
+	~TMessageQueue(){ this->fCond.notify_all(); };
 	TMessageQueue(const TMessageQueue&) = delete;            // disable copying
 	TMessageQueue& operator=(const TMessageQueue&) = delete; // disable assignment
 
-	const TMessageContainer popMessage();
-	void pushMessage(const TMessageContainer aMsg);
+	bool isEmpty();
+	TMessageContainer_ptr popMessage();
+	void pushMessage(TMessageContainer_ptr& aMsg);
 };

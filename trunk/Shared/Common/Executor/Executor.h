@@ -22,8 +22,9 @@ using namespace boost;
 ///////////////////////////////////
 public class IBaseExecutorController : public IServerBaseController {
 public:
-	virtual TMessageContainer getMessageToProcess() = 0;
-	virtual void enqueueMessageToSend(TMessageContainer aMsg) = 0;
+	virtual bool isInQueueEmpty() = 0;
+	virtual TMessageContainer_ptr getMessageToProcess() = 0;
+	virtual void enqueueMessageToSend(TMessageContainer_ptr& aMsg) = 0;
 };
 
 #ifdef STORAGE_SERVER
@@ -32,16 +33,16 @@ public:
 //////////////////////////////////////
 public class IServerExecutorController : public IBaseExecutorController {
 public:
-	virtual void processRegistrationRequest(TConnectionHandle aConnection, TUserRegistrReqMessage aMsg) = 0;
-	virtual void processUpdateStartRequest(TConnectionHandle aConnection, TUpdateStartReqMessage aMsg) = 0;
-	virtual void processAddNewFile(TConnectionHandle aConnection, TAddNewFileMessage aMsg) = 0;
-	virtual void processUpdateFile(TConnectionHandle aConnection, TUpdateFileMessage aMsg) = 0;
-	virtual void processRemoveFile(TConnectionHandle aConnection, TRemoveFileMessage aMsg) = 0;
-	virtual void processUpdateStopRequest(TConnectionHandle aConnection, TUpdateStopReqMessage aMsg) = 0;
-	virtual void processGetVersions(TConnectionHandle aConnection, TGetVersionsReqMessage aMsg) = 0;
-	virtual void processRestoreVersion(TConnectionHandle aConnection, TRestoreVerReqMessage aMsg) = 0;
-	virtual void processRestoreFileAck(TConnectionHandle aConnection, TRestoreFileAckMessage aMsg) = 0;
-	virtual void processPingRequest(TConnectionHandle aConnection, TPingReqMessage aMsg) = 0;
+	virtual void processRegistrationRequest(TConnectionHandle aConnection, TUserRegistrReqMessage_ptr& aMsg) = 0;
+	virtual void processUpdateStartRequest(TConnectionHandle aConnection, TUpdateStartReqMessage_ptr& aMsg) = 0;
+	virtual void processAddNewFile(TConnectionHandle aConnection, TAddNewFileMessage_ptr& aMsg) = 0;
+	virtual void processUpdateFile(TConnectionHandle aConnection, TUpdateFileMessage_ptr& aMsg) = 0;
+	virtual void processRemoveFile(TConnectionHandle aConnection, TRemoveFileMessage_ptr& aMsg) = 0;
+	virtual void processUpdateStopRequest(TConnectionHandle aConnection, TUpdateStopReqMessage_ptr& aMsg) = 0;
+	virtual void processGetVersions(TConnectionHandle aConnection, TGetVersionsReqMessage_ptr& aMsg) = 0;
+	virtual void processRestoreVersion(TConnectionHandle aConnection, TRestoreVerReqMessage_ptr& aMsg) = 0;
+	virtual void processRestoreFileAck(TConnectionHandle aConnection, TRestoreFileAckMessage_ptr& aMsg) = 0;
+	virtual void processPingRequest(TConnectionHandle aConnection, TPingReqMessage_ptr& aMsg) = 0;
 };
 #else
 //////////////////////////////////////
@@ -77,5 +78,6 @@ public:
 #else
 #endif
 
+	void stopExecutors();
 	~TMessageExecutor();
 };
