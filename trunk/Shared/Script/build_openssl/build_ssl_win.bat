@@ -57,7 +57,7 @@ mkdir "%OUT_LIB_DIR%\openssl\static"
 
 mkdir temp
 cd temp
-call curl -O http://www.openssl.org/source/openssl-%VERSION%.tar.gz
+call curl -O -k https://www.openssl.org/source/openssl-%VERSION%.tar.gz
 call 7z e openssl-%VERSION%.tar.gz
 call 7z x openssl-%VERSION%.tar 
 SET OPENSSL_DIR="%PWD%\temp\openssl-%VERSION%"
