@@ -36,6 +36,9 @@
     <ClCompile Include="..\..\..\..\Shared\Common\Executor\MessageQueue.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\..\Shared\Common\Session\Session.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ServerForm.h">
@@ -60,6 +63,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\..\Shared\Common\Executor\MessageQueue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Shared\Common\Session\Session.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

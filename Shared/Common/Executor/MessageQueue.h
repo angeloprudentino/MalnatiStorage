@@ -35,6 +35,9 @@ public:
 	const bool isEmpty();
 };
 typedef std::unique_ptr<TMessageContainer> TMessageContainer_ptr;
+#define new_TMessageContainer_ptr(aMsg, aConnection) std::make_unique<TMessageContainer>(aMsg, aConnection)
+#define make_TMessageContainer_ptr(ptr) std::make_unique<TMessageContainer>(ptr)
+#define move_TMessageContainer_ptr(ptr) std::move(ptr)
 
 
 

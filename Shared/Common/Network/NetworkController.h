@@ -23,8 +23,8 @@ typedef struct Connection{
 	Connection(io_service &aIoService) : fSocket(aIoService), fPeer(), fReadBuffer() { }
 	Connection(io_service &aIoService, size_t aMaxBuffSize) : fSocket(aIoService), fPeer(), fReadBuffer(aMaxBuffSize) { }
 } TConnection;
-
-typedef list<TConnection>::iterator TConnectionHandle;
+typedef list<TConnection> TConnectionList;
+typedef TConnectionList::iterator TConnectionHandle;
 
 #ifdef STORAGE_SERVER
 

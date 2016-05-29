@@ -72,14 +72,14 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Users\Angelo Prudentino\Desktop\Progetto_Malnati\Svn\Network_test\TCP_server_test\TCP_server_test;C:\Users\Angelo Prudentino\Desktop\Progetto_Malnati\Svn\ServerMain;C:\Users\Angelo Prudentino\Desktop\Progetto_Malnati\Svn\Shared\Libraries\include;C:\Users\Angelo Prudentino\Desktop\Progetto_Malnati\Svn\Shared\Common\Utils;C:\Users\Angelo Prudentino\Desktop\Progetto_Malnati\Svn\Shared\Common\Network;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)\..\..\..\Shared\Common\Session;$(SolutionDir)\TCP_server_test;$(SolutionDir)\..\..\..\ServerMain;$(SolutionDir)\..\..\..\Shared\Libraries\include;$(SolutionDir)\..\..\..\Shared\Common\Utils;$(SolutionDir)\..\..\..\Shared\Common\Network;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)\..\..\..\Shared\Libraries\x86\debug\openssl
 \static;$(SolutionDir)\..\..\..\Shared\Libraries\x86\debug\openssl;$(SolutionDir)\..\..\..\Shared\Libraries\x86\debug\boost\static;$(SolutionDir)\..\..\..\Shared\Libraries\x86\debug\boost;$(LibraryPath)</LibraryPath>
     <ReferencePath>$(SolutionDir)\..\..\..\Shared\Libraries\x86\debug\boost;$(ReferencePath)</ReferencePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)\TCP_server_test;$(SolutionDir)\..\..\..\Shared\Libraries\include;$(SolutionDir)\..\..\..\Shared\Common\Executor;$(SolutionDir)\..\..\..\Shared\Common\Utils;$(SolutionDir)\..\..\..\Shared\Common\Network;$(SolutionDir)\..\..\..\ServerMain;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)\TCP_server_test;$(SolutionDir)\..\..\..\Shared\Libraries\include;$(SolutionDir)\..\..\..\Shared\Common\Executor;$(SolutionDir)\..\..\..\Shared\Common\Session;$(SolutionDir)\..\..\..\Shared\Common\Utils;$(SolutionDir)\..\..\..\Shared\Common\Network;$(SolutionDir)\..\..\..\ServerMain;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\debug\openssl\static;$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\debug\openssl;$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\debug\boost;$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\debug\boost\static;$(LibraryPath)</LibraryPath>
     <ReferencePath>$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\debug\openssl;$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\debug\boost;$(ReferencePath)</ReferencePath>
     <ExecutablePath>$(ExecutablePath)</ExecutablePath>
@@ -87,14 +87,14 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)\TCP_server_test;$(SolutionDir)\..\..\..\ServerMain;$(SolutionDir)\..\..\..\Shared\Libraries\include;$(SolutionDir)\..\..\..\Shared\Common\Utils;$(SolutionDir)\..\..\..\Shared\Common\Network;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)\TCP_server_test;$(SolutionDir)\..\..\..\ServerMain;$(SolutionDir)\..\..\..\Shared\Libraries\include;$(SolutionDir)\..\..\..\Shared\Common\Utils;$(SolutionDir)\..\..\..\Shared\Common\Network;$(SolutionDir)\..\..\..\Shared\Common\Session;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)\..\..\..\Shared\Libraries\x86\release\openssl
 \static;$(SolutionDir)\..\..\..\Shared\Libraries\x86\release\openssl;$(SolutionDir)\..\..\..\Shared\Libraries\x86\release\boost\static;$(SolutionDir)\..\..\..\Shared\Libraries\x86\release\boost;$(LibraryPath)</LibraryPath>
     <ReferencePath>$(SolutionDir)\..\..\..\Shared\Libraries\x86\release\openssl;$(SolutionDir)\..\..\..\Shared\Libraries\x86\release\boost;$(ReferencePath)</ReferencePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)\TCP_server_test;$(SolutionDir)\..\..\..\ServerMain;$(SolutionDir)\..\..\..\Shared\Libraries\include;$(SolutionDir)\..\..\..\Shared\Common\Utils;$(SolutionDir)\..\..\..\Shared\Common\Executor;$(SolutionDir)\..\..\..\Shared\Common\Network;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)\TCP_server_test;$(SolutionDir)\..\..\..\ServerMain;$(SolutionDir)\..\..\..\Shared\Libraries\include;$(SolutionDir)\..\..\..\Shared\Common\Utils;$(SolutionDir)\..\..\..\Shared\Common\Executor;$(SolutionDir)\..\..\..\Shared\Common\Session;$(SolutionDir)\..\..\..\Shared\Common\Network;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\release\openssl
 \static;$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\release\openssl;$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\release\boost\static;$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\release\boost;$(LibraryPath)</LibraryPath>
     <ReferencePath>$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\release\openssl;$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\release\boost;$(ReferencePath)</ReferencePath>
@@ -169,6 +169,7 @@
     <ClCompile Include="..\..\..\..\Shared\Common\Executor\MessageQueue.cpp" />
     <ClCompile Include="..\..\..\..\Shared\Common\Network\Message.cpp" />
     <ClCompile Include="..\..\..\..\Shared\Common\Network\ServerSocket.cpp" />
+    <ClCompile Include="..\..\..\..\Shared\Common\Session\Session.cpp" />
     <ClCompile Include="..\..\..\..\Shared\Common\Utils\Utility.cpp" />
     <ClCompile Include="ServerForm.cpp" />
   </ItemGroup>
@@ -179,6 +180,7 @@
     <ClInclude Include="..\..\..\..\Shared\Common\Network\Message.h" />
     <ClInclude Include="..\..\..\..\Shared\Common\Network\NetworkController.h" />
     <ClInclude Include="..\..\..\..\Shared\Common\Network\ServerSocket.h" />
+    <ClInclude Include="..\..\..\..\Shared\Common\Session\Session.h" />
     <ClInclude Include="..\..\..\..\Shared\Common\Utils\Utility.h" />
     <ClInclude Include="ServerForm.h">
       <FileType>CppForm</FileType>

@@ -73,7 +73,7 @@ private:
 	thread* fMainIO = nullptr;
 	io_service fMainIoService;
 	tcp::acceptor fServerAcceptor;
-	std::list<TConnection> fConnections;
+	TConnectionList fConnections;
 
 	//Callback object
 	IServerSockController* fCallbackObj = nullptr;

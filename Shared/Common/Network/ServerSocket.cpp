@@ -63,12 +63,12 @@ TServerSockController::~TServerSockController(){
 
 void TServerSockController::sendBaseMessage(){
 	if (this->fSock != nullptr){
-		TMessageContainer_ptr msg = std::move(this->fOutQueue->popMessage());
+		TMessageContainer_ptr msg = this->fOutQueue->popMessage();
 		if (msg != nullptr && !msg->isEmpty()){
 			TConnectionHandle conn = msg->getConnection();
 			TBaseMessage_ptr bmsg = msg->getMessage();
 			tcp::endpoint peer = conn->fPeer;
-			this->onServerLog("TServerSockController", "sendBaseMessage", "preparing to send a " + bmsg->getName() + "message to " + peer.address().to_string() + ":" + std::to_string(peer.port()));
+			this->onServerLog("TServerSockController", "sendBaseMessage", "preparing to send a " + bmsg->getName() + " message to " + peer.address().to_string() + ":" + std::to_string(peer.port()));
 			this->fSock->doSend(conn, bmsg);
 		}
 	}
@@ -130,7 +130,7 @@ void TServerSockController::onServerSockAccept(TConnectionHandle aConnection){
 
 void TServerSockController::onServerSockRead(TConnectionHandle aConnection, string_ptr& aMsg){
 	tcp::endpoint peer = aConnection->fPeer;
-	TBaseMessage_ptr bmsg = make_unique<TBaseMessage>(aMsg);
+	TBaseMessage_ptr bmsg = new_TBaseMessage_ptr(aMsg);
 	int msgType = bmsg->getID();
 
 	if (!isValidMessageID(msgType)){
@@ -153,7 +153,7 @@ void TServerSockController::onServerSockRead(TConnectionHandle aConnection, stri
 	}
 
 	//enqueue the message to be processed
-	TMessageContainer_ptr mcp = make_unique<TMessageContainer>(bmsg, aConnection);
+	TMessageContainer_ptr mcp = new_TMessageContainer_ptr(bmsg, aConnection);
 	this->fInQueue->pushMessage(mcp);
 }
 
@@ -169,12 +169,12 @@ bool TServerSockController::isInQueueEmpty(){
 }
 
 TMessageContainer_ptr TServerSockController::getMessageToProcess(){
-	return std::move(this->fInQueue->popMessage());
+	return move_TMessageContainer_ptr(this->fInQueue->popMessage());
 }
 
 void TServerSockController::enqueueMessageToSend(TMessageContainer_ptr& aMsg){
 	if (!aMsg->isEmpty())
-		this->fOutQueue->pushMessage(aMsg);
+		this->fOutQueue->pushMessage(move_TMessageContainer_ptr(aMsg));
 }
 #pragma endregion
 #pragma endregion
