@@ -56,7 +56,23 @@ const time_t stringToTime(const string& s) {
 
 	return t;
 }
+
+const string formatFileDate(const time_t& t){
+	struct tm tstruct;
+	char buf[23];
+	tstruct = *localtime(&t);
+
+	strftime(buf, sizeof(buf), "%Y-%m-%d %X", &tstruct);
+	return buf;
+}
 #pragma endregion
+
+string_ptr getUniqueToken(const string& aUser){
+	string_ptr rand = opensslB64RandomToken();
+	string t = timeToString(time(NULL));
+	string token(*rand + "$" + aUser + "-" + t + "$" + *rand);
+	return opensslB64Encode((char*)token.c_str(), (int)token.size());
+}
 
 #pragma region "Crypto Utilities"
 // openssl crypto system init
@@ -377,4 +393,20 @@ string_ptr opensslB64Checksum(const string& aString){
 		throw e;
 	}
 }
+
+string_ptr opensslB64RandomToken(){
+	char* buff = new char[20];
+	int res = RAND_bytes((unsigned char*)buff, 20);
+
+	if (res == 0){
+		delete[] buff;
+		string err = ERR_error_string(ERR_get_error(), NULL);
+		throw EOpensslException("Error in RAND_bytes(): " + err);
+	}
+
+	string_ptr result = opensslB64Encode(buff, 20);
+	delete[] buff;
+	return move_string_ptr(result);
+}
+
 #pragma endregion

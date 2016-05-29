@@ -14,7 +14,7 @@
 //////////////////////////////////////
 #pragma region "TMessageContainer"
 TMessageContainer::TMessageContainer(TBaseMessage_ptr& aMsg, TConnectionHandle aConnection){
-	this->fMsg = std::move(aMsg);
+	this->fMsg = move_TMessageContainer_ptr(aMsg);
 	this->fConnection = aConnection;
 }
 
@@ -27,7 +27,7 @@ TMessageContainer::~TMessageContainer(){
 
 TBaseMessage_ptr TMessageContainer::getMessage(){
 	if (this->fMsg != nullptr)
-		return std::move(this->fMsg);
+		return move_TMessageContainer_ptr(this->fMsg);
 	else
 		return nullptr;
 }
@@ -60,17 +60,17 @@ TMessageContainer_ptr TMessageQueue::popMessage(){
 	while (this->fQueue.empty()){
 		this->fCond.wait(lock);
 	}
-	TMessageContainer_ptr res = std::move(this->fQueue.front());
+	TMessageContainer_ptr res = move_TMessageContainer_ptr(this->fQueue.front());
 	this->fQueue.pop();
 
-	return res;
+	return move_TMessageContainer_ptr(res);
 }
 
 void TMessageQueue::pushMessage(TMessageContainer_ptr& aMsg){
 	try{
 		unique_lock<mutex> lock(this->fMutex);
 
-		this->fQueue.push(std::move(aMsg));
+		this->fQueue.push(move_TMessageContainer_ptr(aMsg));
 	}
 	catch (...){
 		//try-catch block to automatically release lock

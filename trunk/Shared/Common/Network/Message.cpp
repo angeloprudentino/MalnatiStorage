@@ -103,8 +103,6 @@ void unescape(string_ptr& aMsg){
 		boost::replace_all(*aMsg, from, to);
 	}
 }
-
-
 #pragma endregion
 
 
@@ -121,11 +119,15 @@ TBaseMessage::TBaseMessage(){
 TBaseMessage::TBaseMessage(string_ptr& aMsg){
 	this->fID = NO_ID;
 	this->fEncodedMsg = move_string_ptr(aMsg);
+	this->fItems = new_string_vector_ptr();
 	this->decodeMessageID();
 }
 
 TBaseMessage::~TBaseMessage() {
 	if (this->fItems != nullptr){
+		for (string_vector::iterator it = this->fItems->begin(); it < this->fItems->end(); it++)
+			it->reset();
+		this->fItems->clear();
 		this->fItems.reset();
 		this->fItems = nullptr;
 	}
@@ -204,6 +206,17 @@ TUserRegistrReqMessage::TUserRegistrReqMessage(const string aUser, const string 
 	this->fPass = make_string_ptr(aPass);
 }
 
+TUserRegistrReqMessage::~TUserRegistrReqMessage(){
+	if (this->fUser != nullptr)
+		this->fUser.reset();
+
+	if (this->fPass != nullptr)
+		this->fPass.reset();
+
+	this->fUser = nullptr;
+	this->fPass = nullptr;
+}
+
 string_ptr TUserRegistrReqMessage::encodeMessage(){
 	this->fItems->push_back(make_string_ptr(getMessageName(this->fID)));
 	this->fItems->push_back(move_string_ptr(this->fUser));
@@ -240,8 +253,6 @@ void TUserRegistrReqMessage::decodeMessage(){
 	if (*(this->fItems->at(2)) == EMPTY)
 		throw EMessageException("The password field cannot be empty");
 	this->fPass = move_string_ptr(this->fItems->at(2));
-
-	this->fItems->erase(this->fItems->begin(), this->fItems->end());
 }
 #pragma endregion
 
@@ -304,8 +315,6 @@ void TUserRegistrReplyMessage::decodeMessage(){
 		this->fResp = true;
 	else
 		this->fResp = false;
-
-	this->fItems->erase(this->fItems->begin(), this->fItems->end());
 }
 #pragma endregion
 
@@ -326,6 +335,17 @@ TUpdateStartReqMessage::TUpdateStartReqMessage(const string aUser, const string 
 	this->fID = UPDATE_START_REQ_ID;
 	this->fUser = make_string_ptr(aUser);
 	this->fPass = make_string_ptr(aPass);
+}
+
+TUpdateStartReqMessage::~TUpdateStartReqMessage(){
+	if (this->fUser != nullptr)
+		this->fUser.reset();
+
+	if (this->fPass != nullptr)
+		this->fPass.reset();
+
+	this->fUser = nullptr;
+	this->fPass = nullptr;
 }
 
 string_ptr TUpdateStartReqMessage::encodeMessage(){
@@ -364,8 +384,6 @@ void TUpdateStartReqMessage::decodeMessage(){
 	if (*(this->fItems->at(2)) == EMPTY)
 		throw EMessageException("The password field cannot be empty");
 	this->fPass = move_string_ptr(this->fItems->at(2));
-
-	this->fItems->erase(this->fItems->begin(), this->fItems->end());
 }
 #pragma endregion
 
@@ -386,6 +404,12 @@ TUpdateStartReplyMessage::TUpdateStartReplyMessage(const bool aResp, const strin
 	this->fID = UPDATE_START_REPLY_ID;
 	this->fResp = aResp;
 	this->fToken = make_string_ptr(aToken);
+}
+
+TUpdateStartReplyMessage::~TUpdateStartReplyMessage(){
+	if (this->fToken != nullptr)
+		this->fToken.reset();
+	this->fToken = nullptr;
 }
 
 string_ptr TUpdateStartReplyMessage::encodeMessage(){
@@ -436,8 +460,6 @@ void TUpdateStartReplyMessage::decodeMessage(){
 	if (*(this->fItems->at(2)) == EMPTY)
 		throw EMessageException("The token field cannot be empty");
 	this->fToken = move_string_ptr(this->fItems->at(2)); //TODO: implement -> checkToken(this->fItems->at(2));
-
-	this->fItems->erase(this->fItems->begin(), this->fItems->end());
 }
 #pragma endregion
 
@@ -461,6 +483,25 @@ TAddNewFileMessage::TAddNewFileMessage(const string aToken, string aFilePath){
 	this->fFileContent = nullptr;
 	this->fChecksum = nullptr;
 	this->fFileDate = time(nullptr);
+}
+
+TAddNewFileMessage::~TAddNewFileMessage(){
+	if (this->fToken != nullptr)
+		this->fToken.reset();
+	
+	if (this->fFilePath != nullptr)
+		this->fFilePath.reset();
+	
+	if (this->fFileContent != nullptr)
+		this->fFileContent.reset();
+	
+	if (this->fChecksum != nullptr)
+		this->fChecksum.reset();
+
+	this->fToken = nullptr;
+	this->fFilePath = nullptr;
+	this->fFileContent = nullptr;
+	this->fChecksum = nullptr;
 }
 
 string_ptr TAddNewFileMessage::encodeMessage(){
@@ -531,8 +572,6 @@ void TAddNewFileMessage::decodeMessage(){
 		throw EMessageException("The file content field cannot be empty");
 	this->fFileContent = move_string_ptr(this->fItems->at(5));
 
-	this->fItems->erase(this->fItems->begin(), this->fItems->end());
-
 	//verify file correctness
 	string_ptr myChecksum = nullptr;
 	try{
@@ -567,6 +606,25 @@ TUpdateFileMessage::TUpdateFileMessage(const string aToken, string aFilePath){
 	this->fFileContent = nullptr;
 	this->fChecksum = nullptr;
 	this->fFileDate = time(nullptr);
+}
+
+TUpdateFileMessage::~TUpdateFileMessage(){
+	if (this->fToken != nullptr)
+		this->fToken.reset();
+
+	if (this->fFilePath != nullptr)
+		this->fFilePath.reset();
+
+	if (this->fFileContent != nullptr)
+		this->fFileContent.reset();
+
+	if (this->fChecksum != nullptr)
+		this->fChecksum.reset();
+
+	this->fToken = nullptr;
+	this->fFilePath = nullptr;
+	this->fFileContent = nullptr;
+	this->fChecksum = nullptr;
 }
 
 string_ptr TUpdateFileMessage::encodeMessage(){
@@ -637,8 +695,6 @@ void TUpdateFileMessage::decodeMessage(){
 		throw EMessageException("The file content field cannot be empty");
 	this->fFileContent = move_string_ptr(this->fItems->at(5));
 
-	this->fItems->erase(this->fItems->begin(), this->fItems->end());
-
 	//verify file correctness
 	string_ptr myChecksum = nullptr;
 	try{
@@ -670,6 +726,17 @@ TRemoveFileMessage::TRemoveFileMessage(const string aToken, string aFilePath){
 	this->fID = REMOVE_FILE_ID;
 	this->fToken = make_string_ptr(aToken);
 	this->fFilePath = make_string_ptr(aFilePath);
+}
+
+TRemoveFileMessage::~TRemoveFileMessage(){
+	if (this->fToken != nullptr)
+		this->fToken.reset();
+
+	if (this->fFilePath != nullptr)
+		this->fFilePath.reset();
+
+	this->fToken = nullptr;
+	this->fFilePath = nullptr;
 }
 
 string_ptr TRemoveFileMessage::encodeMessage(){
@@ -714,8 +781,6 @@ void TRemoveFileMessage::decodeMessage(){
 	//if (!isValidPath(this->fFilePath))
 	//	throw EMessageException("The file path field must contain a valid path");
 	this->fFilePath = move_string_ptr(this->fItems->at(2));
-
-	this->fItems->erase(this->fItems->begin(), this->fItems->end());
 }
 #pragma endregion
 
@@ -736,6 +801,13 @@ TFileAckMessage::TFileAckMessage(const bool aResp, const string aFilePath){
 	this->fID = FILE_ACK_ID;
 	this->fResp = aResp;
 	this->fFilePath = make_string_ptr(aFilePath);
+}
+
+TFileAckMessage::~TFileAckMessage(){
+	if (this->fFilePath != nullptr)
+		this->fFilePath.reset();
+
+	this->fFilePath = nullptr;
 }
 
 string_ptr TFileAckMessage::encodeMessage(){
@@ -789,8 +861,6 @@ void TFileAckMessage::decodeMessage(){
 	//if (!isValidPath(this->fFilePath))
 	//	throw EMessageException("The file path field must contain a valid path");
 	this->fFilePath = move_string_ptr(this->fItems->at(2));
-
-	this->fItems->erase(this->fItems->begin(), this->fItems->end());
 }
 #pragma endregion
 
@@ -810,6 +880,13 @@ TUpdateStopReqMessage::TUpdateStopReqMessage(TBaseMessage_ptr& aBase){
 TUpdateStopReqMessage::TUpdateStopReqMessage(const string aToken){
 	this->fID = UPDATE_STOP_REQ_ID;
 	this->fToken = make_string_ptr(aToken);
+}
+
+TUpdateStopReqMessage::~TUpdateStopReqMessage(){
+	if (this->fToken != nullptr)
+		this->fToken.reset();
+
+	this->fToken = nullptr;
 }
 
 string_ptr TUpdateStopReqMessage::encodeMessage(){
@@ -841,8 +918,6 @@ void TUpdateStopReqMessage::decodeMessage(){
 	if (*(this->fItems->at(1)) == EMPTY)
 		throw EMessageException("The token field cannot be empty");
 	this->fToken = move_string_ptr(this->fItems->at(1)); //TODO: implement -> checkToken(this->fItems->at(2));
-
-	this->fItems->erase(this->fItems->begin(), this->fItems->end());
 }
 #pragma endregion
 
@@ -922,8 +997,6 @@ void TUpdateStopReplyMessage::decodeMessage(){
 	if (*(this->fItems->at(3)) == EMPTY)
 		throw EMessageException("The version timestamp field cannot be empty");
 	this->fTime = stringToTime(*(this->fItems->at(3)));
-
-	this->fItems->erase(this->fItems->begin(), this->fItems->end());
 }
 #pragma endregion
 
@@ -944,6 +1017,17 @@ TGetVersionsReqMessage::TGetVersionsReqMessage(const string aUser, const string 
 	this->fID = GET_VERSIONS_REQ_ID;
 	this->fUser = make_string_ptr(aUser);
 	this->fPass = make_string_ptr(aPass);
+}
+
+TGetVersionsReqMessage::~TGetVersionsReqMessage(){
+	if (this->fUser != nullptr)
+		this->fUser.reset();
+
+	if (this->fPass != nullptr)
+		this->fPass.reset();
+
+	this->fUser = nullptr;
+	this->fPass = nullptr;
 }
 
 string_ptr TGetVersionsReqMessage::encodeMessage(){
@@ -982,8 +1066,6 @@ void TGetVersionsReqMessage::decodeMessage(){
 	if (*(this->fItems->at(2)) == EMPTY)
 		throw EMessageException("The password field cannot be empty");
 	this->fPass = move_string_ptr(this->fItems->at(2));
-
-	this->fItems->erase(this->fItems->begin(), this->fItems->end());
 }
 #pragma endregion
 
@@ -1069,8 +1151,6 @@ void TGetVersionsReplyMessage::decodeMessage(){
 	for (i = GET_VERSIONS_REPLY_MIN_TOK_NUM + 1, j = this->fOldestVersion; i < totSize; i++, j++){
 		this->fVersions.emplace(j, stringToTime(*(this->fItems->at(i))));
 	}
-
-	this->fItems->erase(this->fItems->begin(), this->fItems->end());
 }
 #pragma endregion
 
@@ -1092,6 +1172,17 @@ TRestoreVerReqMessage::TRestoreVerReqMessage(const string aUser, const string aP
 	this->fUser = make_string_ptr(aUser);
 	this->fPass = make_string_ptr(aPass);
 	this->fVersion = aVersion;
+}
+
+TRestoreVerReqMessage::~TRestoreVerReqMessage(){
+	if (this->fUser != nullptr)
+		this->fUser.reset();
+
+	if (this->fPass != nullptr)
+		this->fPass.reset();
+
+	this->fUser = nullptr;
+	this->fPass = nullptr;
 }
 
 string_ptr TRestoreVerReqMessage::encodeMessage(){
@@ -1139,8 +1230,6 @@ void TRestoreVerReqMessage::decodeMessage(){
 		throw EMessageException("The version number field cannot be empty");
 	//TODO: check if this->fItems->at(3) contains a number
 	this->fVersion = stoi(*(this->fItems->at(3)));
-
-	this->fItems->erase(this->fItems->begin(), this->fItems->end());
 }
 #pragma endregion
 
@@ -1161,6 +1250,13 @@ TRestoreVerReplyMessage::TRestoreVerReplyMessage(const bool aResp, const string 
 	this->fID = RESTORE_VER_REPLY_ID;
 	this->fResp = aResp;
 	this->fToken = make_string_ptr(aToken);
+}
+
+TRestoreVerReplyMessage::~TRestoreVerReplyMessage(){
+	if (this->fToken != nullptr)
+		this->fToken.reset();
+
+	this->fToken = nullptr;
 }
 
 string_ptr TRestoreVerReplyMessage::encodeMessage(){
@@ -1211,8 +1307,6 @@ void TRestoreVerReplyMessage::decodeMessage(){
 	if (*(this->fItems->at(2)) == EMPTY)
 		throw EMessageException("The token field cannot be empty");
 	this->fToken = move_string_ptr(this->fItems->at(2)); //TODO: implement -> checkToken(this->fItems->at(2));
-
-	this->fItems->erase(this->fItems->begin(), this->fItems->end());
 }
 #pragma endregion
 
@@ -1235,6 +1329,21 @@ TRestoreFileMessage::TRestoreFileMessage(string aFilePath){
 	this->fFileContent = nullptr;
 	this->fChecksum = nullptr;
 	this->fFileDate = time(nullptr);
+}
+
+TRestoreFileMessage::~TRestoreFileMessage(){
+	if (this->fFilePath != nullptr)
+		this->fFilePath.reset();
+
+	if (this->fFileContent != nullptr)
+		this->fFileContent.reset();
+
+	if (this->fChecksum != nullptr)
+		this->fChecksum.reset();
+
+	this->fFilePath = nullptr;
+	this->fFileContent = nullptr;
+	this->fChecksum = nullptr;
 }
 
 string_ptr TRestoreFileMessage::encodeMessage(){
@@ -1298,8 +1407,6 @@ void TRestoreFileMessage::decodeMessage(){
 		throw EMessageException("The file content field cannot be empty");
 	this->fFileContent = move_string_ptr(this->fItems->at(4));
 
-	this->fItems->erase(this->fItems->begin(), this->fItems->end());
-
 	//verify file correctness
 	string_ptr myChecksum = nullptr;
 	try{
@@ -1327,11 +1434,22 @@ TRestoreFileAckMessage::TRestoreFileAckMessage(TBaseMessage_ptr& aBase){
 	this->decodeMessage();
 }
 
-TRestoreFileAckMessage::TRestoreFileAckMessage(const string aToken, const bool aResp, const string aFilePath){
+TRestoreFileAckMessage::TRestoreFileAckMessage(const bool aResp, const string aToken, const string aFilePath){
 	this->fID = RESTORE_FILE_ACK_ID;
 	this->fToken = make_string_ptr(aToken);
 	this->fFilePath = make_string_ptr(aFilePath);
 	this->fResp = aResp;
+}
+
+TRestoreFileAckMessage::~TRestoreFileAckMessage(){
+	if (this->fToken != nullptr)
+		this->fToken.reset();
+
+	if (this->fFilePath != nullptr)
+		this->fFilePath.reset();
+
+	this->fToken = nullptr;
+	this->fFilePath = nullptr;
 }
 
 string_ptr TRestoreFileAckMessage::encodeMessage(){
@@ -1392,8 +1510,6 @@ void TRestoreFileAckMessage::decodeMessage(){
 	//if (!isValidPath(this->fFilePath))
 	//	throw EMessageException("The file path field must contain a valid path");
 	this->fFilePath = move_string_ptr(this->fItems->at(3));
-
-	this->fItems->erase(this->fItems->begin(), this->fItems->end());
 }
 #pragma endregion
 
@@ -1453,8 +1569,6 @@ void TRestoreStopMessage::decodeMessage(){
 	if (*(this->fItems->at(2)) == EMPTY)
 		throw EMessageException("The version timestamp field cannot be empty");
 	this->fTime = stringToTime(*(this->fItems->at(2)));
-
-	this->fItems->erase(this->fItems->begin(), this->fItems->end());
 }
 #pragma endregion
 
@@ -1505,8 +1619,6 @@ void TPingReqMessage::decodeMessage(){
 	if (*(this->fItems->at(1)) == EMPTY)
 		throw EMessageException("The time-stamp field cannot be empty");
 	this->fTime = stringToTime(*(this->fItems->at(1)));
-
-	this->fItems->erase(this->fItems->begin(), this->fItems->end());
 }
 #pragma endregion
 
@@ -1557,7 +1669,5 @@ void TPingReplyMessage::decodeMessage(){
 	if (*(this->fItems->at(1)) == EMPTY)
 		throw EMessageException("The time-stamp field cannot be empty");
 	this->fTime = stringToTime(*(this->fItems->at(1)));
-
-	this->fItems->erase(this->fItems->begin(), this->fItems->end());
 }
 #pragma endregion

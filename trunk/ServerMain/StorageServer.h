@@ -8,10 +8,18 @@
 
 #pragma once
 #include <string>
+#include <map>
 
 #include "ServerSocket.h"
 #include "Executor.h"
 #include "Utility"
+#include "Session.h"
+
+using namespace std;
+
+//type definitions
+typedef map<string, TSession> TSessions;
+typedef unique_ptr<TSessions> TSessions_ptr;
 
 ////////////////////////////////////
 //        TStorageServer	      //
@@ -23,6 +31,8 @@ private:
 	//this is the way to use managed obj inside unmanaged classes
 	gcroot<IManagedServerSockController^> fCallbackObj = nullptr;
 	
+	TSessions_ptr fSessions = nullptr;
+
 	TServerSockController* fSockController = nullptr;
 	IBaseExecutorController* fExeController = nullptr;
 	TMessageExecutor* fExecutor = nullptr;

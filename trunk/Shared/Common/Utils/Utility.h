@@ -77,6 +77,10 @@ const string currentDateTime();
 // Convert time_t to string and vice versa
 const string timeToString(const time_t& t);
 const time_t stringToTime(const string& s);
+const string formatFileDate(const time_t& t);
+
+// Generate a unique token to identify a session
+string_ptr getUniqueToken(const string& aUser); //throws EOpensslException
 
 // openssl crypto system init
 void initCrypto();
@@ -90,4 +94,4 @@ string_ptr opensslB64EncodeFile(const string& aFileName); //throws EOpensslExcep
 //string_ptr opensslChecksum(char* aContent, int aLen); //throws EOpensslException
 //string_ptr opensslFileChecksum(const string aFileName); //throws EOpensslException
 string_ptr opensslB64Checksum(const string& aString); //throws EOpensslException
-
+string_ptr opensslB64RandomToken();
