@@ -5,6 +5,7 @@
 
 #include "pch.h"
 #include "MainPage.xaml.h"
+#include "ClientMain.h"
 
 using namespace StorageClient;
 
@@ -22,6 +23,7 @@ using namespace Windows::UI::Xaml::Interop;
 using namespace Windows::UI::Xaml::Media;
 using namespace Windows::UI::Xaml::Navigation;
 
+
 // Il modello di applicazione vuota è documentato all'indirizzo http://go.microsoft.com/fwlink/?LinkId=234227
 
 /// <summary>
@@ -31,6 +33,7 @@ using namespace Windows::UI::Xaml::Navigation;
 App::App()
 {
 	InitializeComponent();
+	
 	Suspending += ref new SuspendingEventHandler(this, &App::OnSuspending);
 }
 
@@ -97,6 +100,7 @@ void App::OnLaunched(Windows::ApplicationModel::Activation::LaunchActivatedEvent
 		// Assicurarsi che la finestra corrente sia attiva
 		Window::Current->Activate();
 	}
+
 }
 
 /// <summary>

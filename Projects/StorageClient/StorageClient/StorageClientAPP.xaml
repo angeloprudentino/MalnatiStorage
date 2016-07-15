@@ -11,18 +11,16 @@
     mc:Ignorable="d">
 
     <Page.Resources>
-        <!-- Raccolta di elementi visualizzati da questa pagina -->
-        <CollectionViewSource
-        x:Name="itemsViewSource"
-        Source="{Binding Items}"/>
+        <!-- TODO: Delete this line if the key AppName is declared in App.xaml -->
+        <x:String x:Key="AppName">My Application</x:String>
     </Page.Resources>
 
     <!--
-        Questa griglia funge da pannello radice per la pagina che definisce due righe:
-        * Riga 0 contiene il pulsante Indietro e il titolo della pagina
-        * Riga 1 contiene il resto del layout della pagina
+        This grid acts as a root panel for the page that defines two rows:
+        * Row 0 contains the back button and page title
+        * Row 1 contains the rest of the page layout
     -->
-    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Margin="784,10,10,140">
         <Grid.ChildrenTransitions>
             <TransitionCollection>
                 <EntranceThemeTransition/>
@@ -32,13 +30,9 @@
             <RowDefinition Height="140"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition x:Name="primaryColumn" Width="420"/>
-            <ColumnDefinition x:Name="secondaryColumn" Width="*"/>
-        </Grid.ColumnDefinitions>
 
-        <!-- Pulsante Indietro e titolo della pagina -->
-        <Grid x:Name="titlePanel">
+        <!-- Back button and page title -->
+        <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="120"/>
                 <ColumnDefinition Width="*"/>
@@ -49,133 +43,12 @@
                         AutomationProperties.Name="Back"
                         AutomationProperties.AutomationId="BackButton"
                         AutomationProperties.ItemType="Navigation Button"/>
-            <TextBlock x:Name="pageTitle" Text="{Binding Title}" Style="{StaticResource HeaderTextBlockStyle}" Grid.Column="1" 
-                        IsHitTestVisible="false" TextWrapping="NoWrap" VerticalAlignment="Bottom" Margin="0,0,0,40"/>
+            <TextBlock x:Name="pageTitle" Text="Storage Client" Style="{StaticResource HeaderTextBlockStyle}" Grid.Column="1" 
+                        IsHitTestVisible="false" TextWrapping="NoWrap" VerticalAlignment="Bottom" Margin="0,0,30,40"/>
         </Grid>
-
-        <!-- Elenco elementi a scorrimento verticale -->
-        <ListView
-            x:Name="itemListView"
-            AutomationProperties.AutomationId="ItemsListView"
-            AutomationProperties.Name="Items"
-            TabIndex="1"
-            Grid.Row="1"
-            Margin="-10,-10,0,0"
-            Padding="120,0,0,60"
-            ItemsSource="{Binding Source={StaticResource itemsViewSource}}"
-            IsSwipeEnabled="False"
-            SelectionChanged="ItemListView_SelectionChanged">
-            <ListView.ItemTemplate>
-                <DataTemplate>
-                    <Grid Margin="6">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Border Background="{ThemeResource ListViewItemPlaceholderBackgroundThemeBrush}" Width="60" Height="60">
-                            <Image Source="{Binding ImagePath}" Stretch="UniformToFill" AutomationProperties.Name="{Binding Title}"/>
-                        </Border>
-                        <StackPanel Grid.Column="1" Margin="10,0,0,0">
-                            <TextBlock Text="{Binding Title}" Style="{StaticResource TitleTextBlockStyle}" TextWrapping="NoWrap" MaxHeight="40"/>
-                            <TextBlock Text="{Binding Subtitle}" Style="{StaticResource CaptionTextBlockStyle}" TextWrapping="NoWrap"/>
-                        </StackPanel>
-                    </Grid>
-                </DataTemplate>
-            </ListView.ItemTemplate>
-            <ListView.ItemContainerStyle>
-                <Style TargetType="FrameworkElement">
-                    <Setter Property="Margin" Value="0,0,0,10"/>
-                </Style>
-            </ListView.ItemContainerStyle>
-        </ListView>
-
-
-        <!-- Dettagli per l'elemento selezionato -->
-        <ScrollViewer
-            x:Name="itemDetail"
-            AutomationProperties.AutomationId="ItemDetailScrollViewer"
-            Grid.Column="1"
-            Grid.RowSpan="2"
-            Padding="60,0,66,0"
-            DataContext="{Binding SelectedItem, ElementName=itemListView}"
-            HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto"
-            ScrollViewer.HorizontalScrollMode="Disabled" ScrollViewer.VerticalScrollMode="Enabled"
-            ScrollViewer.ZoomMode="Disabled">
-
-            <Grid x:Name="itemDetailGrid" Margin="0,60,0,50">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <Image Grid.Row="1" Margin="0,0,20,0" Width="180" Height="180" Source="{Binding ImagePath}" Stretch="UniformToFill" AutomationProperties.Name="{Binding Title}"/>
-                <StackPanel x:Name="itemDetailTitlePanel" Grid.Row="1" Grid.Column="1">
-                    <TextBlock x:Name="itemTitle" Margin="0,-10,0,0" Text="{Binding Title}" Style="{StaticResource SubheaderTextBlockStyle}"/>
-                    <TextBlock x:Name="itemSubtitle" Margin="0,0,0,20" Text="{Binding Subtitle}" Style="{StaticResource SubtitleTextBlockStyle}"/>
-                </StackPanel>
-                <TextBlock Grid.Row="2" Grid.ColumnSpan="2" Margin="0,20,0,0" Text="{Binding Content}" Style="{StaticResource BodyTextBlockStyle}"/>
-            </Grid>
-        </ScrollViewer>
-
-        <VisualStateManager.VisualStateGroups>
-
-            <!-- Gli stati di visualizzazione rispecchiano lo stato di visualizzazione dell'applicazione -->
-            <VisualStateGroup x:Name="ViewStates">
-                <VisualState x:Name="PrimaryView" />
-                <VisualState x:Name="SinglePane">
-                    <Storyboard>
-                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="primaryColumn" Storyboard.TargetProperty="Width">
-                            <DiscreteObjectKeyFrame KeyTime="0" Value="*"/>
-                        </ObjectAnimationUsingKeyFrames>
-                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="secondaryColumn" Storyboard.TargetProperty="Width">
-                            <DiscreteObjectKeyFrame KeyTime="0" Value="0"/>
-                        </ObjectAnimationUsingKeyFrames>
-                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="itemDetail" Storyboard.TargetProperty="Visibility">
-                            <DiscreteObjectKeyFrame KeyTime="0" Value="Collapsed"/>
-                        </ObjectAnimationUsingKeyFrames>
-                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="itemListView" Storyboard.TargetProperty="Padding">
-                            <DiscreteObjectKeyFrame KeyTime="0" Value="120,0,90,60"/>
-                        </ObjectAnimationUsingKeyFrames>
-                    </Storyboard>
-                </VisualState>
-                <!--
-                    Quando un elemento è selezionato e solo un riquadro è visualizzato, la visualizzazione dei dettagli richiede modifiche più estese:
-                     * Nascondere l'elenco principale e la colonna in cui si trovava
-                     * Spostare i dettagli dell'elemento in basso di una riga creando spazio per il titolo
-                     * Spostare il titolo direttamente sopra ai dettagli
-                     * Regolare la spaziatura per i dettagli
-                 -->
-                <VisualState x:Name="SinglePane_Detail">
-                    <Storyboard>
-                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="primaryColumn" Storyboard.TargetProperty="Width">
-                            <DiscreteObjectKeyFrame KeyTime="0" Value="0"/>
-                        </ObjectAnimationUsingKeyFrames>
-                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="itemListView" Storyboard.TargetProperty="Visibility">
-                            <DiscreteObjectKeyFrame KeyTime="0" Value="Collapsed"/>
-                        </ObjectAnimationUsingKeyFrames>
-                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="itemDetail" Storyboard.TargetProperty="(Grid.Row)">
-                            <DiscreteObjectKeyFrame KeyTime="0" Value="1"/>
-                        </ObjectAnimationUsingKeyFrames>
-                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="itemDetail" Storyboard.TargetProperty="(Grid.RowSpan)">
-                            <DiscreteObjectKeyFrame KeyTime="0" Value="1"/>
-                        </ObjectAnimationUsingKeyFrames>
-                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="titlePanel" Storyboard.TargetProperty="(Grid.Column)">
-                            <DiscreteObjectKeyFrame KeyTime="0" Value="1"/>
-                        </ObjectAnimationUsingKeyFrames>
-                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="itemDetailGrid" Storyboard.TargetProperty="Margin">
-                            <DiscreteObjectKeyFrame KeyTime="0" Value="0,0,0,60"/>
-                        </ObjectAnimationUsingKeyFrames>
-                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="itemDetail" Storyboard.TargetProperty="Padding">
-                            <DiscreteObjectKeyFrame KeyTime="0" Value="120,0,90,0"/>
-                        </ObjectAnimationUsingKeyFrames>
-                    </Storyboard>
-                </VisualState>
-            </VisualStateGroup>
-        </VisualStateManager.VisualStateGroups>
+        <ScrollViewer/>
+        <Image HorizontalAlignment="Left" Height="100" Margin="36,22,0,0" Grid.Row="1" VerticalAlignment="Top" Width="100"/>
+        <Button Content="SynchNow" HorizontalAlignment="Left" Margin="177,137,0,0" Grid.Row="1" VerticalAlignment="Top" Click="Button_Click"/>
+        <TextBox x:Name="Messages" ScrollViewer.VerticalScrollBarVisibility="Auto" HorizontalAlignment="Left" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Height="112" Width="278" Margin="180,10,0,0" Grid.Row="1"/>
     </Grid>
 </Page>

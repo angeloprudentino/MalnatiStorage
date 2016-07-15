@@ -6,6 +6,7 @@
 #include "pch.h"
 #include "LogIn.xaml.h"
 #include "StorageClientAPP.xaml.h"
+#include "ClientMain.h"
 
 
 using namespace StorageClient;
@@ -120,7 +121,9 @@ void StorageClient::LogIn::LogInButton_Click(Platform::Object^ sender, Windows::
 	String^ user = this->User->Text;
 	//Platform::String^ password = this->Pass->Text;
 
-	String^ pass = this->Pass->Text;
+	ClientMain* c = ClientMain::getInstance();
+
+	String^ pass = this->passwordbox->Password;
 	String^ prova_pass = "Pippo";
 	int res=String::CompareOrdinal(prova_pass,pass);
 	if (res != 0){
