@@ -42,6 +42,8 @@
     </ClCompile>
     <ClCompile Include="LogIn.xaml.cpp" />
     <ClCompile Include="Register.xaml.cpp" />
+    <ClCompile Include="StorageClientAPP.xaml.cpp" />
+    <ClCompile Include="ClientMain.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -58,6 +60,8 @@
     </ClInclude>
     <ClInclude Include="LogIn.xaml.h" />
     <ClInclude Include="Register.xaml.h" />
+    <ClInclude Include="StorageClientAPP.xaml.h" />
+    <ClInclude Include="ClientMain.h" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest" />

@@ -7,14 +7,12 @@
 #include "StorageClientAPP.xaml.h"
 
 using namespace StorageClient;
-using namespace StorageClient::Common;
 
+using namespace std;
 using namespace Platform;
 using namespace Platform::Collections;
-using namespace concurrency;
 using namespace Windows::Foundation;
 using namespace Windows::Foundation::Collections;
-using namespace Windows::UI::ViewManagement;
 using namespace Windows::UI::Xaml;
 using namespace Windows::UI::Xaml::Controls;
 using namespace Windows::UI::Xaml::Controls::Primitives;
@@ -23,33 +21,20 @@ using namespace Windows::UI::Xaml::Input;
 using namespace Windows::UI::Xaml::Interop;
 using namespace Windows::UI::Xaml::Media;
 using namespace Windows::UI::Xaml::Navigation;
+using namespace concurrency;
+using namespace Windows::Storage;
 
-// Il modello di elemento per la pagina divisa è documentato all'indirizzo http://go.microsoft.com/fwlink/?LinkId=234234
 
+// Il modello di elemento per la pagina base è documentato all'indirizzo http://go.microsoft.com/fwlink/?LinkId=234237
+String^ path;
 StorageClientAPP::StorageClientAPP()
 {
 	InitializeComponent();
 	SetValue(_defaultViewModelProperty, ref new Map<String^,Object^>(std::less<String^>()));
-	auto navigationHelper = ref new Common::NavigationHelper(this,
-		ref new Common::RelayCommand(
-		[this](Object^) -> bool
-	{
-		return CanGoBack();
-	},
-		[this](Object^) -> void
-	{
-		GoBack();
-	}
-	)
-		);
+	auto navigationHelper = ref new Common::NavigationHelper(this);
 	SetValue(_navigationHelperProperty, navigationHelper);
 	navigationHelper->LoadState += ref new Common::LoadStateEventHandler(this, &StorageClientAPP::LoadState);
 	navigationHelper->SaveState += ref new Common::SaveStateEventHandler(this, &StorageClientAPP::SaveState);
-
-	itemListView->SelectionChanged += ref new SelectionChangedEventHandler(this, &StorageClientAPP::ItemListView_SelectionChanged);
-	Window::Current->SizeChanged += ref new WindowSizeChangedEventHandler (this, &StorageClientAPP::Window_SizeChanged);
-	InvalidateVisualState();
-
 }
 
 DependencyProperty^ StorageClientAPP::_defaultViewModelProperty =
@@ -74,168 +59,8 @@ DependencyProperty^ StorageClientAPP::_navigationHelperProperty =
 /// </summary>
 Common::NavigationHelper^ StorageClientAPP::NavigationHelper::get()
 {
-	//	return _navigationHelper;
 	return safe_cast<Common::NavigationHelper^>(GetValue(_navigationHelperProperty));
 }
-
-#pragma region Page state management
-
-/// <summary>
-/// Popola la pagina con il contenuto passato durante la navigazione.  Vengono inoltre forniti eventuali stati
-/// salvati durante la ricreazione di una pagina in una sessione precedente.
-/// </summary>
-/// <param name="navigationParameter">Valore del parametro passato a
-/// <see cref="Frame::Navigate(Type, Object)"/> quando la pagina è stata inizialmente richiesta.
-/// </param>
-/// <param name="pageState">Mappa di stato mantenuto da questa pagina nel corso di una sessione
-/// precedente.  Il valore è null la prima volta che viene visitata una pagina.</param>
-void StorageClientAPP::LoadState(Platform::Object^ sender, Common::LoadStateEventArgs^ e)
-{
-	// TODO: impostare un gruppo associabile utilizzando DefaultViewModel->Inserire("Group", <valore>)
-	// TODO: impostare una raccolta di elementi associabili utilizzando DefaultViewModel->Inserire("Items", <valore>)
-
-	if (e->PageState == nullptr)
-	{
-		// Se si tratta di una nuova pagina, selezionare il primo elemento automaticamente, a meno che non sia in uso
-		// la navigazione all'interno di pagine logiche (vedere l'istruzione #region più avanti relativa alla navigazione all'interno di pagine logiche.)
-		if (!UsingLogicalPageNavigation() && itemsViewSource->View != nullptr)
-		{
-			itemsViewSource->View->MoveCurrentToFirst();
-		}
-	}
-	else
-	{
-		// Ripristinare lo stato salvato in precedenza con questa pagina
-		if (e->PageState->HasKey("SelectedItem") && itemsViewSource->View != nullptr)
-		{
-			// TODO: richiamare itemsViewSource->View->MoveCurrentTo() con l'elemento
-			//       selezionato come specificato dal valore di pageState->Lookup("SelectedItem")
-		}
-	}
-}
-
-/// <summary>
-/// Mantiene lo stato associato a questa pagina in caso di sospensione dell'applicazione o se la
-/// viene scartata dalla cache di navigazione.  I valori devono essere conformi ai requisiti di
-/// serializzazione di <see cref="SuspensionManager::SessionState"/>.
-/// </summary>
-/// <param name="sender">Origine dell'evento. In genere <see cref="NavigationHelper"/></param>
-/// <param name="e">Dati di evento che forniscono un dizionario vuoto da popolare con
-/// uno stato serializzabile.</param>
-void StorageClientAPP::SaveState(Platform::Object^ sender, Common::SaveStateEventArgs^ e)
-{
-	if (itemsViewSource->View != nullptr)
-	{
-		auto selectedItem = itemsViewSource->View->CurrentItem;
-		// TODO: derivare un parametro di navigazione serializzabile e passarlo a
-		//       pageState->Insert("SelectedItem", <valore>)
-	}
-}
-
-#pragma endregion
-
-#pragma region Logical page navigation
-
-// La gestione dello stato di visualizzazione in genere rispecchia direttamente i quattro stati di visualizzazione dell'applicazione (Portrait e Landscape
-// a schermo intero più le visualizzazioni Snapped e Filled). La pagina divisa viene disegnata in modo che
-// gli stati di visualizzazione Snapped e Portrait dispongano ognuno di due sottostati distinti: viene visualizzato solo l'elenco
-// di elementi oppure solo i dettagli ma non entrambi allo stesso tempo.
-//
-// Ciò è interamente implementato mediante una singola pagina fisica che può rappresentare due pagine logiche.
-// Nel codice seguente viene raggiunto questo obiettivo senza che l'utente si renda conto della distinzione.
-
-/// <summary>
-/// Richiamato per determinare se la pagina deve funzionare come una singola pagina logica o come due pagine.
-/// </summary>
-/// <returns>True quando lo stato di visualizzazione corrente è Portrait o Snapped, false
-/// in caso contrario.</returns>
-bool StorageClientAPP::CanGoBack()
-{
-	if (UsingLogicalPageNavigation() && itemListView->SelectedItem != nullptr)
-	{
-		return true;
-	}
-	else
-	{
-		return NavigationHelper->CanGoBack();
-	}
-}
-
-void StorageClientAPP::GoBack()
-{
-	if (UsingLogicalPageNavigation() && itemListView->SelectedItem != nullptr)
-	{
-		// Quando è attiva la navigazione all'interno di pagine logiche e vi è un elemento selezionato, vengono
-		// visualizzati i dettagli di tale elemento.  La cancellazione della selezione comporterà il ritorno
-		// all'elenco di elementi.  Dal punto di vista dell'utente, si tratta di un'operazione di navigazione logica
-		// a ritroso.
-		itemListView->SelectedItem = nullptr;
-	}
-	else
-	{
-		NavigationHelper->GoBack();
-	}
-}
-
-/// <summary>
-/// Richiamato con le modifiche alle dimensioni della finestra
-/// </summary>
-/// <param name="sender">Finestra corrente</param>
-/// <param name="e">Dati dell'evento in cui vengono descritte le nuove dimensioni della finestra</param>
-void StorageClientAPP::Window_SizeChanged(Platform::Object^ sender, Windows::UI::Core::WindowSizeChangedEventArgs^ e)
-{
-	InvalidateVisualState();
-}
-
-/// <summary>
-/// Richiamato quando un elemento all'interno dell'elenco è selezionato.
-/// </summary>
-/// <param name="sender"> GridView in cui viene visualizzato l'elemento selezionato.</param>
-/// <param name="e">Dati dell'evento in cui è descritto in che modo è stata modificata la selezione.</param>
-void StorageClientAPP::ItemListView_SelectionChanged(Platform::Object^ sender, Windows::UI::Xaml::Controls::SelectionChangedEventArgs^ e)
-{
-	if (UsingLogicalPageNavigation())
-	{
-		InvalidateVisualState();
-	}
-}
-
-/// <summary>
-/// Richiamato per determinare se la pagina deve funzionare come una singola pagina logica o come due pagine.
-/// </summary>
-/// <returns>True se la finestra deve agire come una sola pagina logica, false
-/// in caso contrario.</returns>
-bool StorageClientAPP::UsingLogicalPageNavigation()
-{
-	return Windows::UI::Xaml::Window::Current->Bounds.Width < MinimumWidthForSupportingTwoPanes;
-}
-
-void StorageClientAPP::InvalidateVisualState()
-{
-	auto visualState = DetermineVisualState();
-	Windows::UI::Xaml::VisualStateManager::GoToState(this, visualState, false);
-	NavigationHelper->GoBackCommand->RaiseCanExecuteChanged();
-}
-
-/// <summary>
-/// Richiamato per determinare lo stato di visualizzazione corrispondente a quello di
-/// un'applicazione.
-/// </summary>
-/// <returns>Nome dello stato di visualizzazione desiderato.  È lo stesso nome utilizzato per lo
-/// stato di visualizzazione, eccetto quando un elemento è selezionato nelle visualizzazioni Portrait e Snapped, nei cui casi
-/// questa pagina logica aggiuntiva viene rappresentata aggiungendo un suffisso _Detail.</returns>
-Platform::String^ StorageClientAPP::DetermineVisualState()
-{
-	if (!UsingLogicalPageNavigation())
-		return "PrimaryView";
-
-	// Aggiorna lo stato abilitato del pulsante Indietro quando viene modificato lo stato di visualizzazione
-	auto logicalPageBack = UsingLogicalPageNavigation() && itemListView->SelectedItem != nullptr;
-
-	return logicalPageBack ? "SinglePane_Detail" : "SinglePane";
-}
-
-#pragma endregion
 
 #pragma region Navigation support
 
@@ -250,12 +75,131 @@ Platform::String^ StorageClientAPP::DetermineVisualState()
 
 void StorageClientAPP::OnNavigatedTo(NavigationEventArgs^ e)
 {
+	path = (String^)e->Parameter;
 	NavigationHelper->OnNavigatedTo(e);
+	this->Messages->Text = path;
 }
 
 void StorageClientAPP::OnNavigatedFrom(NavigationEventArgs^ e)
 {
 	NavigationHelper->OnNavigatedFrom(e);
-
+	//path = e->Parameter->ToString();
 }
+
 #pragma endregion
+
+/// <summary>
+/// Popola la pagina con il contenuto passato durante la navigazione. Vengono inoltre forniti eventuali stati
+/// salvati durante la ricreazione di una pagina in una sessione precedente.
+/// </summary>
+/// <param name="sender">
+/// Origine dell'evento. In genere <see cref="NavigationHelper"/>
+/// </param>
+/// <param name="e">Dati evento che forniscono il parametro di navigazione passato a
+/// <see cref="Frame.Navigate(Type, Object)"/> quando la pagina è stata inizialmente richiesta e
+/// un dizionario di stato mantenuto da questa pagina nel corso di una sessione
+/// precedente. Lo stato è null la prima volta che viene visitata una pagina.</param>
+void StorageClientAPP::LoadState(Object^ sender, Common::LoadStateEventArgs^ e)
+{
+	(void) sender;	// Parametro non utilizzato
+	(void) e;	// Parametro non utilizzato
+}
+
+/// <summary>
+/// Mantiene lo stato associato a questa pagina in caso di sospensione dell'applicazione o se la
+/// viene scartata dalla cache di navigazione.  I valori devono essere conformi ai requisiti di
+/// serializzazione di <see cref="SuspensionManager::SessionState"/>.
+/// </summary>
+/// <param name="sender">Origine dell'evento. In genere <see cref="NavigationHelper"/></param>
+/// <param name="e">Dati di evento che forniscono un dizionario vuoto da popolare con
+/// uno stato serializzabile.</param>
+void StorageClientAPP::SaveState(Object^ sender, Common::SaveStateEventArgs^ e){
+	(void) sender;	// Parametro non utilizzato
+	(void) e; // Parametro non utilizzato
+}
+
+
+void StorageClient::StorageClientAPP::Button_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+{
+	//PRIMA PROVA
+	//try{
+	//	Messages->Text = "";
+	//	StorageFolder^ folder;
+	//	folder->GetFolderFromPathAsync(path);
+
+	//	
+	//		create_task(folder->GetFoldersAsync()).then([this](IVectorView<StorageFolder^>^ folders)
+	//		{
+	//			StorageFolder^ folder;
+	//			folder->GetFolderFromPathAsync(path);
+
+	//			create_task(folder->GetFilesAsync()).then([this, folders](IVectorView<StorageFile^>^ files)
+	//			{
+	//				//auto count = folders->Size + files->Size;
+	//				String^ outputText = ref new String();
+	//				//outputText = KnownFolders::PicturesLibrary->Name + " (" + count.ToString() + ")\n\n";
+	//				StorageFolder^ folder;
+	//				folder->GetFolderFromPathAsync(path);
+	//				outputText = folder->Name;// +" (" + count.ToString() + ")\n\n";
+	//				std::for_each(begin(folders), end(folders), [this, &outputText](StorageFolder^ folder)
+	//				{
+	//					outputText += "    " + folder->DisplayName + "\\\n";
+	//				});
+	//				std::for_each(begin(files), end(files), [this, &outputText](StorageFile^ file)
+	//				{
+	//					outputText += "    " + file->Name + "\n";
+	//				});
+	//				Messages->Text = outputText;
+	//			});
+	//		});
+	//}
+	//catch (Exception^ e){
+	//	this->Messages->Text= e->Message;
+	//}
+
+	//LETTURA DA KNOWNFOLDER
+	Messages->Text= "";
+
+	create_task(KnownFolders::PicturesLibrary->GetFoldersAsync()).then([this](IVectorView<StorageFolder^>^ folders)
+	{
+		create_task(KnownFolders::PicturesLibrary->GetFilesAsync()).then([this, folders](IVectorView<StorageFile^>^ files)
+		{
+			auto count = folders->Size + files->Size;
+			String^ outputtext = ref new String();
+			outputtext = KnownFolders::PicturesLibrary->Name + " (" + count.ToString() + ")\n\n";
+			std::for_each(begin(folders), end(folders), [this, &outputtext](StorageFolder^ folder)
+			{
+				outputtext += "    " + folder->DisplayName + "\\\n";
+			});
+			std::for_each(begin(files), end(files), [this, &outputtext](StorageFile^ file)
+			{
+				outputtext += "    " + file->Name + "\n";
+			});
+			Messages->Text = outputtext;
+		});
+	});
+
+	//LETTURA DA FOLDER QUALSIASI
+	//Messages->Text = "";
+	//StorageFolder^ folder;
+	//folder->GetFolderFromPathAsync(path);
+
+	//create_task(folder->GetFoldersAsync()).then([this](IVectorView<StorageFolder^>^ folders)
+	//{
+	//	create_task(KnownFolders::PicturesLibrary->GetFilesAsync()).then([this, folders](IVectorView<StorageFile^>^ files)
+	//	{
+	//		auto count = folders->Size + files->Size;
+	//		String^ outputtext = ref new String();
+	//		outputtext = KnownFolders::PicturesLibrary->Name + " (" + count.ToString() + ")\n\n";
+	//		std::for_each(begin(folders), end(folders), [this, &outputtext](StorageFolder^ folder)
+	//		{
+	//			outputtext += "    " + folder->DisplayName + "\\\n";
+	//		});
+	//		std::for_each(begin(files), end(files), [this, &outputtext](StorageFile^ file)
+	//		{
+	//			outputtext += "    " + file->Name + "\n";
+	//		});
+	//		Messages->Text = outputtext;
+	//	});
+	//});
+}

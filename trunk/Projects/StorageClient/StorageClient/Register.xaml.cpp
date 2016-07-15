@@ -5,6 +5,7 @@
 
 #include "pch.h"
 #include "Register.xaml.h"
+#include "StorageClientAPP.xaml.h"
 #include "Windows.h"
 #include <stdio.h>
 #include <iostream>
@@ -19,6 +20,8 @@ using namespace Platform;
 using namespace Platform::Collections;
 using namespace Windows::Foundation;
 using namespace Windows::Foundation::Collections;
+using namespace Windows::Storage;
+using namespace Windows::Storage::Pickers;
 using namespace Windows::Graphics::Display;
 using namespace Windows::UI::ViewManagement;
 using namespace Windows::UI::Xaml;
@@ -42,6 +45,7 @@ using namespace std;
 
 
 // Il modello di elemento per la pagina base è documentato all'indirizzo http://go.microsoft.com/fwlink/?LinkId=234237
+
 
 Register::Register()
 {
@@ -171,11 +175,13 @@ void StorageClient::Register::Register_Click(Platform::Object^ sender, Windows::
 	String^ user = this->User->Text;
 	//Platform::String^ password = this->Pass->Text;
 	
-	String^ pass = this->Pass->Text;
+	
+	String^ pass = this->passwordbox->Password;
 	this->Prova->Text = pass;
-	String^ prova_pass = "Pippo";
 	//int res=String::CompareOrdinal(prova_pass,pass);
 
+	String^ folder_path = this->Directory->Text;
+	this->Frame->Navigate(Windows::UI::Xaml::Interop::TypeName(StorageClientAPP::typeid),folder_path);;
 }
 
 
@@ -184,7 +190,31 @@ void StorageClient::Register::Register_Click(Platform::Object^ sender, Windows::
 
 void StorageClient::Register::backButton_Copy_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
+	this->Prova->Text = ""; //prova è una text box per vedere i risultati
 
-	//va a cercare la cartella
+	// Clear previous returned folder name, if it exists, between iterations of this scenario
+
+	FolderPicker^ folderPicker = ref new FolderPicker();
+	folderPicker->SuggestedStartLocation = PickerLocationId::ComputerFolder;
+
+	// Users expect to have a filtered view of their folders depending on the scenario.
+	// For example, when choosing a documents folder, restrict the filetypes to documents for your application.
+	//folderPicker->FileTypeFilter->Append(".docx");
+	//folderPicker->FileTypeFilter->Append(".xlsx");
+	//folderPicker->FileTypeFilter->Append(".pptx");
+	folderPicker->FileTypeFilter->Append("*");
+
+	create_task(folderPicker->PickSingleFolderAsync()).then([this](StorageFolder^ folder)
+	{
+		if (folder)
+		{
+			Prova->Text = "Picked folder: " + folder->Name;
+			this->Directory->Text = folder->Path;
+		}
+		else
+		{
+			Prova->Text = "Operation cancelled.";
+		}
+	});
 
 }

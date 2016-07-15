@@ -6,6 +6,7 @@
 #pragma once
 
 #include "App.g.h"
+#include "ClientMain.h"
 
 namespace StorageClient
 {
@@ -19,7 +20,6 @@ namespace StorageClient
 
 	internal:
 		App();
-
 	private:
 		void OnSuspending(Platform::Object^ sender, Windows::ApplicationModel::SuspendingEventArgs^ e);
 		void OnNavigationFailed(Platform::Object ^sender, Windows::UI::Xaml::Navigation::NavigationFailedEventArgs ^e);

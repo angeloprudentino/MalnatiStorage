@@ -143,6 +143,7 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="ClientMain.h" />
     <ClInclude Include="Common\NavigationHelper.h" />
     <ClInclude Include="Common\RelayCommand.h" />
     <ClInclude Include="Common\SuspensionManager.h" />
@@ -196,6 +197,7 @@
     <ClCompile Include="App.xaml.cpp">
       <DependentUpon>App.xaml</DependentUpon>
     </ClCompile>
+    <ClCompile Include="ClientMain.cpp" />
     <ClCompile Include="Common\NavigationHelper.cpp" />
     <ClCompile Include="Common\RelayCommand.cpp" />
     <ClCompile Include="Common\SuspensionManager.cpp" />
