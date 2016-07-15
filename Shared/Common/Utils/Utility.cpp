@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <fstream>
+#include <boost/algorithm/string/replace.hpp>
 #include "openssl/rand.h"
 #include "openssl/evp.h"
 #include "openssl/sha.h"
@@ -19,8 +20,11 @@
 #include "openssl/bio.h" // BIO objects for I/O
 #include "openssl/ssl.h" // SSL and SSL_CTX for SSL connections
 #include "openssl/err.h" // Error reporting
-
 #include "Utility.h"
+
+#define RAND_LEN 20
+#define SEP '$'
+#define SEP_ESC "&#36"
 
 using namespace std;
 
@@ -67,11 +71,45 @@ const string formatFileDate(const time_t& t){
 }
 #pragma endregion
 
+string escape(const string& aUser){
+	string res = aUser;
+
+	string from = to_string(SEP);
+	string to = SEP_ESC;
+	boost::replace_all(res, from, to);
+
+	return res;
+}
+
+string unescape(const string& aUser){
+	string res = aUser;
+
+	string from = SEP_ESC;
+	string to = to_string(SEP);
+	boost::replace_all(res, from, to);
+
+	return res;
+}
+
 string_ptr getUniqueToken(const string& aUser){
 	string_ptr rand = opensslB64RandomToken();
 	string t = timeToString(time(NULL));
-	string token(*rand + "$" + aUser + "-" + t + "$" + *rand);
+	string token(*rand + SEP + escape(aUser) + SEP + t + SEP + *rand);
 	return opensslB64Encode((char*)token.c_str(), (int)token.size());
+}
+
+const string getUserFromToken(const string& aToken){
+	B64result ret = opensslB64Decode(aToken);
+	string s(ret.data);
+
+	// Turn into a stream.
+	stringstream ss(ret.data);
+	string tok;
+
+	getline(ss, tok, SEP); //skip first rand
+	getline(ss, tok, SEP);
+
+	return unescape(tok);
 }
 
 #pragma region "Crypto Utilities"
@@ -395,7 +433,7 @@ string_ptr opensslB64Checksum(const string& aString){
 }
 
 string_ptr opensslB64RandomToken(){
-	char* buff = new char[20];
+	char* buff = new char[RAND_LEN];
 	int res = RAND_bytes((unsigned char*)buff, 20);
 
 	if (res == 0){

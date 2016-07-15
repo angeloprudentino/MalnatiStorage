@@ -164,6 +164,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\..\ServerMain\DBManager.cpp" />
     <ClCompile Include="..\..\..\..\ServerMain\StorageServer.cpp" />
     <ClCompile Include="..\..\..\..\Shared\Common\Executor\Executor.cpp" />
     <ClCompile Include="..\..\..\..\Shared\Common\Executor\MessageQueue.cpp" />
@@ -174,6 +175,7 @@
     <ClCompile Include="ServerForm.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\..\ServerMain\DBManager.h" />
     <ClInclude Include="..\..\..\..\ServerMain\StorageServer.h" />
     <ClInclude Include="..\..\..\..\Shared\Common\Executor\Executor.h" />
     <ClInclude Include="..\..\..\..\Shared\Common\Executor\MessageQueue.h" />

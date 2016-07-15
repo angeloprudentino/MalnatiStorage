@@ -43,10 +43,10 @@ public:
 	virtual void onServerError(string aClassName, string aFuncName, string aMsg) = 0;
 	virtual void onServerCriticalError(string aClassName, string aFuncName, string aMsg) = 0;
 };
-#define doServerLog(ptr, s1, s2, s3) if(ptr!=nullptr){ptr->onServerLog(s1, s2, s3);}
-#define doServerWarning(ptr, s1, s2, s3) if(ptr!=nullptr){ptr->onServerWarning(s1, s2, s3);}
-#define doServerError(ptr, s1, s2, s3) if(ptr!=nullptr){ptr->onServerError(s1, s2, s3);}
-#define doServerCriticalError(ptr, s1, s2, s3) if(ptr!=nullptr){ptr->onServerCriticalError(s1, s2, s3);}
+#define doServerLog(ptr, aClassName, aFuncName, aMsg) if(ptr!=nullptr){ptr->onServerLog(aClassName, aFuncName, aMsg);}
+#define doServerWarning(ptr, aClassName, aFuncName, aMsg) if(ptr!=nullptr){ptr->onServerWarning(aClassName, aFuncName, aMsg);}
+#define doServerError(ptr, aClassName, aFuncName, aMsg) if(ptr!=nullptr){ptr->onServerError(aClassName, aFuncName, aMsg);}
+#define doServerCriticalError(ptr, aClassName, aFuncName, aMsg) if(ptr!=nullptr){ptr->onServerCriticalError(aClassName, aFuncName, aMsg);}
 
 #endif
 
@@ -81,6 +81,7 @@ const string formatFileDate(const time_t& t);
 
 // Generate a unique token to identify a session
 string_ptr getUniqueToken(const string& aUser); //throws EOpensslException
+const string getUserFromToken(const string& aToken); //throws EOpensslException
 
 // openssl crypto system init
 void initCrypto();

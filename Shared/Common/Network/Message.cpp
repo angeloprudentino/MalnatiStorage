@@ -934,7 +934,7 @@ TUpdateStopReplyMessage::TUpdateStopReplyMessage(TBaseMessage_ptr& aBase){
 	this->decodeMessage();
 }
 
-TUpdateStopReplyMessage::TUpdateStopReplyMessage(const bool aResp, unsigned int aVersion, time_t aTime){
+TUpdateStopReplyMessage::TUpdateStopReplyMessage(const bool aResp, int aVersion, time_t aTime){
 	this->fID = UPDATE_STOP_REPLY_ID;
 	this->fResp = aResp;
 	this->fVersion = aVersion;
