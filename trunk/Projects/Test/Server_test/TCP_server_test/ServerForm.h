@@ -1,9 +1,10 @@
 /*
-* Author: Angelo Prudentino
-* Date: 30/09/2015
-* File: ServerForm.h
-*
-*/
+ * Author: Angelo Prudentino
+ * Date: 30/09/2015
+ * File: ServerForm.h
+ * Description: This is the UI class of the server
+ *
+ */
 #pragma once
 
 #include <string>
@@ -209,7 +210,7 @@ namespace Server_test {
 	delegate void afterStartServerDelegate();
 	delegate void LogDelegate(String^ strToLog);
 
-	private: Thread^ NetworkThread;
+	private: Thread^ ServerThread;
 	private: bool server_is_started = false;
 	private: TStorageServer* serverEngine = nullptr;
 
@@ -231,8 +232,8 @@ namespace Server_test {
 				 if (!this->server_is_started){
 					 this->beforeStartServer();
 					 this->Log("TServerForm", "btnStart_Click", "server is going to start");
-					 this->NetworkThread = gcnew Thread(gcnew ParameterizedThreadStart(this, &TServerForm::initTCPserver));
-					 this->NetworkThread->Start(tbPort->Text);
+					 this->ServerThread = gcnew Thread(gcnew ParameterizedThreadStart(this, &TServerForm::initTCPserver));
+					 this->ServerThread->Start(tbPort->Text);
 				 }
 				 else{
 					 this->beforeStopServer();

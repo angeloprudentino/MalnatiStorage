@@ -9,10 +9,91 @@
 #include "StorageServer.h"
 #include "Utility.h"
 
+#define ADD_FILE 0
+#define UPDATE_FILE 1
+#define REMOVE_FILE 2
+
+
 ////////////////////////////////////
 //        TStorageServer	      //
 ////////////////////////////////////
 #pragma region "TStorageServer"
+const bool TStorageServer::isThereASessionFor(const string aUser){
+	//access map in mutual exclusion to avoid 2 thread inserting the same session in the table
+	unique_lock<mutex> lock(this->fSessionsMutex);
+
+	auto pos = this->fSessions->find(aUser);
+	return pos != this->fSessions->end();
+}
+
+const bool TStorageServer::isThereAnUpdateSessionFor(const string aUser){
+	//access map in mutual exclusion to avoid 2 thread inserting the same session in the table
+	unique_lock<mutex> lock(this->fSessionsMutex);
+
+	auto pos = this->fSessions->find(aUser);
+	bool res = pos != this->fSessions->end();
+	if (res == true){
+		res = pos->second->getKind() == UPDATE_SESSION;
+	}
+
+	return res;
+}
+
+const bool TStorageServer::isThereARestoreSessionFor(const string aUser){
+	//access map in mutual exclusion to avoid 2 thread inserting the same session in the table
+	unique_lock<mutex> lock(this->fSessionsMutex);
+
+	auto pos = this->fSessions->find(aUser);
+	bool res = pos != this->fSessions->end();
+	if (res == true){
+		res = pos->second->getKind() == RESTORE_SESSION;
+	}
+
+	return res;
+}
+
+void TStorageServer::newUpdateSession(const string aUser, const string aToken){
+	//access map in mutual exclusion to avoid 2 thread inserting the same session in the table
+	unique_lock<mutex> lock(this->fSessionsMutex);
+
+	this->fSessions->emplace(aUser, new_TSession_ptr(UPDATE_SESSION, aToken));
+	//TODO: load data abaout the session from DB
+}
+
+void TStorageServer::newRestoreSession(const string aUser, const string aToken){
+	//access map in mutual exclusion to avoid 2 thread inserting the same session in the table
+	unique_lock<mutex> lock(this->fSessionsMutex);
+
+	this->fSessions->emplace(aUser, new_TSession_ptr(RESTORE_SESSION, aToken));
+	//TODO: load data abaout the session from DB
+
+}
+
+void TStorageServer::updateSessionWithFile(const string aUser, TFile_ptr& aFile, int aOperation){
+	//access map in mutual exclusion to avoid 2 thread inserting the same session in the table
+	unique_lock<mutex> lock(this->fSessionsMutex);
+
+	auto session = this->fSessions->find(aUser);
+	if (session != this->fSessions->end()){
+		switch (aOperation){
+			case ADD_FILE:
+				session->second->addFile(move_TFile_ptr(aFile));
+				break;
+			
+			case UPDATE_FILE:
+				session->second->updateFile(move_TFile_ptr(aFile));
+				break;
+
+			case REMOVE_FILE:
+				session->second->removeFile(move_TFile_ptr(aFile));
+				break;
+
+			default:
+				break;
+		}
+	}
+}
+
 TStorageServer::TStorageServer(int AServerPort, IManagedServerSockController^ aCallbackObj){
 	initCrypto();
 
@@ -28,6 +109,14 @@ TStorageServer::TStorageServer(int AServerPort, IManagedServerSockController^ aC
 	}
 
 	this->onServerLog("TStorageServer", "constructor", "TServerSockController object created");
+
+	this->onServerLog("TStorageServer", "constructor", "creating TSessions object...");
+	this->fSessions = new TSessions();
+	this->onServerLog("TStorageServer", "constructor", "TSessions object created");
+
+	this->onServerLog("TStorageServer", "constructor", "creating TDBManager object...");
+	this->fDBManager = new TDBManager(DEFAULT_DB_HOST, DEFAULT_DB_NAME);
+	this->onServerLog("TStorageServer", "constructor", "TDBManager object created");
 }
 
 TStorageServer::~TStorageServer(){
@@ -44,6 +133,24 @@ TStorageServer::~TStorageServer(){
 		delete this->fExecutor;
 		this->onServerLog("TStorageServer", "destructor", "TMessageExecutor object deleted");
 		this->fExecutor = nullptr;
+	}
+
+	if (this->fSessions != nullptr){
+		this->onServerLog("TStorageServer", "destructor", "deleting TSessions object...");
+		for (TSessions::iterator it = this->fSessions->begin(); it != this->fSessions->end(); it++){
+			it->second.reset();
+		}
+		this->fSessions->clear();
+		delete this->fSessions;
+		this->fSessions = nullptr;
+		this->onServerLog("TStorageServer", "destructor", "TSessions object deleted");
+	}
+
+	if (this->fDBManager != nullptr){
+		this->onServerLog("TStorageServer", "destructor", "deleting TDBManager object...");
+		delete this->fDBManager;
+		this->fDBManager = nullptr;
+		this->onServerLog("TStorageServer", "destructor", "TDBManager object deleted");
 	}
 
 	this->fCallbackObj = nullptr;
@@ -146,7 +253,9 @@ void TStorageServer::processRegistrationRequest(TConnectionHandle aConnection, T
 
 		//TODO: check if user already registred; if so enqueue negative response
 
-		//TODO: store user in DB and send back a positive response
+		//TODO: store user in DB 
+		
+		//send back a positive response
 		TUserRegistrReplyMessage_ptr reply = new_TUserRegistrReplyMessage_ptr(true);
 		TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)reply, aConnection); //reply is moved
 		this->enqueueMessageToSend(replyContainer); //replyContainer is moved
@@ -156,42 +265,56 @@ void TStorageServer::processRegistrationRequest(TConnectionHandle aConnection, T
 	}
 }
 
-void TStorageServer::processUpdateStartRequest(TConnectionHandle aConnection, TUpdateStartReqMessage_ptr& aMsg){
+void TStorageServer::processUpdateStart(TConnectionHandle aConnection, TUpdateStartReqMessage_ptr& aMsg){
 	if (aMsg != nullptr){
 		string u = aMsg->getUser();
 		string p = aMsg->getPass();
 
 		//Log the message
-		this->onServerLog("TStorageServer", "processUpdateStartRequest", "####################################");
-		this->onServerLog("TStorageServer", "processUpdateStartRequest", "####################################");
-		this->onServerLog("TStorageServer", "processUpdateStartRequest", "## UpdateStartReqMessage ");
-		this->onServerLog("TStorageServer", "processUpdateStartRequest", "## ");
-		this->onServerLog("TStorageServer", "processUpdateStartRequest", "## user: " + u);
-		this->onServerLog("TStorageServer", "processUpdateStartRequest", "## coded pass: " + p);
-		this->onServerLog("TStorageServer", "processUpdateStartRequest", "## ");
-		this->onServerLog("TStorageServer", "processUpdateStartRequest", "####################################");
-		this->onServerLog("TStorageServer", "processUpdateStartRequest", "####################################");
+		this->onServerLog("TStorageServer", "processUpdateStart", "####################################");
+		this->onServerLog("TStorageServer", "processUpdateStart", "####################################");
+		this->onServerLog("TStorageServer", "processUpdateStart", "## UpdateStartReqMessage ");
+		this->onServerLog("TStorageServer", "processUpdateStart", "## ");
+		this->onServerLog("TStorageServer", "processUpdateStart", "## user: " + u);
+		this->onServerLog("TStorageServer", "processUpdateStart", "## coded pass: " + p);
+		this->onServerLog("TStorageServer", "processUpdateStart", "## ");
+		this->onServerLog("TStorageServer", "processUpdateStart", "####################################");
+		this->onServerLog("TStorageServer", "processUpdateStart", "####################################");
 
-		//TODO: check if no sessions for this user are already active
+		//TODO: check if user already registred; if so no response
 
+		//check if no session for this user is already active
+		bool isSess = this->isThereASessionFor(u);
+		if (isSess){
+			this->onServerError("TStorageServer", "processUpdateStart", "A session is already active for user: " + u);
 
-		//TODO: generate a new token and start a new session
-		string token;
-		try{
-			string_ptr token_ptr = getUniqueToken(u);
-			token = (token_ptr.release())->c_str();
-		}
-		catch (EOpensslException e){
-			this->onServerError("TStorageServer", "processUpdateStartRequest", "EOpensslException creating a new token: " + e.getMessage() + " ; skipped.");
+			//send back negative response
+			TUpdateStartReplyMessage_ptr reply = new_TUpdateStartReplyMessage_ptr(false, "");
+			TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)reply, aConnection); //reply is moved
+			this->enqueueMessageToSend(replyContainer); //replyContainer is moved
 			return;
 		}
 
-		TUpdateStartReplyMessage_ptr reply = new_TUpdateStartReplyMessage_ptr(true, token);
+		//generate a new token and start a new session
+		string_ptr token_ptr;
+		try{
+			token_ptr = getUniqueToken(u);
+		}
+		catch (EOpensslException e){
+			this->onServerError("TStorageServer", "processUpdateStart", "EOpensslException creating a new token: " + e.getMessage() + " ; skipped.");
+			return;
+		}
+		this->newUpdateSession(u, token_ptr->c_str());
+
+		//send back positive response
+		TUpdateStartReplyMessage_ptr reply = new_TUpdateStartReplyMessage_ptr(true, token_ptr->c_str());
 		TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)reply, aConnection); //reply is moved
 		this->enqueueMessageToSend(replyContainer); //replyContainer is moved
+
+		token_ptr.reset();
 	}
 	else{
-		this->onServerError("TStorageServer", "processUpdateStartRequest", "received an empty message; skipped.");
+		this->onServerError("TStorageServer", "processUpdateStart", "received an empty message; skipped.");
 	}
 }
 
@@ -215,11 +338,24 @@ void TStorageServer::processAddNewFile(TConnectionHandle aConnection, TAddNewFil
 		this->onServerLog("TStorageServer", "processAddNewFile", "####################################");
 		this->onServerLog("TStorageServer", "processAddNewFile", "####################################");
 
-		//TODO: check if token is associated to a valid session
+		//check if token is associated to a valid session
+		string u = getUserFromToken(t);
+		bool isSess = this->isThereAnUpdateSessionFor(u);
+		if (!isSess){
+			this->onServerError("TStorageServer", "processAddNewFile", "There is no update session opened for user: " + u);
 
+			//enqueue negative response
+			TFileAckMessage_ptr reply = new_TFileAckMessage_ptr(false, fp);
+			TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)reply, aConnection); //reply is moved
+			this->enqueueMessageToSend(replyContainer); //replyContainer is moved
+		}
 
-		//TODO: add file in proper location and send a positive response
+		//TODO: add file in proper location
 
+		//update session object
+		//this->updateSessionWithFile(u, /*file*/, ADD_FILE);
+
+		//send a positive response
 		TFileAckMessage_ptr reply = new_TFileAckMessage_ptr(true, fp);
 		TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)reply, aConnection); //reply is moved
 		this->enqueueMessageToSend(replyContainer); //replyContainer is moved
@@ -249,11 +385,24 @@ void TStorageServer::processUpdateFile(TConnectionHandle aConnection, TUpdateFil
 		this->onServerLog("TStorageServer", "processUpdateFile", "####################################");
 		this->onServerLog("TStorageServer", "processUpdateFile", "####################################");
 
-		//TODO: check if token is associated to a valid session
+		//check if token is associated to a valid session
+		string u = getUserFromToken(t);
+		bool isSess = this->isThereAnUpdateSessionFor(u);
+		if (!isSess){
+			this->onServerError("TStorageServer", "processUpdateFile", "There is no update session opened for user: " + u);
 
+			//enqueue negative response
+			TFileAckMessage_ptr reply = new_TFileAckMessage_ptr(false, fp);
+			TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)reply, aConnection); //reply is moved
+			this->enqueueMessageToSend(replyContainer); //replyContainer is moved
+		}
 
-		//TODO: update file in proper location and send a positive response
+		//TODO: add file in proper location 
 
+		//update session object
+		//this->updateSessionWithFile(u, /*file*/, ADD_FILE);
+
+		//send a positive response
 		TFileAckMessage_ptr reply = new_TFileAckMessage_ptr(true, fp);
 		TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)reply, aConnection); //reply is moved
 		this->enqueueMessageToSend(replyContainer); //replyContainer is moved
@@ -279,11 +428,24 @@ void TStorageServer::processRemoveFile(TConnectionHandle aConnection, TRemoveFil
 		this->onServerLog("TStorageServer", "processRemoveFile", "####################################");
 		this->onServerLog("TStorageServer", "processRemoveFile", "####################################");
 
-		//TODO: check if token is associated to a valid session
+		//check if token is associated to a valid session
+		string u = getUserFromToken(t);
+		bool isSess = this->isThereAnUpdateSessionFor(u);
+		if (!isSess){
+			this->onServerError("TStorageServer", "processRemoveFile", "There is no update session opened for user: " + u);
 
+			//enqueue negative response
+			TFileAckMessage_ptr reply = new_TFileAckMessage_ptr(false, fp);
+			TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)reply, aConnection); //reply is moved
+			this->enqueueMessageToSend(replyContainer); //replyContainer is moved
+		}
 
-		//TODO: remove file and send a positive response
+		//TODO: remove file 
 
+		//update session object
+		//this->updateSessionWithFile(u, /*file*/, ADD_FILE);
+
+		//send a positive response
 		TFileAckMessage_ptr reply = new_TFileAckMessage_ptr(true, fp);
 		TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)reply, aConnection); //reply is moved
 		this->enqueueMessageToSend(replyContainer); //replyContainer is moved
@@ -293,32 +455,42 @@ void TStorageServer::processRemoveFile(TConnectionHandle aConnection, TRemoveFil
 	}
 }
 
-void TStorageServer::processUpdateStopRequest(TConnectionHandle aConnection, TUpdateStopReqMessage_ptr& aMsg){
+void TStorageServer::processUpdateStop(TConnectionHandle aConnection, TUpdateStopReqMessage_ptr& aMsg){
 	if (aMsg != nullptr){
 		string t = aMsg->getToken();
 
 		//Log the message
-		this->onServerLog("TStorageServer", "processRemoveFile", "####################################");
-		this->onServerLog("TStorageServer", "processRemoveFile", "####################################");
-		this->onServerLog("TStorageServer", "processRemoveFile", "## UpdateStopReqMessage ");
-		this->onServerLog("TStorageServer", "processRemoveFile", "## ");
-		this->onServerLog("TStorageServer", "processRemoveFile", "## token: " + t);
-		this->onServerLog("TStorageServer", "processRemoveFile", "## ");
-		this->onServerLog("TStorageServer", "processRemoveFile", "####################################");
-		this->onServerLog("TStorageServer", "processRemoveFile", "####################################");
+		this->onServerLog("TStorageServer", "processUpdateStop", "####################################");
+		this->onServerLog("TStorageServer", "processUpdateStop", "####################################");
+		this->onServerLog("TStorageServer", "processUpdateStop", "## UpdateStopReqMessage ");
+		this->onServerLog("TStorageServer", "processUpdateStop", "## ");
+		this->onServerLog("TStorageServer", "processUpdateStop", "## token: " + t);
+		this->onServerLog("TStorageServer", "processUpdateStop", "## ");
+		this->onServerLog("TStorageServer", "processUpdateStop", "####################################");
+		this->onServerLog("TStorageServer", "processUpdateStop", "####################################");
 
-		//TODO: check if token is associated to a valid session
+		//check if token is associated to a valid session
+		string u = getUserFromToken(t);
+		bool isSess = this->isThereAnUpdateSessionFor(u);
+		if (!isSess){
+			this->onServerError("TStorageServer", "processUpdateStop", "There is no update session opened for user: " + u);
+
+			//enqueue negative response
+			TUpdateStopReplyMessage_ptr reply = new_TUpdateStopReplyMessage_ptr(false, NO_VERSION, time(nullptr));
+			TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)reply, aConnection); //reply is moved
+			this->enqueueMessageToSend(replyContainer); //replyContainer is moved
+		}
 
 
 		//TODO: end update session and store modifictions permanently
 
 		// send back info about the newly created version
-		//TUpdateStopReplyMessage reply = new_TUpdateStopReplyMessage_ptr();
-		//TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)reply, aConnection); //reply is moved
-		//this->enqueueMessageToSend(replyContainer); //replyContainer is moved
+		TUpdateStopReplyMessage_ptr reply = new_TUpdateStopReplyMessage_ptr(true, /*NO_VERSION*/, time(nullptr));
+		TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)reply, aConnection); //reply is moved
+		this->enqueueMessageToSend(replyContainer); //replyContainer is moved
 	}
 	else{
-		this->onServerError("TStorageServer", "processRemoveFile", "received an empty message; skipped.");
+		this->onServerError("TStorageServer", "processUpdateStop", "received an empty message; skipped.");
 	}
 }
 
@@ -370,22 +542,33 @@ void TStorageServer::processRestoreVersion(TConnectionHandle aConnection, TResto
 		this->onServerLog("TStorageServer", "processRestoreVersion", "####################################");
 		this->onServerLog("TStorageServer", "processRestoreVersion", "####################################");
 
-		//TODO: check if no sessions for this user are already active
+		//check if no session for this user is already active
+		bool isSess = this->isThereASessionFor(u);
+		if (isSess){
+			this->onServerError("TStorageServer", "processRestoreVersion", "A session is already active for user: " + u);
+
+			//send back negative response
+			TRestoreVerReplyMessage_ptr reply = new_TRestoreVerReplyMessage_ptr(false, "");
+			TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)reply, aConnection); //reply is moved
+			this->enqueueMessageToSend(replyContainer); //replyContainer is moved
+			return;
+		}
 
 		//TODO: check if required version is available
 
-		//TODO: generate a new token and start a new session
-		string token;
+		//generate a new token and start a new session
+		string_ptr token_ptr;
 		try{
-			string_ptr token_ptr = getUniqueToken(u);
-			token = (token_ptr.release())->c_str();
+			token_ptr = getUniqueToken(u);
 		}
 		catch (EOpensslException e){
 			this->onServerError("TStorageServer", "processRestoreVersion", "EOpensslException creating a new token: " + e.getMessage() + " ; skipped.");
 			return;
 		}
+		this->newRestoreSession(u, token_ptr->c_str());
 
-		TRestoreVerReplyMessage_ptr reply = new_TRestoreVerReplyMessage_ptr(true, token);
+		//send back positive response
+		TRestoreVerReplyMessage_ptr reply = new_TRestoreVerReplyMessage_ptr(true, token_ptr->c_str());
 		TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)reply, aConnection); //reply is moved
 		this->enqueueMessageToSend(replyContainer); //replyContainer is moved
 
@@ -403,21 +586,26 @@ void TStorageServer::processRestoreFileAck(TConnectionHandle aConnection, TResto
 		bool r = aMsg->getResp();
 
 		//Log the message
-		this->onServerLog("TStorageServer", "processRemoveFile", "####################################");
-		this->onServerLog("TStorageServer", "processRemoveFile", "####################################");
-		this->onServerLog("TStorageServer", "processRemoveFile", "## RestoreFileAckMessage ");
-		this->onServerLog("TStorageServer", "processRemoveFile", "## ");
-		this->onServerLog("TStorageServer", "processRemoveFile", "## token: " + t);
-		this->onServerLog("TStorageServer", "processRemoveFile", "## file path: " + fp);
+		this->onServerLog("TStorageServer", "processRestoreFileAck", "####################################");
+		this->onServerLog("TStorageServer", "processRestoreFileAck", "####################################");
+		this->onServerLog("TStorageServer", "processRestoreFileAck", "## RestoreFileAckMessage ");
+		this->onServerLog("TStorageServer", "processRestoreFileAck", "## ");
+		this->onServerLog("TStorageServer", "processRestoreFileAck", "## token: " + t);
+		this->onServerLog("TStorageServer", "processRestoreFileAck", "## file path: " + fp);
 		if (r)
-			this->onServerLog("TStorageServer", "processRemoveFile", "## result: ok");
+			this->onServerLog("TStorageServer", "processRestoreFileAck", "## result: ok");
 		else
-			this->onServerLog("TStorageServer", "processRemoveFile", "## result: error");
-		this->onServerLog("TStorageServer", "processRemoveFile", "## ");
-		this->onServerLog("TStorageServer", "processRemoveFile", "####################################");
-		this->onServerLog("TStorageServer", "processRemoveFile", "####################################");
+			this->onServerLog("TStorageServer", "processRestoreFileAck", "## result: error");
+		this->onServerLog("TStorageServer", "processRestoreFileAck", "## ");
+		this->onServerLog("TStorageServer", "processRestoreFileAck", "####################################");
+		this->onServerLog("TStorageServer", "processRestoreFileAck", "####################################");
 
-		//TODO: check if token is associated to a valid session
+		//check if token is associated to a valid session
+		string u = getUserFromToken(t);
+		bool isSess = this->isThereARestoreSessionFor(u);
+		if (!isSess){
+			this->onServerError("TStorageServer", "processRestoreFileAck", "There is no restore session opened for user: " + u);
+		}
 
 
 		//TODO: if result is ok, send the next file, otherwise send this one again
@@ -434,7 +622,7 @@ void TStorageServer::processRestoreFileAck(TConnectionHandle aConnection, TResto
 		//this->enqueueMessageToSend(replyContainer); //replyContainer is moved
 	}
 	else{
-		this->onServerError("TStorageServer", "processRemoveFile", "received an empty message; skipped.");
+		this->onServerError("TStorageServer", "processRestoreFileAck", "received an empty message; skipped.");
 	}
 }
 

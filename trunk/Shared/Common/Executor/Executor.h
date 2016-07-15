@@ -34,11 +34,11 @@ public:
 public class IServerExecutorController : public IBaseExecutorController {
 public:
 	virtual void processRegistrationRequest(TConnectionHandle aConnection, TUserRegistrReqMessage_ptr& aMsg) = 0;
-	virtual void processUpdateStartRequest(TConnectionHandle aConnection, TUpdateStartReqMessage_ptr& aMsg) = 0;
+	virtual void processUpdateStart(TConnectionHandle aConnection, TUpdateStartReqMessage_ptr& aMsg) = 0;
 	virtual void processAddNewFile(TConnectionHandle aConnection, TAddNewFileMessage_ptr& aMsg) = 0;
 	virtual void processUpdateFile(TConnectionHandle aConnection, TUpdateFileMessage_ptr& aMsg) = 0;
 	virtual void processRemoveFile(TConnectionHandle aConnection, TRemoveFileMessage_ptr& aMsg) = 0;
-	virtual void processUpdateStopRequest(TConnectionHandle aConnection, TUpdateStopReqMessage_ptr& aMsg) = 0;
+	virtual void processUpdateStop(TConnectionHandle aConnection, TUpdateStopReqMessage_ptr& aMsg) = 0;
 	virtual void processGetVersions(TConnectionHandle aConnection, TGetVersionsReqMessage_ptr& aMsg) = 0;
 	virtual void processRestoreVersion(TConnectionHandle aConnection, TRestoreVerReqMessage_ptr& aMsg) = 0;
 	virtual void processRestoreFileAck(TConnectionHandle aConnection, TRestoreFileAckMessage_ptr& aMsg) = 0;

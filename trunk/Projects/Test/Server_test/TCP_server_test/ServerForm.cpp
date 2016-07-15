@@ -2,6 +2,7 @@
  * Author: Angelo Prudentino
  * Date: 30/09/2015
  * File: ServerForm.cpp
+ * Description: This is the UI class of the server
  *
  */
 
@@ -44,26 +45,25 @@ void TServerForm::dismissTCPserver(){
 	}
 
 	//wait for all secondary threads to terminate
-	NetworkThread->Join();
+	ServerThread->Join();
 }
 
 void TServerForm::onServerSockCreate(){
-
 	this->Log("TServerForm", "onServerSockCreate", "Main TCP Server has been succesfully created");
 	this->afterStartServer();
 }
 
-void TServerForm::onServerLog(std::string aClassName, std::string aFuncName, std::string aMsg){
+void TServerForm::onServerLog(string aClassName, string aFuncName, string aMsg){
 	this->Log(aClassName, aFuncName, aMsg);
 }
 
-void TServerForm::onServerWarning(std::string aClassName, std::string aFuncName, std::string aMsg){
+void TServerForm::onServerWarning(string aClassName, string aFuncName, string aMsg){
 	this->Log(aClassName, aFuncName, "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww");
 	this->Log(aClassName, aFuncName, "w " + aMsg);
 	this->Log(aClassName, aFuncName, "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww");
 }
 
-void TServerForm::onServerError(std::string aClassName, std::string aFuncName, std::string aMsg){
+void TServerForm::onServerError(string aClassName, string aFuncName, string aMsg){
 	this->Log(aClassName, aFuncName, "************************************************");
 	this->Log(aClassName, aFuncName, "************************************************");
 	this->Log(aClassName, aFuncName, "** ");

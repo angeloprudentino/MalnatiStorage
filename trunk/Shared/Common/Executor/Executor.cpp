@@ -82,7 +82,7 @@ void TMessageExecutor::serverExecutor(){
 				doServerLog(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "calling processUpdateStartRequest method of the controller");
 				try{
 					TUpdateStartReqMessage_ptr mptr = make_TUpdateStartReqMessage_ptr(bm);
-					this->fCallbackObj->processUpdateStartRequest(msg->getConnection(), mptr);
+					this->fCallbackObj->processUpdateStart(msg->getConnection(), mptr);
 				}
 				catch (EMessageException& e){
 					doServerError(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "error creating TUpdateStartReqMessage: " + e.getMessage());
@@ -126,7 +126,7 @@ void TMessageExecutor::serverExecutor(){
 				doServerLog(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "calling processUpdateStopRequest method of the controller");
 				try{
 					TUpdateStopReqMessage_ptr mptr = make_TUpdateStopReqMessage_ptr(bm);
-					this->fCallbackObj->processUpdateStopRequest(msg->getConnection(), mptr);
+					this->fCallbackObj->processUpdateStop(msg->getConnection(), mptr);
 				}
 				catch (EMessageException& e){
 					doServerError(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "error creating TUpdateStopReqMessage: " + e.getMessage());

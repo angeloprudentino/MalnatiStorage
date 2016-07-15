@@ -8,18 +8,17 @@
 
 #pragma once
 #include <string>
-#include <map>
+#include <memory>
+#include <boost/thread/mutex.hpp>
 
 #include "ServerSocket.h"
 #include "Executor.h"
-#include "Utility"
+#include "Utility.h"
 #include "Session.h"
+#include "DBManager.h"
 
 using namespace std;
 
-//type definitions
-typedef map<string, TSession> TSessions;
-typedef unique_ptr<TSessions> TSessions_ptr;
 
 ////////////////////////////////////
 //        TStorageServer	      //
@@ -31,11 +30,20 @@ private:
 	//this is the way to use managed obj inside unmanaged classes
 	gcroot<IManagedServerSockController^> fCallbackObj = nullptr;
 	
-	TSessions_ptr fSessions = nullptr;
+	TSessions* fSessions = nullptr;
+	mutex fSessionsMutex;
 
 	TServerSockController* fSockController = nullptr;
 	IBaseExecutorController* fExeController = nullptr;
 	TMessageExecutor* fExecutor = nullptr;
+	TDBManager* fDBManager = nullptr;
+
+	const bool isThereASessionFor(const string aUser);
+	const bool isThereAnUpdateSessionFor(const string aUser);
+	const bool isThereARestoreSessionFor(const string aUser);
+	void newUpdateSession(const string aUser, const string aToken);
+	void newRestoreSession(const string aUser, const string aToken);
+	void updateSessionWithFile(const string aUser, TFile_ptr& aFile, int aOperation);
 
 public:
 	TStorageServer(int AServerPort, IManagedServerSockController^ aCallbackObj);
@@ -57,11 +65,11 @@ public:
 	TMessageContainer_ptr getMessageToProcess() override;
 	void enqueueMessageToSend(TMessageContainer_ptr& aMsg) override;
 	void processRegistrationRequest(TConnectionHandle aConnection, TUserRegistrReqMessage_ptr& aMsg) override;
-	void processUpdateStartRequest(TConnectionHandle aConnection, TUpdateStartReqMessage_ptr& aMsg) override;
+	void processUpdateStart(TConnectionHandle aConnection, TUpdateStartReqMessage_ptr& aMsg) override;
 	void processAddNewFile(TConnectionHandle aConnection, TAddNewFileMessage_ptr& aMsg) override;
 	void processUpdateFile(TConnectionHandle aConnection, TUpdateFileMessage_ptr& aMsg) override;
 	void processRemoveFile(TConnectionHandle aConnection, TRemoveFileMessage_ptr& aMsg) override;
-	void processUpdateStopRequest(TConnectionHandle aConnection, TUpdateStopReqMessage_ptr& aMsg) override;
+	void processUpdateStop(TConnectionHandle aConnection, TUpdateStopReqMessage_ptr& aMsg) override;
 	void processGetVersions(TConnectionHandle aConnection, TGetVersionsReqMessage_ptr& aMsg) override;
 	void processRestoreVersion(TConnectionHandle aConnection, TRestoreVerReqMessage_ptr& aMsg) override;
 	void processRestoreFileAck(TConnectionHandle aConnection, TRestoreFileAckMessage_ptr& aMsg) override;

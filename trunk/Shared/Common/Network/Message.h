@@ -324,12 +324,12 @@ typedef std::unique_ptr<TUpdateStopReqMessage> TUpdateStopReqMessage_ptr;
 public class TUpdateStopReplyMessage : public TBaseMessage {
 private:
 	bool fResp = false;
-	unsigned int fVersion = -1;
+	int fVersion = -1;
 	time_t fTime;
 
 public:
 	TUpdateStopReplyMessage(TBaseMessage_ptr& aBase);
-	TUpdateStopReplyMessage(const bool aResp, unsigned int aVersion, time_t aTime);
+	TUpdateStopReplyMessage(const bool aResp, int aVersion, time_t aTime);
 	~TUpdateStopReplyMessage() {};
 
 	string_ptr encodeMessage();
@@ -337,7 +337,7 @@ public:
 
 	//getters
 	const bool getResp(){ return this->fResp; }
-	const unsigned int getVersion(){ return this->fVersion; }
+	const int getVersion(){ return this->fVersion; }
 	const time_t getTime(){ return this->fTime; }
 };
 typedef std::unique_ptr<TUpdateStopReplyMessage> TUpdateStopReplyMessage_ptr;
