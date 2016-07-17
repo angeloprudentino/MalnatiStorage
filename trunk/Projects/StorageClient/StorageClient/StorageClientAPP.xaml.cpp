@@ -6,8 +6,12 @@
 #include "pch.h"
 #include "StorageClientAPP.xaml.h"
 #include <boost\filesystem.hpp>
+#include <iostream>
+#include <string>
 
 using namespace StorageClient;
+
+using namespace boost::filesystem;
 
 using namespace std;
 using namespace Platform;
@@ -28,9 +32,8 @@ using namespace Windows::Storage::Pickers;
 
 
 
-
 // Il modello di elemento per la pagina base è documentato all'indirizzo http://go.microsoft.com/fwlink/?LinkId=234237
-String^ path;
+String^ Mypath;
 StorageClientAPP::StorageClientAPP()
 {
 	InitializeComponent();
@@ -79,9 +82,9 @@ Common::NavigationHelper^ StorageClientAPP::NavigationHelper::get()
 
 void StorageClientAPP::OnNavigatedTo(NavigationEventArgs^ e)
 {
-	path = (String^)e->Parameter;
+	Mypath = (String^)e->Parameter;
 	NavigationHelper->OnNavigatedTo(e);
-	this->Messages->Text = path;
+	this->Messages->Text = Mypath;
 }
 
 void StorageClientAPP::OnNavigatedFrom(NavigationEventArgs^ e)
@@ -125,37 +128,51 @@ void StorageClientAPP::SaveState(Object^ sender, Common::SaveStateEventArgs^ e){
 
 void StorageClient::StorageClientAPP::Button_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
-	//PRIMA PROVA
-	//	Messages->Text = "";
-	//	StorageFolder^ folder;
-	//	folder->GetFolderFromPathAsync(path);
+	//leggo con boost
+	//Messages->Text = "stampa il path";
+	std::wstring ws1(Mypath->Data());
 
-	//	
-	//		create_task(folder->GetFoldersAsync()).then([this](IVectorView<StorageFolder^>^ folders)
-	//		{
-	//			StorageFolder^ folder;
-	//			folder->GetFolderFromPathAsync(path);
+	// Assign the modified wstring back to str1. 
+	Mypath = ref new String(ws1.c_str());
+	
+	path p(ws1);
 
-	//			create_task(folder->GetFilesAsync()).then([this, folders](IVectorView<StorageFile^>^ files)
-	//			{
-	//				//auto count = folders->Size + files->Size;
-	//				String^ outputText = ref new String();
-	//				//outputText = KnownFolders::PicturesLibrary->Name + " (" + count.ToString() + ")\n\n";
-	//				StorageFolder^ folder;
-	//				folder->GetFolderFromPathAsync(path);
-	//				outputText = folder->Name;// +" (" + count.ToString() + ")\n\n";
-	//				std::for_each(begin(folders), end(folders), [this, &outputText](StorageFolder^ folder)
-	//				{
-	//					outputText += "    " + folder->DisplayName + "\\\n";
-	//				});
-	//				std::for_each(begin(files), end(files), [this, &outputText](StorageFile^ file)
-	//				{
-	//					outputText += "    " + file->Name + "\n";
-	//				});
-	//				Messages->Text = outputText;
-	//			});
-	//		});
-	//}
+	Messages->Text = "stampa il path: " + Mypath;
+	String^ outputtext = ref new String();
+	outputtext = "fyles : \n";
+	//p.string;
+	Messages->Text = outputtext;
+
+	//SCRIVERE I NOMI E I DATI OTTENUTI NELL' INTERFACCIA GRAFICA
+	try
+	{
+		if (exists(p))    // does p actually exist?
+		{
+			if (is_regular_file(p))        // is p a regular file?   
+				cout << p << " size is " << file_size(p) << '\n';
+
+			else if (is_directory(p))      // is p a directory?
+			{
+				cout << p << " is a directory containing:\n";
+
+				copy(directory_iterator(p), directory_iterator(), // directory_iterator::value_type
+					ostream_iterator<directory_entry>(cout, "\n")); // is directory_entry, which is
+				// converted to a path by the
+				// path stream inserter
+			}
+
+			else
+				cout << p << " exists, but is neither a regular file nor a directory\n";
+		}
+		else
+			cout << p << " does not exist\n";
+	}
+
+	catch (const filesystem_error& ex)
+	{
+		cout << ex.what() << '\n';
+	}
+
 
 	////LETTURA DA KNOWNFOLDER
 	//Messages->Text= "";

@@ -2,10 +2,10 @@
 
 #include <string>
 
-//#include <boost\asio.hpp>
-//#include <boost\thread\thread.hpp>
-//#include <boost\bind.hpp>
-//
+#include <boost\asio.hpp>
+#include <boost\thread\thread.hpp>
+#include <boost\bind.hpp>
+
 using namespace std;
 //using namespace boost;
 //using namespace boost::asio;
