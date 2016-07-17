@@ -5,7 +5,7 @@
 
 #include "pch.h"
 #include "StorageClientAPP.xaml.h"
-//#include <boost\filesystem.hpp>
+#include <boost\filesystem.hpp>
 
 using namespace StorageClient;
 
