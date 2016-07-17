@@ -125,6 +125,9 @@ void StorageClient::LogIn::LogInButton_Click(Platform::Object^ sender, Windows::
 
 	String^ pass = this->passwordbox->Password;
 	String^ prova_pass = "Pippo";
+
+	c->PasswordCheck(user,pass);
+
 	int res=String::CompareOrdinal(prova_pass,pass);
 	if (res != 0){
 		//messaggio di errore
