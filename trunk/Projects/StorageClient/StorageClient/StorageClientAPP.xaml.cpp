@@ -128,8 +128,12 @@ void StorageClientAPP::SaveState(Object^ sender, Common::SaveStateEventArgs^ e){
 
 void StorageClient::StorageClientAPP::Button_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
+	//String^ Mypath;
+
+	//per prova
+
+	//PROBLEMA CON I DIRITTI DI ACCESSO AI FILE
 	//leggo con boost
-	//Messages->Text = "stampa il path";
 	std::wstring ws1(Mypath->Data());
 
 	// Assign the modified wstring back to str1. 
@@ -137,24 +141,34 @@ void StorageClient::StorageClientAPP::Button_Click(Platform::Object^ sender, Win
 	
 	path p(ws1);
 
-	Messages->Text = "stampa il path: " + Mypath;
+	//Messages->Text = "stampa il path: " + Mypath;
+	//testo da stampare
 	String^ outputtext = ref new String();
-	outputtext = "fyles : \n";
-	//p.string;
-	Messages->Text = outputtext;
+	outputtext = "fyles in: " + Mypath + " : \n";
 
-	//SCRIVERE I NOMI E I DATI OTTENUTI NELL' INTERFACCIA GRAFICA
+	//conversione da string a String^
+	std::wstring p2 = p.wstring();
+	String^ pp= ref new String(p2.data());
+	//outputtext += pp + " : \n";
+
+
 	try
 	{
 		if (exists(p))    // does p actually exist?
 		{
-			if (is_regular_file(p))        // is p a regular file?   
+			if (is_regular_file(p)) {       // is p a regular file?   
 				cout << p << " size is " << file_size(p) << '\n';
-
+				//traformo p in String^
+				p2 = p.wstring();
+				pp = ref new String(p2.data());
+				outputtext += "    " + pp + "\\\n";
+			}
 			else if (is_directory(p))      // is p a directory?
 			{
 				cout << p << " is a directory containing:\n";
-
+				p2 = p.wstring();
+				pp = ref new String(p2.data());
+				outputtext += "Directory: " + pp + "\\\n";
 				copy(directory_iterator(p), directory_iterator(), // directory_iterator::value_type
 					ostream_iterator<directory_entry>(cout, "\n")); // is directory_entry, which is
 				// converted to a path by the
@@ -166,14 +180,25 @@ void StorageClient::StorageClientAPP::Button_Click(Platform::Object^ sender, Win
 		}
 		else
 			cout << p << " does not exist\n";
+			p2 = p.wstring();
+			pp = ref new String(p2.data());
+			outputtext += pp + "does not exists \\\n";
 	}
 
 	catch (const filesystem_error& ex)
 	{
-		cout << ex.what() << '\n';
+		cout << ex.what() << '\n'; 
+		string str = ex.what();
+		//convertire da string a wstring
+		std::wstring wsTmp;
+		wsTmp.assign(str.begin(),str.end());
+		pp = ref new String(wsTmp.data());
+		outputtext += pp;
+		//pp = ref new String();
+
 	}
 
-
+	Messages->Text = outputtext;
 	////LETTURA DA KNOWNFOLDER
 	//Messages->Text= "";
 

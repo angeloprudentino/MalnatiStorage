@@ -19,13 +19,12 @@
         <m2:SplashScreen Image="Assets\SplashScreen.png" />
       </m2:VisualElements>
       <Extensions>
-        <Extension Category="windows.fileTypeAssociation">
-          <FileTypeAssociation Name="alsdk">
-            <Logo>images\Icon.png</Logo>
+        <Extension Category="windows.fileOpenPicker">
+          <FileOpenPicker>
             <SupportedFileTypes>
-              <FileType>.alsdk</FileType>
+              <SupportsAnyFileType />
             </SupportedFileTypes>
-          </FileTypeAssociation>
+          </FileOpenPicker>
         </Extension>
       </Extensions>
     </Application>
@@ -35,7 +34,14 @@
     <Capability Name="picturesLibrary" />
     <Capability Name="sharedUserCertificates" />
     <Capability Name="removableStorage" />
+    <Capability Name="enterpriseAuthentication" />
+    <Capability Name="internetClientServer" />
+    <Capability Name="musicLibrary" />
+    <Capability Name="videosLibrary" />
+    <Capability Name="privateNetworkClientServer" />
     <DeviceCapability Name="proximity" />
     <DeviceCapability Name="location" />
+    <DeviceCapability Name="microphone" />
+    <DeviceCapability Name="webcam" />
   </Capabilities>
 </Package>
