@@ -4,8 +4,7 @@
     <ShowAllFiles>false</ShowAllFiles>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerEnvironment>PATH=%PATH%;$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\debug\boost;$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\debug\openssl
-$(LocalDebuggerEnvironment)</LocalDebuggerEnvironment>
+    <LocalDebuggerEnvironment>PATH=%PATH%;$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\debug\boost;$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\debug\openssl $(LocalDebuggerEnvironment)</LocalDebuggerEnvironment>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">

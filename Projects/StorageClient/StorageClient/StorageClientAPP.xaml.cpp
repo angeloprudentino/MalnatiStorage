@@ -5,6 +5,7 @@
 
 #include "pch.h"
 #include "StorageClientAPP.xaml.h"
+//#include <boost\filesystem.hpp>
 
 using namespace StorageClient;
 
@@ -24,6 +25,8 @@ using namespace Windows::UI::Xaml::Navigation;
 using namespace concurrency;
 using namespace Windows::Storage;
 using namespace Windows::Storage::Pickers;
+
+
 
 
 // Il modello di elemento per la pagina base è documentato all'indirizzo http://go.microsoft.com/fwlink/?LinkId=234237
