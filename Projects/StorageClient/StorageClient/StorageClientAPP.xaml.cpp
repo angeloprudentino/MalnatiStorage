@@ -23,6 +23,7 @@ using namespace Windows::UI::Xaml::Media;
 using namespace Windows::UI::Xaml::Navigation;
 using namespace concurrency;
 using namespace Windows::Storage;
+using namespace Windows::Storage::Pickers;
 
 
 // Il modello di elemento per la pagina base è documentato all'indirizzo http://go.microsoft.com/fwlink/?LinkId=234237
@@ -122,7 +123,6 @@ void StorageClientAPP::SaveState(Object^ sender, Common::SaveStateEventArgs^ e){
 void StorageClient::StorageClientAPP::Button_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
 	//PRIMA PROVA
-	//try{
 	//	Messages->Text = "";
 	//	StorageFolder^ folder;
 	//	folder->GetFolderFromPathAsync(path);
@@ -153,38 +153,11 @@ void StorageClient::StorageClientAPP::Button_Click(Platform::Object^ sender, Win
 	//			});
 	//		});
 	//}
-	//catch (Exception^ e){
-	//	this->Messages->Text= e->Message;
-	//}
 
-	//LETTURA DA KNOWNFOLDER
-	Messages->Text= "";
+	////LETTURA DA KNOWNFOLDER
+	//Messages->Text= "";
 
-	create_task(KnownFolders::PicturesLibrary->GetFoldersAsync()).then([this](IVectorView<StorageFolder^>^ folders)
-	{
-		create_task(KnownFolders::PicturesLibrary->GetFilesAsync()).then([this, folders](IVectorView<StorageFile^>^ files)
-		{
-			auto count = folders->Size + files->Size;
-			String^ outputtext = ref new String();
-			outputtext = KnownFolders::PicturesLibrary->Name + " (" + count.ToString() + ")\n\n";
-			std::for_each(begin(folders), end(folders), [this, &outputtext](StorageFolder^ folder)
-			{
-				outputtext += "    " + folder->DisplayName + "\\\n";
-			});
-			std::for_each(begin(files), end(files), [this, &outputtext](StorageFile^ file)
-			{
-				outputtext += "    " + file->Name + "\n";
-			});
-			Messages->Text = outputtext;
-		});
-	});
-
-	//LETTURA DA FOLDER QUALSIASI
-	//Messages->Text = "";
-	//StorageFolder^ folder;
-	//folder->GetFolderFromPathAsync(path);
-
-	//create_task(folder->GetFoldersAsync()).then([this](IVectorView<StorageFolder^>^ folders)
+	//create_task(KnownFolders::PicturesLibrary->GetFoldersAsync()).then([this](IVectorView<StorageFolder^>^ folders)
 	//{
 	//	create_task(KnownFolders::PicturesLibrary->GetFilesAsync()).then([this, folders](IVectorView<StorageFile^>^ files)
 	//	{
@@ -202,4 +175,8 @@ void StorageClient::StorageClientAPP::Button_Click(Platform::Object^ sender, Win
 	//		Messages->Text = outputtext;
 	//	});
 	//});
+
+
+
+
 }

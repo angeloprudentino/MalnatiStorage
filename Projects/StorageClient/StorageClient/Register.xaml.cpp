@@ -208,7 +208,7 @@ void StorageClient::Register::backButton_Copy_Click(Platform::Object^ sender, Wi
 	{
 		if (folder)
 		{
-			Prova->Text = "Picked folder: " + folder->Name;
+			Prova->Text = "Picked folder: " + folder->Path;
 			this->Directory->Text = folder->Path;
 		}
 		else
