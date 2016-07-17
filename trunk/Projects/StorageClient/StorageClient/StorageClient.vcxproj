@@ -115,6 +115,7 @@
     <IncludePath>$(SolutionDir)\..\..\Shared\Common\Executor;$(SolutionDir)\..\..\Shared\Common\Session;$(SolutionDir)\..\..\Shared\Libraries\include;$(SolutionDir)\..\..\Shared\Common\Utils;$(SolutionDir)\..\..\Shared\Common\Network;$(IncludePath)</IncludePath>
     <ReferencePath>$(SolutionDir)\..\..\Shared\Libraries\x86_64\debug\boost;$(SolutionDir)\..\..\Shared\Libraries\x86_64\debug\openssl;$(ReferencePath)</ReferencePath>
     <LibraryPath>$(SolutionDir)\..\..\Shared\Libraries\x86_64\debug\boost\static;$(SolutionDir)\..\..\Shared\Libraries\x86_64\debug\openssl\boost;$(SolutionDir)\..\..\Shared\Libraries\x86_64\debug\openssl;$(SolutionDir)\..\..\Shared\Libraries\x86_64\debug\openssl\static;$(LibraryPath)</LibraryPath>
+    <ExecutablePath>$(SolutionDir)\..\..\Shared\Libraries\x86_64\debug\boost;$(SolutionDir)\..\..\Shared\Libraries\x86_64\debug\openssl;$(ExecutablePath)</ExecutablePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <ClCompile>
