@@ -29,11 +29,15 @@ using namespace Windows::UI::Xaml::Navigation;
 using namespace concurrency;
 using namespace Windows::Storage;
 using namespace Windows::Storage::Pickers;
+using namespace Windows::Storage::AccessCache;
+
 
 
 
 // Il modello di elemento per la pagina base è documentato all'indirizzo http://go.microsoft.com/fwlink/?LinkId=234237
 String^ Mypath;
+StorageFolder^ Myfolder;
+
 StorageClientAPP::StorageClientAPP()
 {
 	InitializeComponent();
@@ -82,7 +86,8 @@ Common::NavigationHelper^ StorageClientAPP::NavigationHelper::get()
 
 void StorageClientAPP::OnNavigatedTo(NavigationEventArgs^ e)
 {
-	Mypath = (String^)e->Parameter;
+	//Mypath = (String^)e->Parameter;
+	Myfolder = (StorageFolder^)e->Parameter;
 	NavigationHelper->OnNavigatedTo(e);
 	this->Messages->Text = Mypath;
 }
@@ -128,98 +133,105 @@ void StorageClientAPP::SaveState(Object^ sender, Common::SaveStateEventArgs^ e){
 
 void StorageClient::StorageClientAPP::Button_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
-	//String^ Mypath;
+	//TENERE LA PARTE COMMENTATA PER LA GESTIONE STRINGHE 
+	////String^ Mypath;
 
-	//per prova
+	////per prova
 
-	//PROBLEMA CON I DIRITTI DI ACCESSO AI FILE
-	//leggo con boost
-	std::wstring ws1(Mypath->Data());
+	////PROBLEMA CON I DIRITTI DI ACCESSO AI FILE
+	////leggo con boost
+	//std::wstring ws1(Mypath->Data());
 
-	// Assign the modified wstring back to str1. 
-	Mypath = ref new String(ws1.c_str());
-	
-	path p(ws1);
+	//// Assign the modified wstring back to str1. 
+	//Mypath = ref new String(ws1.c_str());
+	//
+	//path p(ws1);
 
-	//Messages->Text = "stampa il path: " + Mypath;
-	//testo da stampare
-	String^ outputtext = ref new String();
-	outputtext = "fyles in: " + Mypath + " : \n";
+	////Messages->Text = "stampa il path: " + Mypath;
+	////testo da stampare
+	//String^ outputtext = ref new String();
+	//outputtext = "fyles in: " + Mypath + " : \n";
 
-	//conversione da string a String^
-	std::wstring p2 = p.wstring();
-	String^ pp= ref new String(p2.data());
-	//outputtext += pp + " : \n";
+	////conversione da string a String^
+	//std::wstring p2 = p.wstring();
+	//String^ pp= ref new String(p2.data());
+	////outputtext += pp + " : \n";
 
 
-	try
-	{
-		if (exists(p))    // does p actually exist?
-		{
-			if (is_regular_file(p)) {       // is p a regular file?   
-				cout << p << " size is " << file_size(p) << '\n';
-				//traformo p in String^
-				p2 = p.wstring();
-				pp = ref new String(p2.data());
-				outputtext += "    " + pp + "\\\n";
-			}
-			else if (is_directory(p))      // is p a directory?
-			{
-				cout << p << " is a directory containing:\n";
-				p2 = p.wstring();
-				pp = ref new String(p2.data());
-				outputtext += "Directory: " + pp + "\\\n";
-				copy(directory_iterator(p), directory_iterator(), // directory_iterator::value_type
-					ostream_iterator<directory_entry>(cout, "\n")); // is directory_entry, which is
-				// converted to a path by the
-				// path stream inserter
-			}
-
-			else
-				cout << p << " exists, but is neither a regular file nor a directory\n";
-		}
-		else
-			cout << p << " does not exist\n";
-			p2 = p.wstring();
-			pp = ref new String(p2.data());
-			outputtext += pp + "does not exists \\\n";
-	}
-
-	catch (const filesystem_error& ex)
-	{
-		cout << ex.what() << '\n'; 
-		string str = ex.what();
-		//convertire da string a wstring
-		std::wstring wsTmp;
-		wsTmp.assign(str.begin(),str.end());
-		pp = ref new String(wsTmp.data());
-		outputtext += pp;
-		//pp = ref new String();
-
-	}
-
-	Messages->Text = outputtext;
-	////LETTURA DA KNOWNFOLDER
-	//Messages->Text= "";
-
-	//create_task(KnownFolders::PicturesLibrary->GetFoldersAsync()).then([this](IVectorView<StorageFolder^>^ folders)
+	//try
 	//{
-	//	create_task(KnownFolders::PicturesLibrary->GetFilesAsync()).then([this, folders](IVectorView<StorageFile^>^ files)
+	//	if (exists(p))    // does p actually exist?
 	//	{
-	//		auto count = folders->Size + files->Size;
-	//		String^ outputtext = ref new String();
-	//		outputtext = KnownFolders::PicturesLibrary->Name + " (" + count.ToString() + ")\n\n";
-	//		std::for_each(begin(folders), end(folders), [this, &outputtext](StorageFolder^ folder)
+	//		if (is_regular_file(p)) {       // is p a regular file?   
+	//			cout << p << " size is " << file_size(p) << '\n';
+	//			//traformo p in String^
+	//			p2 = p.wstring();
+	//			pp = ref new String(p2.data());
+	//			outputtext += "    " + pp + "\\\n";
+	//		}
+	//		else if (is_directory(p))      // is p a directory?
 	//		{
-	//			outputtext += "    " + folder->DisplayName + "\\\n";
-	//		});
-	//		std::for_each(begin(files), end(files), [this, &outputtext](StorageFile^ file)
-	//		{
-	//			outputtext += "    " + file->Name + "\n";
-	//		});
-	//		Messages->Text = outputtext;
-	//	});
-	//});
+	//			cout << p << " is a directory containing:\n";
+	//			p2 = p.wstring();
+	//			pp = ref new String(p2.data());
+	//			outputtext += "Directory: " + pp + "\\\n";
+	//			copy(directory_iterator(p), directory_iterator(), // directory_iterator::value_type
+	//				ostream_iterator<directory_entry>(cout, "\n")); // is directory_entry, which is
+	//			// converted to a path by the
+	//			// path stream inserter
+	//		}
+
+	//		else
+	//			cout << p << " exists, but is neither a regular file nor a directory\n";
+	//	}
+	//	else
+	//		cout << p << " does not exist\n";
+	//		p2 = p.wstring();
+	//		pp = ref new String(p2.data());
+	//		outputtext += pp + "does not exists \\\n";
+	//}
+
+	//catch (const filesystem_error& ex)
+	//{
+	//	cout << ex.what() << '\n'; 
+	//	string str = ex.what();
+	//	//convertire da string a wstring
+	//	std::wstring wsTmp;
+	//	wsTmp.assign(str.begin(),str.end());
+	//	pp = ref new String(wsTmp.data());
+	//	outputtext += pp;
+	//	//pp = ref new String();
+
+	//}
+
+	//Messages->Text = outputtext;
+
+
+	//LETTURA DA KNOWNFOLDER
+	Messages->Text= "";
+	//KnownFolders::PicturesLibrary
+	create_task(Myfolder->GetFoldersAsync()).then([this](IVectorView<StorageFolder^>^ folders)
+	{
+		create_task(Myfolder->GetFilesAsync()).then([this, folders](IVectorView<StorageFile^>^ files)
+		{
+			auto count = folders->Size + files->Size;
+			String^ outputtext = ref new String();
+			outputtext = Myfolder->Name + " (" + count.ToString() + ")\n\n";
+
+			std::for_each(begin(folders), end(folders), [this, &outputtext](StorageFolder^ folder)
+			{
+				outputtext += "    " + folder->DisplayName + "\\\n";
+				//per ogni cartella che trova, gli faccio cercare anche i file
+
+				/////
+			});
+			std::for_each(begin(files), end(files), [this, &outputtext](StorageFile^ file)
+			{
+				outputtext += "    " + file->Name + "\n";
+			});
+			Messages->Text = outputtext;
+		});
+	});
 
 
 
