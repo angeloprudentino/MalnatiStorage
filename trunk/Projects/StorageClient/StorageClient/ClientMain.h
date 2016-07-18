@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-
+//#include "sqlite3.h"
 #include <boost\asio.hpp>
 #include <boost\thread\thread.hpp>
 #include <boost\bind.hpp>
