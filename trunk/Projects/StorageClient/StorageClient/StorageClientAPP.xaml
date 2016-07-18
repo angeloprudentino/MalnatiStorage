@@ -32,7 +32,7 @@
         </Grid.RowDefinitions>
 
         <!-- Back button and page title -->
-        <Grid>
+        <Grid Name="mainGrid">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="120"/>
                 <ColumnDefinition Width="*"/>
@@ -49,6 +49,8 @@
         <ScrollViewer/>
         <Image HorizontalAlignment="Left" Height="100" Margin="36,22,0,0" Grid.Row="1" VerticalAlignment="Top" Width="100"/>
         <Button Content="SynchNow" HorizontalAlignment="Left" Margin="177,137,0,0" Grid.Row="1" VerticalAlignment="Top" Click="Button_Click"/>
-        <TextBox x:Name="Messages" ScrollViewer.VerticalScrollBarVisibility="Auto" HorizontalAlignment="Left" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Height="112" Width="278" Margin="180,10,0,0" Grid.Row="1"/>
+        <Button Content="Versions" HorizontalAlignment="Left" Margin="294,137,0,0" Grid.Row="1" VerticalAlignment="Top" Click="Button_Click_1"/>
+        <TextBox x:Name="Messages" ScrollViewer.VerticalScrollBarVisibility="Auto" HorizontalAlignment="Left" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Height="112" Width="405" Margin="59,10,0,0" Grid.Row="1"/>
+        <Grid Name="WriteGrid" HorizontalAlignment="Left" Height="190" Margin="59,191,0,0" Grid.Row="1" VerticalAlignment="Top" Width="405"/>
     </Grid>
 </Page>
