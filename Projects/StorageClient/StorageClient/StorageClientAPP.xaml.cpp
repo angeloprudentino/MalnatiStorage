@@ -237,3 +237,20 @@ void StorageClient::StorageClientAPP::Button_Click(Platform::Object^ sender, Win
 
 
 }
+
+void StorageClient::StorageClientAPP::Button_Click_1(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+{
+	//per gestire le versioni
+	Messages->Text = "Gestione Versioni";
+	//tb->Margin = "59,10,0,0";
+	int i = 0;
+	for (i = 0; i < 10; i++){
+		StackPanel^ sp = ref new StackPanel();
+		sp->Margin = 0, 10 + i * 40, 0, 0;
+		TextBox^ tb = ref new TextBox();
+		tb->Text = "prova" + i;
+		tb->Height = 40;
+		sp->Children->Append(tb);
+		WriteGrid->Children->Append(sp);
+	}
+}
