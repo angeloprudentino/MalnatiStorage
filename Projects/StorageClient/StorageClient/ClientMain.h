@@ -15,7 +15,9 @@ using namespace std;
 class ClientMain {
 private:
 	static ClientMain* instance;
-
+	//boost::asio::io_service fMainIoService;
+	//boost::asio::ip::tcp::socket fSock;
+	//void handle_write(std::string msg_buffer, boost::system::error_code const & err);
 protected:
 	ClientMain();
 
