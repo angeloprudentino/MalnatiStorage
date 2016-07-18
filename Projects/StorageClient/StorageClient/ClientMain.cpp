@@ -3,7 +3,7 @@
 
 ClientMain* ClientMain::instance = NULL;
 
-ClientMain::ClientMain(){
+ClientMain::ClientMain(): fMainIoService(), fSock(fMainIoService){
 
 }
 
@@ -16,6 +16,6 @@ ClientMain* ClientMain::getInstance(){
 }
 
 bool ClientMain::PasswordCheck(string user, string pass){
-	//fare la conversione a tipi non gestiti e poi la query al server
+	
 	return true;
 }

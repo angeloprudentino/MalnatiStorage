@@ -35,13 +35,14 @@ using namespace Windows::UI::Xaml::Navigation;
 using namespace Windows::Security::Credentials::UI;
 using namespace concurrency;
 using namespace Windows::Data;
+using namespace Windows::Storage::AccessCache;
 
 
 using namespace std;
 
 
-
-
+//globale
+StorageFolder^ folderMia;
 
 
 // Il modello di elemento per la pagina base è documentato all'indirizzo http://go.microsoft.com/fwlink/?LinkId=234237
@@ -180,8 +181,9 @@ void StorageClient::Register::Register_Click(Platform::Object^ sender, Windows::
 	this->Prova->Text = pass;
 	//int res=String::CompareOrdinal(prova_pass,pass);
 
-	String^ folder_path = this->Directory->Text;
-	this->Frame->Navigate(Windows::UI::Xaml::Interop::TypeName(StorageClientAPP::typeid),folder_path);;
+	//String^ folder_path = this->Directory->Text;
+	//this->Frame->Navigate(Windows::UI::Xaml::Interop::TypeName(StorageClientAPP::typeid),folder_path);;
+	this->Frame->Navigate(Windows::UI::Xaml::Interop::TypeName(StorageClientAPP::typeid), folderMia);;
 }
 
 
@@ -210,6 +212,8 @@ void StorageClient::Register::backButton_Copy_Click(Platform::Object^ sender, Wi
 		{
 			Prova->Text = "Picked folder: " + folder->Path;
 			this->Directory->Text = folder->Path;
+			folderMia = folder;
+
 		}
 		else
 		{
