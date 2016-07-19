@@ -36,13 +36,14 @@ using namespace Windows::Security::Credentials::UI;
 using namespace concurrency;
 using namespace Windows::Data;
 using namespace Windows::Storage::AccessCache;
+using namespace Windows::UI::Popups;
 
 
 using namespace std;
 
 
 //globale
-StorageFolder^ folderMia;
+StorageFolder^ folderMia = nullptr;
 
 
 // Il modello di elemento per la pagina base è documentato all'indirizzo http://go.microsoft.com/fwlink/?LinkId=234237
@@ -51,7 +52,7 @@ StorageFolder^ folderMia;
 Register::Register()
 {
 	InitializeComponent();
-	SetValue(_defaultViewModelProperty, ref new Map<String^,Object^>(std::less<String^>()));
+	SetValue(_defaultViewModelProperty, ref new Map<String^, Object^>(std::less<String^>()));
 	auto navigationHelper = ref new Common::NavigationHelper(this);
 	SetValue(_navigationHelperProperty, navigationHelper);
 	navigationHelper->LoadState += ref new Common::LoadStateEventHandler(this, &Register::LoadState);
@@ -59,8 +60,8 @@ Register::Register()
 }
 
 DependencyProperty^ Register::_defaultViewModelProperty =
-	DependencyProperty::Register("DefaultViewModel",
-		TypeName(IObservableMap<String^,Object^>::typeid), TypeName(Register::typeid), nullptr);
+DependencyProperty::Register("DefaultViewModel",
+TypeName(IObservableMap<String^, Object^>::typeid), TypeName(Register::typeid), nullptr);
 
 /// <summary>
 /// utilizzata come semplice modello di visualizzazione.
@@ -71,8 +72,8 @@ IObservableMap<String^, Object^>^ Register::DefaultViewModel::get()
 }
 
 DependencyProperty^ Register::_navigationHelperProperty =
-	DependencyProperty::Register("NavigationHelper",
-		TypeName(Common::NavigationHelper::typeid), TypeName(Register::typeid), nullptr);
+DependencyProperty::Register("NavigationHelper",
+TypeName(Common::NavigationHelper::typeid), TypeName(Register::typeid), nullptr);
 
 /// <summary>
 /// Ottiene un'implementazione di <see cref="NavigationHelper"/> progettata per essere
@@ -119,8 +120,8 @@ void Register::OnNavigatedFrom(NavigationEventArgs^ e)
 /// precedente. Lo stato è null la prima volta che viene visitata una pagina.</param>
 void Register::LoadState(Object^ sender, Common::LoadStateEventArgs^ e)
 {
-	(void) sender;	// Parametro non utilizzato
-	(void) e;	// Parametro non utilizzato
+	(void)sender;	// Parametro non utilizzato
+	(void)e;	// Parametro non utilizzato
 }
 
 /// <summary>
@@ -132,8 +133,8 @@ void Register::LoadState(Object^ sender, Common::LoadStateEventArgs^ e)
 /// <param name="e">Dati di evento che forniscono un dizionario vuoto da popolare con
 /// uno stato serializzabile.</param>
 void Register::SaveState(Object^ sender, Common::SaveStateEventArgs^ e){
-	(void) sender;	// Parametro non utilizzato
-	(void) e; // Parametro non utilizzato
+	(void)sender;	// Parametro non utilizzato
+	(void)e; // Parametro non utilizzato
 }
 
 void Register::SetResult(CredentialPickerResults^ result)
@@ -144,7 +145,7 @@ void Register::SetResult(CredentialPickerResults^ result)
 	auto savedByApi = result->CredentialSaved;
 	auto saveOption = result->CredentialSaveOption;
 
-	
+
 	//Page^ outputFrame = (Page^)this->rootPage->OutputFrame->Content;
 	//TextBox^ status = (TextBox^)(outputFrame->FindName("Status"));
 	//status->Text = "OK";
@@ -175,15 +176,33 @@ void StorageClient::Register::Register_Click(Platform::Object^ sender, Windows::
 {
 	String^ user = this->User->Text;
 	//Platform::String^ password = this->Pass->Text;
-	
-	
+
+
 	String^ pass = this->passwordbox->Password;
 	this->Prova->Text = pass;
 	//int res=String::CompareOrdinal(prova_pass,pass);
 
-	//String^ folder_path = this->Directory->Text;
-	//this->Frame->Navigate(Windows::UI::Xaml::Interop::TypeName(StorageClientAPP::typeid),folder_path);;
-	this->Frame->Navigate(Windows::UI::Xaml::Interop::TypeName(StorageClientAPP::typeid), folderMia);;
+	if (folderMia == nullptr){
+		//messaggio di errore, bisogna scegliere una cartella
+		auto messageDialog = ref new MessageDialog("Please choose a folder, try again", "Invalid Folder");
+		// Add commands and set their callbacks
+		messageDialog->Commands->Append(ref new UICommand("Try Again", ref new UICommandInvokedHandler([this](IUICommand^ command)
+		{
+			//rootPage->NotifyUser("The 'Don't install' command has been selected.", NotifyType::StatusMessage);
+		})));
+
+		// Set the command that will be invoked by default
+		messageDialog->DefaultCommandIndex = 1;
+
+		// Show the message dialog
+		messageDialog->ShowAsync();
+	}
+	else{
+
+		//String^ folder_path = this->Directory->Text;
+		//this->Frame->Navigate(Windows::UI::Xaml::Interop::TypeName(StorageClientAPP::typeid),folder_path);;
+		this->Frame->Navigate(Windows::UI::Xaml::Interop::TypeName(StorageClientAPP::typeid), folderMia);;
+	}
 }
 
 

@@ -5,13 +5,15 @@
 
 #include "pch.h"
 #include "StorageClientAPP.xaml.h"
-#include <boost\filesystem.hpp>
+//#include <boost\filesystem.hpp>
 #include <iostream>
 #include <string>
+#include <array>
+#include <list>
 
 using namespace StorageClient;
 
-using namespace boost::filesystem;
+//using namespace boost::filesystem;
 
 using namespace std;
 using namespace Platform;
@@ -30,6 +32,8 @@ using namespace concurrency;
 using namespace Windows::Storage;
 using namespace Windows::Storage::Pickers;
 using namespace Windows::Storage::AccessCache;
+using namespace Windows::UI::Popups;
+using namespace Windows::System;
 
 
 
@@ -37,11 +41,14 @@ using namespace Windows::Storage::AccessCache;
 // Il modello di elemento per la pagina base è documentato all'indirizzo http://go.microsoft.com/fwlink/?LinkId=234237
 String^ Mypath;
 StorageFolder^ Myfolder;
+//<StorageFile^,100> FileNow;
+map<String^, StorageFile^> FileNow;
+map<String^, StorageFolder^> FolderNow;
 
 StorageClientAPP::StorageClientAPP()
 {
 	InitializeComponent();
-	SetValue(_defaultViewModelProperty, ref new Map<String^,Object^>(std::less<String^>()));
+	SetValue(_defaultViewModelProperty, ref new Map<String^, Object^>(std::less<String^>()));
 	auto navigationHelper = ref new Common::NavigationHelper(this);
 	SetValue(_navigationHelperProperty, navigationHelper);
 	navigationHelper->LoadState += ref new Common::LoadStateEventHandler(this, &StorageClientAPP::LoadState);
@@ -49,8 +56,8 @@ StorageClientAPP::StorageClientAPP()
 }
 
 DependencyProperty^ StorageClientAPP::_defaultViewModelProperty =
-	DependencyProperty::Register("DefaultViewModel",
-		TypeName(IObservableMap<String^,Object^>::typeid), TypeName(StorageClientAPP::typeid), nullptr);
+DependencyProperty::Register("DefaultViewModel",
+TypeName(IObservableMap<String^, Object^>::typeid), TypeName(StorageClientAPP::typeid), nullptr);
 
 /// <summary>
 /// utilizzata come semplice modello di visualizzazione.
@@ -61,8 +68,8 @@ IObservableMap<String^, Object^>^ StorageClientAPP::DefaultViewModel::get()
 }
 
 DependencyProperty^ StorageClientAPP::_navigationHelperProperty =
-	DependencyProperty::Register("NavigationHelper",
-		TypeName(Common::NavigationHelper::typeid), TypeName(StorageClientAPP::typeid), nullptr);
+DependencyProperty::Register("NavigationHelper",
+TypeName(Common::NavigationHelper::typeid), TypeName(StorageClientAPP::typeid), nullptr);
 
 /// <summary>
 /// Ottiene un'implementazione di <see cref="NavigationHelper"/> progettata per essere
@@ -113,8 +120,8 @@ void StorageClientAPP::OnNavigatedFrom(NavigationEventArgs^ e)
 /// precedente. Lo stato è null la prima volta che viene visitata una pagina.</param>
 void StorageClientAPP::LoadState(Object^ sender, Common::LoadStateEventArgs^ e)
 {
-	(void) sender;	// Parametro non utilizzato
-	(void) e;	// Parametro non utilizzato
+	(void)sender;	// Parametro non utilizzato
+	(void)e;	// Parametro non utilizzato
 }
 
 /// <summary>
@@ -126,8 +133,8 @@ void StorageClientAPP::LoadState(Object^ sender, Common::LoadStateEventArgs^ e)
 /// <param name="e">Dati di evento che forniscono un dizionario vuoto da popolare con
 /// uno stato serializzabile.</param>
 void StorageClientAPP::SaveState(Object^ sender, Common::SaveStateEventArgs^ e){
-	(void) sender;	// Parametro non utilizzato
-	(void) e; // Parametro non utilizzato
+	(void)sender;	// Parametro non utilizzato
+	(void)e; // Parametro non utilizzato
 }
 
 
@@ -208,7 +215,13 @@ void StorageClient::StorageClientAPP::Button_Click(Platform::Object^ sender, Win
 
 
 	//LETTURA DA KNOWNFOLDER
-	Messages->Text= "";
+	Messages->Text = "Folder: " + Myfolder->Path;
+	//elimino gli elementi già presenti
+	WriteGrid->RowDefinitions->Clear();
+	//int size = WriteGrid->RowDefinitions->Size;
+	//for (int j = 0; j < size; j++){
+	//	 WriteGrid->RowDefinitions->RemoveAt(j);
+	//}
 	//KnownFolders::PicturesLibrary
 	create_task(Myfolder->GetFoldersAsync()).then([this](IVectorView<StorageFolder^>^ folders)
 	{
@@ -221,13 +234,57 @@ void StorageClient::StorageClientAPP::Button_Click(Platform::Object^ sender, Win
 			std::for_each(begin(folders), end(folders), [this, &outputtext](StorageFolder^ folder)
 			{
 				outputtext += "    " + folder->DisplayName + "\\\n";
-				//per ogni cartella che trova, gli faccio cercare anche i file
+				//per ogni cartella che trova
+				RowDefinition^ row = ref new RowDefinition();
+				row->Height = 40;
+				//rimuovo il vecchio elemento in quella riga
+				//int size = WriteGrid->RowDefinitions->Size;
+				//if(size>0)WriteGrid->RowDefinitions->RemoveAt(size-1);
+				//aggiungo il nuovo elemento
+				WriteGrid->RowDefinitions->Append(row);
+				int i = WriteGrid->RowDefinitions->Size;
+				Button^ tb = ref new Button();
+				tb->Content = folder->Name + "/";
+				tb->Tag = folder->Path;
 
+				FolderNow[folder->Path] = folder;
+				tb->Click += ref new Windows::UI::Xaml::RoutedEventHandler(this, &StorageClient::StorageClientAPP::Button_Open_File);
+
+				StackPanel^ sp = ref new StackPanel();
+				sp->SetValue(WriteGrid->RowProperty, i - 1);
+
+				sp->Children->Append(tb);
+
+				WriteGrid->Children->Append(sp);
 				/////
 			});
 			std::for_each(begin(files), end(files), [this, &outputtext](StorageFile^ file)
 			{
 				outputtext += "    " + file->Name + "\n";
+				//aggiungo il bottone per il file
+				RowDefinition^ row = ref new RowDefinition();
+				row->Height = 40;
+				//rimuovo il vecchio elemento in quella riga
+				//int size = WriteGrid->RowDefinitions->Size;
+				//if(size>0)WriteGrid->RowDefinitions->RemoveAt(size-1);
+				//aggiungo il nuovo elemento
+				WriteGrid->RowDefinitions->Append(row);
+				int i = WriteGrid->RowDefinitions->Size;
+
+				Button^ tb = ref new Button();
+				tb->Content = file->Name;
+				tb->Tag = file->Path;
+
+				FileNow[file->Path] = file;
+				tb->Click += ref new Windows::UI::Xaml::RoutedEventHandler(this, &StorageClient::StorageClientAPP::Button_Open_File);
+
+				StackPanel^ sp = ref new StackPanel();
+				sp->SetValue(WriteGrid->RowProperty, i - 1);
+
+				sp->Children->Append(tb);
+
+				WriteGrid->Children->Append(sp);
+
 			});
 			Messages->Text = outputtext;
 		});
@@ -238,19 +295,62 @@ void StorageClient::StorageClientAPP::Button_Click(Platform::Object^ sender, Win
 
 }
 
+
 void StorageClient::StorageClientAPP::Button_Click_1(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
+	WriteGrid->RowDefinitions->Clear();
 	//per gestire le versioni
-	Messages->Text = "Gestione Versioni";
-	//tb->Margin = "59,10,0,0";
-	int i = 0;
+	Messages->Text = "Available Versions";
+
+	int i;
 	for (i = 0; i < 10; i++){
+		RowDefinition^ row = ref new RowDefinition();
+		row->Height = 40;
+		WriteGrid->RowDefinitions->Append(row);
+
+		//sp->Margin = 0, 10+i*40, 0, 0;
+		//TextBox^ tb = ref new TextBox();
+		//tb->Text = "prova " + i ;
+		//tb->Height = 40;
+		Button^ tb = ref new Button();
+		tb->Content = "Version " + i;
 		StackPanel^ sp = ref new StackPanel();
-		sp->Margin = 0, 10 + i * 40, 0, 0;
-		TextBox^ tb = ref new TextBox();
-		tb->Text = "prova" + i;
-		tb->Height = 40;
+		sp->SetValue(WriteGrid->RowProperty, i);
+
 		sp->Children->Append(tb);
+
+		//sp->Children->InsertAt(i, tb);
 		WriteGrid->Children->Append(sp);
+		//WriteGrid->Children->InsertAt();
 	}
+}
+
+void StorageClient::StorageClientAPP::Button_Open_File(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e){
+
+	//provo ad aprire il file
+	Button^ _button = (Button^)sender;
+	Messages->Text = "file: " + _button->Tag;
+	//messaggio di errore
+	String^ path = (String^)_button->Tag;
+
+	StorageFile^ file = FileNow[path];
+	//Uri^ uri = (Uri^)_button->Tag;
+	//auto uri = ref new Windows::Foundation::Uri(path);
+	Windows::System::Launcher::LaunchFileAsync(file);
+	//Windows::System::Launcher::LaunchUriAsync(uri);
+}
+
+void StorageClient::StorageClientAPP::Button_Open_Folder(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e){
+
+	//provo ad aprire il file
+	Button^ _button = (Button^)sender;
+	Messages->Text = "folder: " + _button->Tag + "/";
+	//messaggio di errore
+	String^ path = (String^)_button->Tag;
+
+	//StorageFolder^ folder = FolderNow[path];
+
+	//auto uri = ref new Windows::Foundation::Uri(path);
+
+	//Windows::System::Launcher::LaunchUriAsync(uri);
 }
