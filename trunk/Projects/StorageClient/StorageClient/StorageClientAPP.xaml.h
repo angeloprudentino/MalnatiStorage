@@ -8,6 +8,10 @@
 #include "StorageClientAPP.g.h"
 #include "Common\NavigationHelper.h"
 
+using namespace Windows::Storage;
+using namespace Windows::Storage::Pickers;
+using namespace Windows::Storage::AccessCache;
+
 namespace StorageClient
 {
 	/// <summary>
@@ -48,5 +52,7 @@ namespace StorageClient
 		static Windows::UI::Xaml::DependencyProperty^ _navigationHelperProperty;
 		void Button_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 		void Button_Click_1(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
+		void Button_Open_File(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
+		void Button_Open_Folder(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 	};
 }
