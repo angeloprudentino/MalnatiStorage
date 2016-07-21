@@ -218,6 +218,7 @@ void StorageClient::StorageClientAPP::Button_Click(Platform::Object^ sender, Win
 	Messages->Text = "Folder: " + Myfolder->Path;
 	//elimino gli elementi già presenti
 	WriteGrid->RowDefinitions->Clear();
+	WriteGrid->Children->Clear();
 	//int size = WriteGrid->RowDefinitions->Size;
 	//for (int j = 0; j < size; j++){
 	//	 WriteGrid->RowDefinitions->RemoveAt(j);
@@ -248,9 +249,10 @@ void StorageClient::StorageClientAPP::Button_Click(Platform::Object^ sender, Win
 				tb->Tag = folder->Path;
 
 				FolderNow[folder->Path] = folder;
-				tb->Click += ref new Windows::UI::Xaml::RoutedEventHandler(this, &StorageClient::StorageClientAPP::Button_Open_File);
+				tb->Click += ref new Windows::UI::Xaml::RoutedEventHandler(this, &StorageClient::StorageClientAPP::Button_Open_Folder);
 
 				StackPanel^ sp = ref new StackPanel();
+				sp->Children->Clear();
 				sp->SetValue(WriteGrid->RowProperty, i - 1);
 
 				sp->Children->Append(tb);
@@ -279,6 +281,7 @@ void StorageClient::StorageClientAPP::Button_Click(Platform::Object^ sender, Win
 				tb->Click += ref new Windows::UI::Xaml::RoutedEventHandler(this, &StorageClient::StorageClientAPP::Button_Open_File);
 
 				StackPanel^ sp = ref new StackPanel();
+				sp->Children->Clear();
 				sp->SetValue(WriteGrid->RowProperty, i - 1);
 
 				sp->Children->Append(tb);
@@ -299,13 +302,17 @@ void StorageClient::StorageClientAPP::Button_Click(Platform::Object^ sender, Win
 void StorageClient::StorageClientAPP::Button_Click_1(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
 	WriteGrid->RowDefinitions->Clear();
+	WriteGrid->Children->Clear();
 	//per gestire le versioni
 	Messages->Text = "Available Versions";
 
+
 	int i;
 	for (i = 0; i < 10; i++){
+
 		RowDefinition^ row = ref new RowDefinition();
 		row->Height = 40;
+
 		WriteGrid->RowDefinitions->Append(row);
 
 		//sp->Margin = 0, 10+i*40, 0, 0;
@@ -314,7 +321,10 @@ void StorageClient::StorageClientAPP::Button_Click_1(Platform::Object^ sender, W
 		//tb->Height = 40;
 		Button^ tb = ref new Button();
 		tb->Content = "Version " + i;
+
 		StackPanel^ sp = ref new StackPanel();
+		sp->Children->Clear();
+
 		sp->SetValue(WriteGrid->RowProperty, i);
 
 		sp->Children->Append(tb);
@@ -348,9 +358,9 @@ void StorageClient::StorageClientAPP::Button_Open_Folder(Platform::Object^ sende
 	//messaggio di errore
 	String^ path = (String^)_button->Tag;
 
-	//StorageFolder^ folder = FolderNow[path];
+	StorageFolder^ folder = FolderNow[path];
 
-	//auto uri = ref new Windows::Foundation::Uri(path);
+	auto uri = ref new Windows::Foundation::Uri(path);
 
-	//Windows::System::Launcher::LaunchUriAsync(uri);
+	Windows::System::Launcher::LaunchUriAsync(uri);
 }
