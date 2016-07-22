@@ -7,6 +7,8 @@
 #include <boost\bind.hpp>
 #include "Utility.h"
 #include "Message.h"
+#include <sqlite3.h>
+#include "SQlite_db.h"
 
 using namespace std;
 //using namespace boost;
@@ -19,9 +21,11 @@ private:
 	static ClientMain* instance;
 	boost::asio::io_service fMainIoService;
 	boost::asio::ip::tcp::socket fSock;
+	SQlite_db db;
 	//void handle_write(std::string msg_buffer, boost::system::error_code const & err);
 protected:
 	ClientMain();
+	~ClientMain();
 
 public:
 	static ClientMain* getInstance();

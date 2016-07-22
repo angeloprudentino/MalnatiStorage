@@ -54,5 +54,7 @@ namespace StorageClient
 		void Button_Click_1(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 		void Button_Open_File(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 		void Button_Open_Folder(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
+		void First_read_folder(Platform::Object^ sender, Platform::Object^ e);
+		void OnLocalAppDataChanged(Windows::Storage::Search::IStorageQueryResultBase^ sender, Platform::Object^ args);
 	};
 }

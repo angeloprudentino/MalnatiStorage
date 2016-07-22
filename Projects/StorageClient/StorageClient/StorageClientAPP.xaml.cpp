@@ -32,6 +32,7 @@ using namespace concurrency;
 using namespace Windows::Storage;
 using namespace Windows::Storage::Pickers;
 using namespace Windows::Storage::AccessCache;
+using namespace Windows::Storage::Search;
 using namespace Windows::UI::Popups;
 using namespace Windows::System;
 
@@ -44,6 +45,10 @@ StorageFolder^ Myfolder;
 //<StorageFile^,100> FileNow;
 map<String^, StorageFile^> FileNow;
 map<String^, StorageFolder^> FolderNow;
+
+auto queryResult;
+//timer
+//DispatcherTimer^ dt;
 
 StorageClientAPP::StorageClientAPP()
 {
@@ -97,6 +102,19 @@ void StorageClientAPP::OnNavigatedTo(NavigationEventArgs^ e)
 	Myfolder = (StorageFolder^)e->Parameter;
 	NavigationHelper->OnNavigatedTo(e);
 	this->Messages->Text = Mypath;
+	//dt = ref new DispatcherTimer();
+	//dt->Tick += ref new Windows::Foundation::EventHandler<Platform::Object ^>(this, &StorageClient::StorageClientAPP::First_read_folder);
+	////dt->Tick += ref new Windows::Foundation::EventHandler<Platform::Object ^>(this, &StorageClient::StorageClientAPP::OnTick);
+	//TimeSpan t;
+	//t.Duration = 10000;
+	//dt->Interval = t;
+	//dt->Start();
+//	First_read_folder();
+	//auto queryResult = localFolder->CreateFileQueryWithOptions(queryOptions);
+	
+	//gestisco l' evento se viene modificata la cartella
+	queryResult = Myfolder->CreateFileQuery();
+	queryResult->ContentsChanged += ref new Windows::Foundation::TypedEventHandler<Windows::Storage::Search::IStorageQueryResultBase ^, Platform::Object ^>(this, &StorageClient::StorageClientAPP::OnLocalAppDataChanged);
 }
 
 void StorageClientAPP::OnNavigatedFrom(NavigationEventArgs^ e)
@@ -163,56 +181,6 @@ void StorageClient::StorageClientAPP::Button_Click(Platform::Object^ sender, Win
 	//std::wstring p2 = p.wstring();
 	//String^ pp= ref new String(p2.data());
 	////outputtext += pp + " : \n";
-
-
-	//try
-	//{
-	//	if (exists(p))    // does p actually exist?
-	//	{
-	//		if (is_regular_file(p)) {       // is p a regular file?   
-	//			cout << p << " size is " << file_size(p) << '\n';
-	//			//traformo p in String^
-	//			p2 = p.wstring();
-	//			pp = ref new String(p2.data());
-	//			outputtext += "    " + pp + "\\\n";
-	//		}
-	//		else if (is_directory(p))      // is p a directory?
-	//		{
-	//			cout << p << " is a directory containing:\n";
-	//			p2 = p.wstring();
-	//			pp = ref new String(p2.data());
-	//			outputtext += "Directory: " + pp + "\\\n";
-	//			copy(directory_iterator(p), directory_iterator(), // directory_iterator::value_type
-	//				ostream_iterator<directory_entry>(cout, "\n")); // is directory_entry, which is
-	//			// converted to a path by the
-	//			// path stream inserter
-	//		}
-
-	//		else
-	//			cout << p << " exists, but is neither a regular file nor a directory\n";
-	//	}
-	//	else
-	//		cout << p << " does not exist\n";
-	//		p2 = p.wstring();
-	//		pp = ref new String(p2.data());
-	//		outputtext += pp + "does not exists \\\n";
-	//}
-
-	//catch (const filesystem_error& ex)
-	//{
-	//	cout << ex.what() << '\n'; 
-	//	string str = ex.what();
-	//	//convertire da string a wstring
-	//	std::wstring wsTmp;
-	//	wsTmp.assign(str.begin(),str.end());
-	//	pp = ref new String(wsTmp.data());
-	//	outputtext += pp;
-	//	//pp = ref new String();
-
-	//}
-
-	//Messages->Text = outputtext;
-
 
 	//LETTURA DA KNOWNFOLDER
 	Messages->Text = "Folder: " + Myfolder->Path;
@@ -292,12 +260,22 @@ void StorageClient::StorageClientAPP::Button_Click(Platform::Object^ sender, Win
 			Messages->Text = outputtext;
 		});
 	});
-
-
-
-
 }
 
+void StorageClient::StorageClientAPP::First_read_folder(Platform::Object^ sender, Platform::Object^ e){
+	//TimeSpan t = dt->Interval;
+	////String^ time = ref new String(t.ToString);
+	//this->Messages->Text = Myfolder->Path + " dentro la funzione; interval: " + t.ToString() ;
+	////mettere la gestione di un timer
+	//dt->Stop();
+	//dt->Start();
+	
+}
+
+void StorageClient::StorageClientAPP::OnLocalAppDataChanged(Windows::Storage::Search::IStorageQueryResultBase^ sender, Platform::Object^ args)
+{
+	Messages->Text = "Modificata la cartella: "+ Myfolder->Path;
+}
 
 void StorageClient::StorageClientAPP::Button_Click_1(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
@@ -344,7 +322,13 @@ void StorageClient::StorageClientAPP::Button_Open_File(Platform::Object^ sender,
 	String^ path = (String^)_button->Tag;
 
 	StorageFile^ file = FileNow[path];
-	//Uri^ uri = (Uri^)_button->Tag;
+	auto attr = file->Properties;
+	//Windows::Storage::FileProperties::BasicProperties^ prop;
+	//prop->DateModified;
+	Messages->Text = "file: " + _button->Tag;
+		//+ " prop:" +prop->DateModified + " size:" + prop->Size;
+	
+		//Uri^ uri = (Uri^)_button->Tag;
 	//auto uri = ref new Windows::Foundation::Uri(path);
 	Windows::System::Launcher::LaunchFileAsync(file);
 	//Windows::System::Launcher::LaunchUriAsync(uri);
