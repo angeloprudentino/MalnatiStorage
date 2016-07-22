@@ -46,7 +46,7 @@ StorageFolder^ Myfolder;
 map<String^, StorageFile^> FileNow;
 map<String^, StorageFolder^> FolderNow;
 
-auto queryResult;
+StorageFileQueryResult^ queryResult;
 //timer
 //DispatcherTimer^ dt;
 
@@ -101,7 +101,7 @@ void StorageClientAPP::OnNavigatedTo(NavigationEventArgs^ e)
 	//Mypath = (String^)e->Parameter;
 	Myfolder = (StorageFolder^)e->Parameter;
 	NavigationHelper->OnNavigatedTo(e);
-	this->Messages->Text = Mypath;
+	this->Messages->Text = Myfolder->Path;
 	//dt = ref new DispatcherTimer();
 	//dt->Tick += ref new Windows::Foundation::EventHandler<Platform::Object ^>(this, &StorageClient::StorageClientAPP::First_read_folder);
 	////dt->Tick += ref new Windows::Foundation::EventHandler<Platform::Object ^>(this, &StorageClient::StorageClientAPP::OnTick);
@@ -109,12 +109,35 @@ void StorageClientAPP::OnNavigatedTo(NavigationEventArgs^ e)
 	//t.Duration = 10000;
 	//dt->Interval = t;
 	//dt->Start();
-//	First_read_folder();
+	//	First_read_folder();
 	//auto queryResult = localFolder->CreateFileQueryWithOptions(queryOptions);
-	
+
 	//gestisco l' evento se viene modificata la cartella
 	queryResult = Myfolder->CreateFileQuery();
 	queryResult->ContentsChanged += ref new Windows::Foundation::TypedEventHandler<Windows::Storage::Search::IStorageQueryResultBase ^, Platform::Object ^>(this, &StorageClient::StorageClientAPP::OnLocalAppDataChanged);
+	//create_task(queryResult->GetFilesAsync()).then([this](IVectorView<StorageFile^>^ files)
+	//{
+	//	String^ outputText = "";
+	//	//output how many files that match the query were found
+	//	if (files->Size == 0)
+	//	{
+	//		outputText += "No files found for '";
+	//	}
+	//	else if (files->Size == 1)
+	//	{
+	//		outputText += files->Size.ToString() + " file found:\n\n";
+	//	}
+	//	else
+	//	{
+	//		outputText += files->Size.ToString() + " files found:\n\n";
+	//	}
+	//	//output the name of each file that matches the query
+	//	for (unsigned int i = 0; i < files->Size; i++)
+	//	{
+	//		outputText += files->GetAt(i)->Name + "\n";
+	//	}
+	//	Messages->Text = outputText;
+	//});
 }
 
 void StorageClientAPP::OnNavigatedFrom(NavigationEventArgs^ e)
@@ -192,6 +215,7 @@ void StorageClient::StorageClientAPP::Button_Click(Platform::Object^ sender, Win
 	//	 WriteGrid->RowDefinitions->RemoveAt(j);
 	//}
 	//KnownFolders::PicturesLibrary
+	//Myfolder
 	create_task(Myfolder->GetFoldersAsync()).then([this](IVectorView<StorageFolder^>^ folders)
 	{
 		create_task(Myfolder->GetFilesAsync()).then([this, folders](IVectorView<StorageFile^>^ files)

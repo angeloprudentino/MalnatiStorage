@@ -177,6 +177,7 @@
     <ClInclude Include="LogIn.xaml.h">
       <DependentUpon>LogIn.xaml</DependentUpon>
     </ClInclude>
+    <ClInclude Include="Message.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="App.xaml.h">
       <DependentUpon>App.xaml</DependentUpon>
@@ -191,6 +192,7 @@
     <ClInclude Include="StorageClientAPP.xaml.h">
       <DependentUpon>StorageClientAPP.xaml</DependentUpon>
     </ClInclude>
+    <ClInclude Include="Utility.h" />
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">
@@ -235,6 +237,7 @@
     <ClCompile Include="MainPage.xaml.cpp">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </ClCompile>
+    <ClCompile Include="Message.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -250,6 +253,7 @@
     <ClCompile Include="StorageClientAPP.xaml.cpp">
       <DependentUpon>StorageClientAPP.xaml</DependentUpon>
     </ClCompile>
+    <ClCompile Include="Utility.cpp" />
   </ItemGroup>
   <ItemGroup>
     <SDKReference Include="BehaviorsXamlSDKNative, Version=12.0" />
