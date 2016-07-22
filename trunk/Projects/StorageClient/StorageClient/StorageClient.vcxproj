@@ -76,31 +76,37 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(ExtensionSDKDirectoryRoot)\Windows\v$(TargetPlatformVersion)\ExtensionSDKs\CppRESTWindowsSDK\1.0\DesignTime\Debug\x86\CppRESTWindowsSDK.props" Condition="exists('$(ExtensionSDKDirectoryRoot)\Windows\v$(TargetPlatformVersion)\ExtensionSDKs\CppRESTWindowsSDK\1.0\DesignTime\Debug\x86\CppRESTWindowsSDK.props')" />
     <Import Project="$(ExtensionSDKDirectoryRoot)\Windows\v$(TargetPlatformVersion)\ExtensionSDKs\MobileServicesCppClient\1.0\DesignTime\Debug\x86\MobileServicesCppClient.props" Condition="exists('$(ExtensionSDKDirectoryRoot)\Windows\v$(TargetPlatformVersion)\ExtensionSDKs\MobileServicesCppClient\1.0\DesignTime\Debug\x86\MobileServicesCppClient.props')" />
+    <Import Project="$(ExtensionSDKDirectoryRoot)\Windows\v$(TargetPlatformVersion)\ExtensionSDKs\SQLite.WinRT81\3.13.0\DesignTime\CommonConfiguration\Neutral\SQLite.WinRT81.props" Condition="exists('$(ExtensionSDKDirectoryRoot)\Windows\v$(TargetPlatformVersion)\ExtensionSDKs\SQLite.WinRT81\3.13.0\DesignTime\CommonConfiguration\Neutral\SQLite.WinRT81.props')" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(ExtensionSDKDirectoryRoot)\Windows\v$(TargetPlatformVersion)\ExtensionSDKs\CppRESTWindowsSDK\1.0\DesignTime\Retail\x86\CppRESTWindowsSDK.props" Condition="exists('$(ExtensionSDKDirectoryRoot)\Windows\v$(TargetPlatformVersion)\ExtensionSDKs\CppRESTWindowsSDK\1.0\DesignTime\Retail\x86\CppRESTWindowsSDK.props')" />
     <Import Project="$(ExtensionSDKDirectoryRoot)\Windows\v$(TargetPlatformVersion)\ExtensionSDKs\MobileServicesCppClient\1.0\DesignTime\Retail\x86\MobileServicesCppClient.props" Condition="exists('$(ExtensionSDKDirectoryRoot)\Windows\v$(TargetPlatformVersion)\ExtensionSDKs\MobileServicesCppClient\1.0\DesignTime\Retail\x86\MobileServicesCppClient.props')" />
+    <Import Project="$(ExtensionSDKDirectoryRoot)\Windows\v$(TargetPlatformVersion)\ExtensionSDKs\SQLite.WinRT81\3.13.0\DesignTime\CommonConfiguration\Neutral\SQLite.WinRT81.props" Condition="exists('$(ExtensionSDKDirectoryRoot)\Windows\v$(TargetPlatformVersion)\ExtensionSDKs\SQLite.WinRT81\3.13.0\DesignTime\CommonConfiguration\Neutral\SQLite.WinRT81.props')" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(ExtensionSDKDirectoryRoot)\Windows\v$(TargetPlatformVersion)\ExtensionSDKs\CppRESTWindowsSDK\1.0\DesignTime\Debug\ARM\CppRESTWindowsSDK.props" Condition="exists('$(ExtensionSDKDirectoryRoot)\Windows\v$(TargetPlatformVersion)\ExtensionSDKs\CppRESTWindowsSDK\1.0\DesignTime\Debug\ARM\CppRESTWindowsSDK.props')" />
     <Import Project="$(ExtensionSDKDirectoryRoot)\Windows\v$(TargetPlatformVersion)\ExtensionSDKs\MobileServicesCppClient\1.0\DesignTime\Debug\ARM\MobileServicesCppClient.props" Condition="exists('$(ExtensionSDKDirectoryRoot)\Windows\v$(TargetPlatformVersion)\ExtensionSDKs\MobileServicesCppClient\1.0\DesignTime\Debug\ARM\MobileServicesCppClient.props')" />
+    <Import Project="$(ExtensionSDKDirectoryRoot)\Windows\v$(TargetPlatformVersion)\ExtensionSDKs\SQLite.WinRT81\3.13.0\DesignTime\CommonConfiguration\Neutral\SQLite.WinRT81.props" Condition="exists('$(ExtensionSDKDirectoryRoot)\Windows\v$(TargetPlatformVersion)\ExtensionSDKs\SQLite.WinRT81\3.13.0\DesignTime\CommonConfiguration\Neutral\SQLite.WinRT81.props')" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(ExtensionSDKDirectoryRoot)\Windows\v$(TargetPlatformVersion)\ExtensionSDKs\CppRESTWindowsSDK\1.0\DesignTime\Retail\ARM\CppRESTWindowsSDK.props" Condition="exists('$(ExtensionSDKDirectoryRoot)\Windows\v$(TargetPlatformVersion)\ExtensionSDKs\CppRESTWindowsSDK\1.0\DesignTime\Retail\ARM\CppRESTWindowsSDK.props')" />
     <Import Project="$(ExtensionSDKDirectoryRoot)\Windows\v$(TargetPlatformVersion)\ExtensionSDKs\MobileServicesCppClient\1.0\DesignTime\Retail\ARM\MobileServicesCppClient.props" Condition="exists('$(ExtensionSDKDirectoryRoot)\Windows\v$(TargetPlatformVersion)\ExtensionSDKs\MobileServicesCppClient\1.0\DesignTime\Retail\ARM\MobileServicesCppClient.props')" />
+    <Import Project="$(ExtensionSDKDirectoryRoot)\Windows\v$(TargetPlatformVersion)\ExtensionSDKs\SQLite.WinRT81\3.13.0\DesignTime\CommonConfiguration\Neutral\SQLite.WinRT81.props" Condition="exists('$(ExtensionSDKDirectoryRoot)\Windows\v$(TargetPlatformVersion)\ExtensionSDKs\SQLite.WinRT81\3.13.0\DesignTime\CommonConfiguration\Neutral\SQLite.WinRT81.props')" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(ExtensionSDKDirectoryRoot)\Windows\v$(TargetPlatformVersion)\ExtensionSDKs\CppRESTWindowsSDK\1.0\DesignTime\Debug\x64\CppRESTWindowsSDK.props" Condition="exists('$(ExtensionSDKDirectoryRoot)\Windows\v$(TargetPlatformVersion)\ExtensionSDKs\CppRESTWindowsSDK\1.0\DesignTime\Debug\x64\CppRESTWindowsSDK.props')" />
     <Import Project="$(ExtensionSDKDirectoryRoot)\Windows\v$(TargetPlatformVersion)\ExtensionSDKs\MobileServicesCppClient\1.0\DesignTime\Debug\x64\MobileServicesCppClient.props" Condition="exists('$(ExtensionSDKDirectoryRoot)\Windows\v$(TargetPlatformVersion)\ExtensionSDKs\MobileServicesCppClient\1.0\DesignTime\Debug\x64\MobileServicesCppClient.props')" />
+    <Import Project="$(ExtensionSDKDirectoryRoot)\Windows\v$(TargetPlatformVersion)\ExtensionSDKs\SQLite.WinRT81\3.13.0\DesignTime\CommonConfiguration\Neutral\SQLite.WinRT81.props" Condition="exists('$(ExtensionSDKDirectoryRoot)\Windows\v$(TargetPlatformVersion)\ExtensionSDKs\SQLite.WinRT81\3.13.0\DesignTime\CommonConfiguration\Neutral\SQLite.WinRT81.props')" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(ExtensionSDKDirectoryRoot)\Windows\v$(TargetPlatformVersion)\ExtensionSDKs\CppRESTWindowsSDK\1.0\DesignTime\Retail\x64\CppRESTWindowsSDK.props" Condition="exists('$(ExtensionSDKDirectoryRoot)\Windows\v$(TargetPlatformVersion)\ExtensionSDKs\CppRESTWindowsSDK\1.0\DesignTime\Retail\x64\CppRESTWindowsSDK.props')" />
     <Import Project="$(ExtensionSDKDirectoryRoot)\Windows\v$(TargetPlatformVersion)\ExtensionSDKs\MobileServicesCppClient\1.0\DesignTime\Retail\x64\MobileServicesCppClient.props" Condition="exists('$(ExtensionSDKDirectoryRoot)\Windows\v$(TargetPlatformVersion)\ExtensionSDKs\MobileServicesCppClient\1.0\DesignTime\Retail\x64\MobileServicesCppClient.props')" />
+    <Import Project="$(ExtensionSDKDirectoryRoot)\Windows\v$(TargetPlatformVersion)\ExtensionSDKs\SQLite.WinRT81\3.13.0\DesignTime\CommonConfiguration\Neutral\SQLite.WinRT81.props" Condition="exists('$(ExtensionSDKDirectoryRoot)\Windows\v$(TargetPlatformVersion)\ExtensionSDKs\SQLite.WinRT81\3.13.0\DesignTime\CommonConfiguration\Neutral\SQLite.WinRT81.props')" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
@@ -150,6 +156,7 @@
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <DisableSpecificWarnings>4453;28204</DisableSpecificWarnings>
       <PreprocessorDefinitions>BOOST_ALL_DYN_LINK;BOOST_THREAD_USE_DLL;BOOST_LIB_DIAGNOSTIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <CompileAsWinRT>true</CompileAsWinRT>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(SolutionDir)\..\..\Shared\Libraries\x86_64\debug\boost;$(SolutionDir)\..\..\Shared\Libraries\x86_64\debug\openssl;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -180,6 +187,7 @@
     <ClInclude Include="Register.xaml.h">
       <DependentUpon>Register.xaml</DependentUpon>
     </ClInclude>
+    <ClInclude Include="SQlite_db.h" />
     <ClInclude Include="StorageClientAPP.xaml.h">
       <DependentUpon>StorageClientAPP.xaml</DependentUpon>
     </ClInclude>
@@ -238,6 +246,7 @@
     <ClCompile Include="Register.xaml.cpp">
       <DependentUpon>Register.xaml</DependentUpon>
     </ClCompile>
+    <ClCompile Include="SQlite_db.cpp" />
     <ClCompile Include="StorageClientAPP.xaml.cpp">
       <DependentUpon>StorageClientAPP.xaml</DependentUpon>
     </ClCompile>
@@ -248,6 +257,7 @@
     <SDKReference Include="CppUnitTestFramework, Version=11.0" />
     <SDKReference Include="MobileServicesCppClient, Version=1.0" />
     <SDKReference Include="MSAdvertisingXaml, Version=8.1" />
+    <SDKReference Include="SQLite.WinRT81, Version=3.13.0" />
     <SDKReference Include="TestPlatform, Version=11.0" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
