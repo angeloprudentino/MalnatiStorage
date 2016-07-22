@@ -225,6 +225,7 @@ void StorageClient::Register::backButton_Copy_Click(Platform::Object^ sender, Wi
 	//folderPicker->FileTypeFilter->Append(".pptx");
 	folderPicker->FileTypeFilter->Append("*");
 
+	
 	create_task(folderPicker->PickSingleFolderAsync()).then([this](StorageFolder^ folder)
 	{
 		if (folder)
@@ -232,12 +233,10 @@ void StorageClient::Register::backButton_Copy_Click(Platform::Object^ sender, Wi
 			Prova->Text = "Picked folder: " + folder->Path;
 			this->Directory->Text = folder->Path;
 			folderMia = folder;
-
 		}
 		else
 		{
 			Prova->Text = "Operation cancelled.";
 		}
 	});
-
 }
