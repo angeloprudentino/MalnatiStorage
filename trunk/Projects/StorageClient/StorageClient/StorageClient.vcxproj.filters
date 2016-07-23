@@ -45,8 +45,6 @@
     <ClCompile Include="StorageClientAPP.xaml.cpp" />
     <ClCompile Include="ClientMain.cpp" />
     <ClCompile Include="SQlite_db.cpp" />
-    <ClCompile Include="Message.cpp" />
-    <ClCompile Include="Utility.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -66,8 +64,6 @@
     <ClInclude Include="StorageClientAPP.xaml.h" />
     <ClInclude Include="ClientMain.h" />
     <ClInclude Include="SQlite_db.h" />
-    <ClInclude Include="Message.h" />
-    <ClInclude Include="Utility.h" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest" />
