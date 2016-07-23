@@ -46,7 +46,7 @@ StorageFolder^ Myfolder;
 map<String^, StorageFile^> FileNow;
 map<String^, StorageFolder^> FolderNow;
 
-StorageFileQueryResult^ queryResult;
+//StorageFolderQueryResult^ queryResult;
 //timer
 //DispatcherTimer^ dt;
 
@@ -113,8 +113,8 @@ void StorageClientAPP::OnNavigatedTo(NavigationEventArgs^ e)
 	//auto queryResult = localFolder->CreateFileQueryWithOptions(queryOptions);
 
 	//gestisco l' evento se viene modificata la cartella
-	queryResult = Myfolder->CreateFileQuery();
-	queryResult->ContentsChanged += ref new Windows::Foundation::TypedEventHandler<Windows::Storage::Search::IStorageQueryResultBase ^, Platform::Object ^>(this, &StorageClient::StorageClientAPP::OnLocalAppDataChanged);
+	//queryResult = Myfolder->CreateFileQuery();
+	//queryResult->ContentsChanged += ref new Windows::Foundation::TypedEventHandler<Windows::Storage::Search::IStorageQueryResultBase ^, Platform::Object ^>(this, &StorageClient::StorageClientAPP::OnLocalAppDataChanged);
 	//create_task(queryResult->GetFilesAsync()).then([this](IVectorView<StorageFile^>^ files)
 	//{
 	//	String^ outputText = "";
@@ -216,8 +216,13 @@ void StorageClient::StorageClientAPP::Button_Click(Platform::Object^ sender, Win
 	//}
 	//KnownFolders::PicturesLibrary
 	//Myfolder
+	//queryResult = Myfolder->CreateFolderQuery();
+	//queryResult->ContentsChanged += ref new Windows::Foundation::TypedEventHandler<Windows::Storage::Search::IStorageQueryResultBase ^, Platform::Object ^>(this, &StorageClient::StorageClientAPP::OnLocalAppDataChanged);
+	//queryResult->ContentsChanged += ref new Windows::Foundation::TypedEventHandler<Windows::Storage::Search::IStorageQueryResultBase ^, Platform::Object ^>(this, &StorageClient::StorageClientAPP::OnLocalAppDataChanged);
+
 	create_task(Myfolder->GetFoldersAsync()).then([this](IVectorView<StorageFolder^>^ folders)
 	{
+
 		create_task(Myfolder->GetFilesAsync()).then([this, folders](IVectorView<StorageFile^>^ files)
 		{
 			auto count = folders->Size + files->Size;
@@ -279,6 +284,15 @@ void StorageClient::StorageClientAPP::Button_Click(Platform::Object^ sender, Win
 				sp->Children->Append(tb);
 
 				WriteGrid->Children->Append(sp);
+				FileProperties::BasicProperties^ prop; 
+				
+
+				create_task(file->GetBasicPropertiesAsync()).then([this, &outputtext](FileProperties::BasicProperties^ p){
+					//Messages->Text = "size: " + p->Size.ToString() + " last mod: " + p->DateModified.UniversalTime;
+					//p->SavePropertiesAsync();
+					//p->DateModified.UniversalTime.
+				});
+
 
 			});
 			Messages->Text = outputtext;
