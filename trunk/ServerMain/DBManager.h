@@ -22,32 +22,47 @@ using namespace System::Data;
 using namespace System::Data::SqlClient;
 
 
+#ifdef STORAGE_SERVER
+//////////////////////////////////
+//       EDBException	        //
+//////////////////////////////////
+public class EDBException : public EBaseException{
+public:
+	EDBException(const string aMsg) : EBaseException(aMsg){}
+};
+
+
+/////////////////////////////////////
+//		IServerDBController		   //
+/////////////////////////////////////
+public class IServerDBController : public IServerBaseController {
+
+};
+
+
 ////////////////////////////////////
 //          TDBManager	          //
 ////////////////////////////////////
 public class TDBManager {
 private:
-	bool fOpen = false;
-
 	gcroot<SqlConnection^> fConnection = nullptr;
 	string_ptr fHost = nullptr;
 	string_ptr fDBName = nullptr;
 
-	IServerBaseController* fCallbackObj = nullptr;
+	IServerDBController* fCallbackObj = nullptr;
 
 public:
-	TDBManager(const string& aHost, const string& aDBName, IServerBaseController* aCallback);
+	TDBManager(const string& aHost, const string& aDBName, IServerDBController* aCallback);
 	~TDBManager();
 	
-	void insertNewUser(const string& aUser, const string& aPass, const string& aSalt);
-	void InsertNewVersion(TVersion_ptr& aVersion);
+	void insertNewUser(const string& aUser, const string& aPass); // throws EDBException
+	void InsertNewVersion(const string& aUser, TVersion_ptr& aVersion); // throws EDBException
 
 	const bool checkIfUserExists(const string& aUser);
-	const bool verifyUserCredentials(const string& aUser, const string& aPass, const string& aSalt);
-	TVersion_ptr getLastVerison(const string& aUser);
-
-	//getters
-	const bool isOpen() { return this->fOpen; }
+	const bool verifyUserCredentials(const string& aUser, const string& aPass);
+	TVersion_ptr getVersion(const string& aUser, int aVersion);
+	TVersion_ptr getLastVersion(const string& aUser);
+	TVersionList_ptr getAllVersions(const string& aUser);
 };
-
+#endif;
 

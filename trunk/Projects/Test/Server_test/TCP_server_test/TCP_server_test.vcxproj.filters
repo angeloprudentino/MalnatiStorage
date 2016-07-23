@@ -42,6 +42,9 @@
     <ClCompile Include="..\..\..\..\ServerMain\DBManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\..\Shared\Common\Session\FileSystemManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ServerForm.h">
@@ -72,6 +75,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\..\ServerMain\DBManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Shared\Common\Session\FileSystemManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

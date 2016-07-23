@@ -32,11 +32,16 @@ typedef struct{
 }B64result;
 
 #ifdef STORAGE_SERVER
-
 //////////////////////////////////////
 //      IServerBaseController	    //
 //////////////////////////////////////
 public class IServerBaseController{
+#else
+//////////////////////////////////////
+//      IClientBaseController	    //
+//////////////////////////////////////
+class IClientBaseController{
+#endif
 public:
 	virtual void onServerLog(string aClassName, string aFuncName, string aMsg) = 0;
 	virtual void onServerWarning(string aClassName, string aFuncName, string aMsg) = 0;
@@ -48,13 +53,15 @@ public:
 #define doServerError(ptr, aClassName, aFuncName, aMsg) if(ptr!=nullptr){ptr->onServerError(aClassName, aFuncName, aMsg);}
 #define doServerCriticalError(ptr, aClassName, aFuncName, aMsg) if(ptr!=nullptr){ptr->onServerCriticalError(aClassName, aFuncName, aMsg);}
 
-#endif
-
 
 //////////////////////////////////////
 //        EBaseException	        //
 //////////////////////////////////////
+#ifdef STORAGE_SERVER
 public class EBaseException : public std::exception {
+#else
+class EBaseException : public std::exception {
+#endif
 private:
 	string fMessage;
 public:
@@ -65,7 +72,11 @@ public:
 //////////////////////////////////////
 //       EOpensslException	        //
 //////////////////////////////////////
+#ifdef STORAGE_SERVER
 public class EOpensslException : public EBaseException{
+#else
+class EOpensslException : public EBaseException{
+#endif
 public:
 	EOpensslException(const string aMsg) : EBaseException(aMsg){}
 };

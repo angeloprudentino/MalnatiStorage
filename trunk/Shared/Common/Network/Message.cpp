@@ -2,7 +2,7 @@
  * Author: Angelo Prudentino
  * Date: 06/03/2016
  * File: Message.cpp
- * Description: this file contains all classes implemented
+ * Description: this file contains all classes implementing
  *              messages exchanged between client and server
  *
  */
@@ -65,7 +65,7 @@ std::string messageNames[] = {
 };
 
 #pragma region "Message Utility"
-const bool isValidMessage(const string aName){
+const bool isValidMessage(const string& aName){
 	for (int i = 0; i < MSG_NUM; i++){
 		if (aName == messageNames[i])
 			return true;
@@ -200,7 +200,7 @@ TUserRegistrReqMessage::TUserRegistrReqMessage(TBaseMessage_ptr& aBase){
 	this->decodeMessage();
 }
 
-TUserRegistrReqMessage::TUserRegistrReqMessage(const string aUser, const string aPass){
+TUserRegistrReqMessage::TUserRegistrReqMessage(const string& aUser, const string& aPass){
 	this->fID = USER_REG_REQ_ID;
 	this->fUser = make_string_ptr(aUser);
 	this->fPass = make_string_ptr(aPass);
@@ -331,7 +331,7 @@ TUpdateStartReqMessage::TUpdateStartReqMessage(TBaseMessage_ptr& aBase){
 	this->decodeMessage();
 }
 
-TUpdateStartReqMessage::TUpdateStartReqMessage(const string aUser, const string aPass){
+TUpdateStartReqMessage::TUpdateStartReqMessage(const string& aUser, const string& aPass){
 	this->fID = UPDATE_START_REQ_ID;
 	this->fUser = make_string_ptr(aUser);
 	this->fPass = make_string_ptr(aPass);
@@ -400,7 +400,7 @@ TUpdateStartReplyMessage::TUpdateStartReplyMessage(TBaseMessage_ptr& aBase){
 	this->decodeMessage();
 }
 
-TUpdateStartReplyMessage::TUpdateStartReplyMessage(const bool aResp, const string aToken){
+TUpdateStartReplyMessage::TUpdateStartReplyMessage(const bool aResp, const string& aToken){
 	this->fID = UPDATE_START_REPLY_ID;
 	this->fResp = aResp;
 	this->fToken = make_string_ptr(aToken);
@@ -476,7 +476,7 @@ TAddNewFileMessage::TAddNewFileMessage(TBaseMessage_ptr& aBase){
 	this->decodeMessage();
 }
 
-TAddNewFileMessage::TAddNewFileMessage(const string aToken, string aFilePath){
+TAddNewFileMessage::TAddNewFileMessage(const string& aToken, const string& aFilePath){
 	this->fID = ADD_NEW_FILE_ID;
 	this->fToken = make_string_ptr(aToken);
 	this->fFilePath = make_string_ptr(aFilePath);
@@ -599,7 +599,7 @@ TUpdateFileMessage::TUpdateFileMessage(TBaseMessage_ptr& aBase){
 	this->decodeMessage();
 }
 
-TUpdateFileMessage::TUpdateFileMessage(const string aToken, string aFilePath){
+TUpdateFileMessage::TUpdateFileMessage(const string& aToken, const string& aFilePath){
 	this->fID = UPDATE_FILE_ID;
 	this->fToken = make_string_ptr(aToken);
 	this->fFilePath = make_string_ptr(aFilePath);
@@ -722,7 +722,7 @@ TRemoveFileMessage::TRemoveFileMessage(TBaseMessage_ptr& aBase){
 	this->decodeMessage();
 }
 
-TRemoveFileMessage::TRemoveFileMessage(const string aToken, string aFilePath){
+TRemoveFileMessage::TRemoveFileMessage(const string& aToken, const string& aFilePath){
 	this->fID = REMOVE_FILE_ID;
 	this->fToken = make_string_ptr(aToken);
 	this->fFilePath = make_string_ptr(aFilePath);
@@ -797,7 +797,7 @@ TFileAckMessage::TFileAckMessage(TBaseMessage_ptr& aBase){
 	this->decodeMessage();
 }
 
-TFileAckMessage::TFileAckMessage(const bool aResp, const string aFilePath){
+TFileAckMessage::TFileAckMessage(const bool aResp, const string& aFilePath){
 	this->fID = FILE_ACK_ID;
 	this->fResp = aResp;
 	this->fFilePath = make_string_ptr(aFilePath);
@@ -877,7 +877,7 @@ TUpdateStopReqMessage::TUpdateStopReqMessage(TBaseMessage_ptr& aBase){
 	this->decodeMessage();
 }
 
-TUpdateStopReqMessage::TUpdateStopReqMessage(const string aToken){
+TUpdateStopReqMessage::TUpdateStopReqMessage(const string& aToken){
 	this->fID = UPDATE_STOP_REQ_ID;
 	this->fToken = make_string_ptr(aToken);
 }
@@ -1013,7 +1013,7 @@ TGetVersionsReqMessage::TGetVersionsReqMessage(TBaseMessage_ptr& aBase){
 	this->decodeMessage();
 }
 
-TGetVersionsReqMessage::TGetVersionsReqMessage(const string aUser, const string aPass){
+TGetVersionsReqMessage::TGetVersionsReqMessage(const string& aUser, const string& aPass){
 	this->fID = GET_VERSIONS_REQ_ID;
 	this->fUser = make_string_ptr(aUser);
 	this->fPass = make_string_ptr(aPass);
@@ -1082,12 +1082,22 @@ TGetVersionsReplyMessage::TGetVersionsReplyMessage(TBaseMessage_ptr& aBase){
 	this->decodeMessage();
 }
 
-TGetVersionsReplyMessage::TGetVersionsReplyMessage(const unsigned int aTotVersions, const unsigned int aOldestVersion, const unsigned int aLastVersion, map<unsigned int, time_t> aVersions){
+TGetVersionsReplyMessage::TGetVersionsReplyMessage(const unsigned int aTotVersions, const unsigned int aOldestVersion, const unsigned int aLastVersion, TVersionList_ptr& aVersions){
 	this->fID = GET_VERSIONS_REPLY_ID;
 	this->fTotVersions = aTotVersions;
 	this->fOldestVersion = aOldestVersion;
 	this->fLastVersion = aLastVersion;
-	this->fVersions = aVersions;
+	this->fVersions = move_TVersionList_ptr(aVersions);
+}
+
+TGetVersionsReplyMessage::~TGetVersionsReplyMessage(){
+	if (this->fVersions != nullptr){
+		for (TVersionList::iterator it = this->fVersions->begin(); it < this->fVersions->end(); it++)
+			it->reset();
+		this->fVersions->clear();
+		this->fVersions.reset();
+		this->fVersions = nullptr;
+	}
 }
 
 string_ptr TGetVersionsReplyMessage::encodeMessage(){
@@ -1096,11 +1106,13 @@ string_ptr TGetVersionsReplyMessage::encodeMessage(){
 	this->fItems->push_back(make_string_ptr(to_string(this->fOldestVersion)));
 	this->fItems->push_back(make_string_ptr(to_string(this->fLastVersion)));
 
-	int size = (int)this->fVersions.size();
-	for (int i = GET_VERSIONS_REPLY_MIN_TOK_NUM + 1; i < size; i++){
-		this->fItems->push_back(make_string_ptr(timeToString(this->fVersions.at(i))));
+	if (this->fVersions != nullptr){
+		int size = (int)this->fVersions->size();
+		for (int i = GET_VERSIONS_REPLY_MIN_TOK_NUM + 1; i < size; i++){
+			time_t t = this->fVersions->at(i)->getDate();
+			this->fItems->push_back(make_string_ptr(timeToString(t)));
+		}
 	}
-
 	return TBaseMessage::encodeMessage();
 }
 
@@ -1149,7 +1161,8 @@ void TGetVersionsReplyMessage::decodeMessage(){
 
 	int i, j;
 	for (i = GET_VERSIONS_REPLY_MIN_TOK_NUM + 1, j = this->fOldestVersion; i < totSize; i++, j++){
-		this->fVersions.emplace(j, stringToTime(*(this->fItems->at(i))));
+		TVersion_ptr pv = new_TVersion_ptr(j, stringToTime(*(this->fItems->at(i))));
+		this->fVersions->push_back(move_TVersion_ptr(pv));
 	}
 }
 #pragma endregion
@@ -1167,7 +1180,7 @@ TRestoreVerReqMessage::TRestoreVerReqMessage(TBaseMessage_ptr& aBase){
 	this->decodeMessage();
 }
 
-TRestoreVerReqMessage::TRestoreVerReqMessage(const string aUser, const string aPass, const unsigned int aVersion){
+TRestoreVerReqMessage::TRestoreVerReqMessage(const string& aUser, const string& aPass, const unsigned int aVersion){
 	this->fID = RESTORE_VER_REQ_ID;
 	this->fUser = make_string_ptr(aUser);
 	this->fPass = make_string_ptr(aPass);
@@ -1246,7 +1259,7 @@ TRestoreVerReplyMessage::TRestoreVerReplyMessage(TBaseMessage_ptr& aBase){
 	this->decodeMessage();
 }
 
-TRestoreVerReplyMessage::TRestoreVerReplyMessage(const bool aResp, const string aToken){
+TRestoreVerReplyMessage::TRestoreVerReplyMessage(const bool aResp, const string& aToken){
 	this->fID = RESTORE_VER_REPLY_ID;
 	this->fResp = aResp;
 	this->fToken = make_string_ptr(aToken);
@@ -1323,7 +1336,7 @@ TRestoreFileMessage::TRestoreFileMessage(TBaseMessage_ptr& aBase){
 	this->decodeMessage();
 }
 
-TRestoreFileMessage::TRestoreFileMessage(string aFilePath){
+TRestoreFileMessage::TRestoreFileMessage(const string& aFilePath){
 	this->fID = RESTORE_FILE_ID;
 	this->fFilePath = make_string_ptr(aFilePath);
 	this->fFileContent = nullptr;
@@ -1434,7 +1447,7 @@ TRestoreFileAckMessage::TRestoreFileAckMessage(TBaseMessage_ptr& aBase){
 	this->decodeMessage();
 }
 
-TRestoreFileAckMessage::TRestoreFileAckMessage(const bool aResp, const string aToken, const string aFilePath){
+TRestoreFileAckMessage::TRestoreFileAckMessage(const bool aResp, const string& aToken, const string& aFilePath){
 	this->fID = RESTORE_FILE_ACK_ID;
 	this->fToken = make_string_ptr(aToken);
 	this->fFilePath = make_string_ptr(aFilePath);

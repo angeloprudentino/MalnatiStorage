@@ -27,7 +27,7 @@ TMessageContainer::~TMessageContainer(){
 
 TBaseMessage_ptr TMessageContainer::getMessage(){
 	if (this->fMsg != nullptr)
-		return move_TMessageContainer_ptr(this->fMsg);
+		return move_TBaseMessage_ptr(this->fMsg);
 	else
 		return nullptr;
 }

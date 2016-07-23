@@ -20,12 +20,17 @@ using namespace boost;
 ///////////////////////////////////
 //    IBaseExecutorController    //
 ///////////////////////////////////
+#ifdef STORAGE_SERVER
 public class IBaseExecutorController : public IServerBaseController {
+#else
+class IBaseExecutorController : public IClientBaseController {
+#endif
 public:
 	virtual bool isInQueueEmpty() = 0;
 	virtual TMessageContainer_ptr getMessageToProcess() = 0;
 	virtual void enqueueMessageToSend(TMessageContainer_ptr& aMsg) = 0;
 };
+
 
 #ifdef STORAGE_SERVER
 //////////////////////////////////////
@@ -48,7 +53,7 @@ public:
 //////////////////////////////////////
 //    IClientExecutorController    //
 //////////////////////////////////////
-public class IClientExecutorController : public IBaseExecutorController {
+class IClientExecutorController : public IBaseExecutorController {
 public:
 };
 #endif
@@ -57,13 +62,18 @@ public:
 //////////////////////////////////////
 //        TMessageExecutor          //
 //////////////////////////////////////
+#ifdef STORAGE_SERVER
 public class TMessageExecutor{
+#else
+class TMessageExecutor{
+#endif
 private:
 	atomic<bool> fMustExit;
 	thread_group fThreadPool;
 #ifdef STORAGE_SERVER
 	IServerExecutorController* fCallbackObj = nullptr;
 #else
+	IClientExecutorController* fCallbackObj = nullptr;
 #endif
 
 #ifdef STORAGE_SERVER
@@ -76,6 +86,7 @@ public:
 #ifdef STORAGE_SERVER
 	TMessageExecutor(IServerExecutorController* aCallbackObj);
 #else
+	TMessageExecutor(IClientExecutorController* aCallbackObj);
 #endif
 
 	void stopExecutors();
