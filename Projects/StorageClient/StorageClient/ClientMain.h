@@ -30,4 +30,5 @@ protected:
 public:
 	static ClientMain* getInstance();
 	bool PasswordCheck(string user, string pass);
+	void sendMsg();
 };

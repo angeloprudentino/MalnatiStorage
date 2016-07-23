@@ -101,7 +101,7 @@ void StorageClientAPP::OnNavigatedTo(NavigationEventArgs^ e)
 	//Mypath = (String^)e->Parameter;
 	Myfolder = (StorageFolder^)e->Parameter;
 	NavigationHelper->OnNavigatedTo(e);
-	this->Messages->Text = Myfolder->Path;
+	//this->Messages->Text = Myfolder->Path;
 	//dt = ref new DispatcherTimer();
 	//dt->Tick += ref new Windows::Foundation::EventHandler<Platform::Object ^>(this, &StorageClient::StorageClientAPP::First_read_folder);
 	////dt->Tick += ref new Windows::Foundation::EventHandler<Platform::Object ^>(this, &StorageClient::StorageClientAPP::OnTick);
