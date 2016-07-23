@@ -10,20 +10,23 @@
 #include <string>
 #include <memory>
 #include <boost/thread/mutex.hpp>
+#include <boost/filesystem.hpp>
 
 #include "ServerSocket.h"
 #include "Executor.h"
 #include "Utility.h"
 #include "Session.h"
 #include "DBManager.h"
+#include "FileSystemManager.h"
 
 using namespace std;
+using namespace boost::filesystem;
 
 
 ////////////////////////////////////
 //        TStorageServer	      //
 ////////////////////////////////////
-public class TStorageServer : public IServerSockController, public IServerExecutorController{
+public class TStorageServer : public IServerSockController, public IServerExecutorController, public IServerDBController{
 private:
 	int fServerPort = -1;
 
@@ -34,16 +37,20 @@ private:
 	mutex fSessionsMutex;
 
 	TServerSockController* fSockController = nullptr;
+	TFileSystemManager* fFileSystemManager = nullptr;
 	IBaseExecutorController* fExeController = nullptr;
 	TMessageExecutor* fExecutor = nullptr;
 	TDBManager* fDBManager = nullptr;
 
-	const bool isThereASessionFor(const string aUser);
-	const bool isThereAnUpdateSessionFor(const string aUser);
-	const bool isThereARestoreSessionFor(const string aUser);
-	void newUpdateSession(const string aUser, const string aToken);
-	void newRestoreSession(const string aUser, const string aToken);
-	void updateSessionWithFile(const string aUser, TFile_ptr& aFile, int aOperation);
+	void newUpdateSession(const string& aUser, const string& aToken);
+	void newRestoreSession(const string& aUser, const string& aToken);
+	TSession_ptr isThereASessionFor(const string& aUser);
+	TSession_ptr isThereAnUpdateSessionFor(const string& aUser);
+	TSession_ptr isThereARestoreSessionFor(const string& aUser);
+	void purgeSession(const string& aUser);
+
+	const bool userExists(const string& aUser);
+	const bool checkUserCredential(const string& aUser, const string& aPass);
 
 public:
 	TStorageServer(int AServerPort, IManagedServerSockController^ aCallbackObj);

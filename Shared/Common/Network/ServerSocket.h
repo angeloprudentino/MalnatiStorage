@@ -26,7 +26,6 @@ class TServerSocket;
 //////////////////////////////////////
 //      TServerSockController	    //
 //////////////////////////////////////
-
 // Socket controller class
 public class TServerSockController : public IServerSockController, public IBaseExecutorController{
 private:
@@ -65,7 +64,6 @@ public:
 //////////////////////////////////////
 //         TServerSocket	        //
 //////////////////////////////////////
-
 //Boost-asio server socket class 
 public class TServerSocket{
 private:

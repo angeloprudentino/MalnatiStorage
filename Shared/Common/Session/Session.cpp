@@ -16,7 +16,7 @@ using namespace std;
 //           TFile	            //
 //////////////////////////////////
 #pragma region "TFile"
-TFile::TFile(const string& aServerPathPrefix, const string& aClientRelativePath, const time_t aFileDate, string_ptr& aChecksum, const bool aProcessed){
+	TFile::TFile(const string& aServerPathPrefix, const string& aClientRelativePath, const time_t aFileDate, string_ptr& aChecksum, const bool aProcessed){
 	this->fServerPathPrefix = make_string_ptr(aServerPathPrefix);
 	this->fClientRelativePath = make_string_ptr(aClientRelativePath);
 	this->fFileDate = aFileDate;
@@ -53,36 +53,40 @@ const bool TFile::isEqualTo(const TFile& aFile){
 TVersion::TVersion(const int aId, const time_t aVersionDate){
 	this->fId = aId;
 	this->fVersionDate = aVersionDate;
-	this->fFileList = new_TFile_list_ptr();
-	this->fNext = this->fFileList->begin();
+	this->fNext = this->fFileList.begin();
 }
 
 TVersion::~TVersion(){
-	if (this->fFileList != nullptr){
-		for (TFile_list::iterator it = this->fFileList->begin(); it != this->fFileList->end(); it++)
-			it->reset();
-		this->fFileList->clear();
-		this->fFileList.reset();
-		this->fFileList = nullptr;
-	}
+	for (TFile_list::iterator it = this->fFileList.begin(); it != this->fFileList.end(); it++)
+		it->reset();
+	this->fFileList.clear();
 }
 
 void TVersion::addFile(TFile_ptr& aFile){
-	this->fFileList->push_back(move_TFile_ptr(aFile));
+	this->fFileList.push_back(move_TFile_ptr(aFile));
 }
 
 void TVersion::updateFile(TFile_ptr& aFile){
-	for (TFile_list::iterator it = this->fFileList->begin(); it != this->fFileList->end(); it++)
+	for (TFile_list::iterator it = this->fFileList.begin(); it != this->fFileList.end(); it++)
 		if (aFile->isEqualTo(**(it)))
 			*it = move_TFile_ptr(aFile);
 }
 
 void TVersion::removeFile(TFile_ptr& aFile){
-	for (TFile_list::iterator it = this->fFileList->begin(); it != this->fFileList->end(); it++)
+	for (TFile_list::iterator it = this->fFileList.begin(); it != this->fFileList.end(); it++)
 		if (aFile->isEqualTo(**(it))){
 			it->reset();
-			this->fFileList->erase(it);
+			this->fFileList.erase(it);
 		}
+}
+
+TFile_ptr TVersion::getNextFile(){
+	if (this->fNext != this->fFileList.end()){		
+		TFile_ptr f = new_TFile_ptr((*this->fNext)->getServerPathPrefix(), (*this->fNext)->getClientRelativePath(), (*this->fNext)->getFileDate(), make_string_ptr((*this->fNext)->getFileChecksum()), false);
+		return move_TFile_ptr(f);
+	}
+	else
+		return nullptr;
 }
 #pragma endregion
 
@@ -119,5 +123,10 @@ void TSession::updateFile(TFile_ptr& aFile){
 
 void TSession::removeFile(TFile_ptr& aFile){
 	this->fVersion->removeFile(move_TFile_ptr(aFile));
+}
+
+TVersion_ptr TSession::terminateWithSucces(){
+
+	return move_TVersion_ptr(this->fVersion);
 }
 #pragma endregion

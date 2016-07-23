@@ -2,7 +2,7 @@
  * Author: Angelo Prudentino
  * Date: 06/03/2016
  * File: Message.h
- * Description: this file contains all classes implemented
+ * Description: this file contains all classes implementing
  *              messages exchanged between client and server
  *
  */
@@ -14,6 +14,7 @@
 #include <memory>
 
 #include "Utility.h"
+#include "Session.h"
 
 using namespace std;
 
@@ -55,16 +56,24 @@ const string getMessageName(const int aIndex);
 //////////////////////////////////////
 //       EMessageException	        //
 //////////////////////////////////////
+#ifdef STORAGE_SERVER
 public class EMessageException : public EBaseException {
+#else
+class EMessageException : public EBaseException {
+#endif
 public:
-	EMessageException(const string aMsg) : EBaseException(aMsg){}
+	EMessageException(const string& aMsg) : EBaseException(aMsg){}
 };
 
 
 //////////////////////////////////////
 //         TBaseMessage	            //
 //////////////////////////////////////
+#ifdef STORAGE_SERVER
 public class TBaseMessage{
+#else
+class TBaseMessage{
+#endif
 private:
 	void decodeMessageID();
 
@@ -89,19 +98,23 @@ public:
 };
 typedef std::unique_ptr<TBaseMessage> TBaseMessage_ptr;
 #define new_TBaseMessage_ptr(str) std::make_unique<TBaseMessage>(str)
-
+#define move_TBaseMessage_ptr(ptr) std::move(ptr)
 
 ////////////////////////////////////////
 //      TUserRegistrReqMessage        //
 ////////////////////////////////////////
+#ifdef STORAGE_SERVER
 public class TUserRegistrReqMessage : public TBaseMessage {
+#else
+class TUserRegistrReqMessage : public TBaseMessage {
+#endif
 private:
 	string_ptr fUser = nullptr;
 	string_ptr fPass = nullptr;
 
 public:
 	TUserRegistrReqMessage(TBaseMessage_ptr& aBase);
-	TUserRegistrReqMessage(const string aUser, const string aPass);
+	TUserRegistrReqMessage(const string& aUser, const string& aPass);
 	~TUserRegistrReqMessage();
 
 	string_ptr encodeMessage();
@@ -118,7 +131,11 @@ typedef std::unique_ptr<TUserRegistrReqMessage> TUserRegistrReqMessage_ptr;
 ////////////////////////////////////////
 //      TUserRegistrReplyMessage      //
 ////////////////////////////////////////
+#ifdef STORAGE_SERVER
 public class TUserRegistrReplyMessage : public TBaseMessage {
+#else
+class TUserRegistrReplyMessage : public TBaseMessage {
+#endif
 private:
 	bool fResp = false;
 
@@ -141,14 +158,18 @@ typedef std::unique_ptr<TUserRegistrReplyMessage> TUserRegistrReplyMessage_ptr;
 ////////////////////////////////////////
 //      TUpdateStartReqMessage        //
 ////////////////////////////////////////
+#ifdef STORAGE_SERVER
 public class TUpdateStartReqMessage : public TBaseMessage {
+#else
+class TUpdateStartReqMessage : public TBaseMessage {
+#endif
 private:
 	string_ptr fUser = nullptr;
 	string_ptr fPass = nullptr;
 
 public:
 	TUpdateStartReqMessage(TBaseMessage_ptr& aBase);
-	TUpdateStartReqMessage(const string aUser, const string aPass);
+	TUpdateStartReqMessage(const string& aUser, const string& aPass);
 	~TUpdateStartReqMessage();
 
 	string_ptr encodeMessage();
@@ -165,14 +186,18 @@ typedef std::unique_ptr<TUpdateStartReqMessage> TUpdateStartReqMessage_ptr;
 ////////////////////////////////////////
 //      TUpdateStartReplyMessage      //
 ////////////////////////////////////////
+#ifdef STORAGE_SERVER
 public class TUpdateStartReplyMessage : public TBaseMessage {
+#else
+class TUpdateStartReplyMessage : public TBaseMessage {
+#endif
 private:
 	bool fResp = false;
 	string_ptr fToken = nullptr;
 
 public:
 	TUpdateStartReplyMessage(TBaseMessage_ptr& aBase);
-	TUpdateStartReplyMessage(const bool aResp, const string aToken);
+	TUpdateStartReplyMessage(const bool aResp, const string& aToken);
 	~TUpdateStartReplyMessage();
 
 	string_ptr encodeMessage();
@@ -190,7 +215,11 @@ typedef std::unique_ptr<TUpdateStartReplyMessage> TUpdateStartReplyMessage_ptr;
 ////////////////////////////////////////
 //        TAddNewFileMessage          //
 ////////////////////////////////////////
+#ifdef STORAGE_SERVER
 public class TAddNewFileMessage : public TBaseMessage {
+#else
+class TAddNewFileMessage : public TBaseMessage {
+#endif
 private:
 	string_ptr fToken = nullptr;
 	string_ptr fFilePath = nullptr;
@@ -200,7 +229,7 @@ private:
 
 public:
 	TAddNewFileMessage(TBaseMessage_ptr& aBase);
-	TAddNewFileMessage(const string aToken, string aFilePath);
+	TAddNewFileMessage(const string& aToken, const string& aFilePath);
 	~TAddNewFileMessage();
 
 	string_ptr encodeMessage();
@@ -210,8 +239,8 @@ public:
 	const string getToken(){ return *(this->fToken); }
 	const string getFilePath(){ return *(this->fFilePath); }
 	const time_t getFileDate(){ return this->fFileDate; }
-	const string getChecksum(){ return *(this->fChecksum); }
-	const string getFileContent(){ return *(this->fFileContent); }
+	string_ptr getChecksum(){ return move_string_ptr(this->fChecksum); }
+	string_ptr getFileContent(){ return move_string_ptr(this->fFileContent); }
 };
 typedef std::unique_ptr<TAddNewFileMessage> TAddNewFileMessage_ptr;
 #define make_TAddNewFileMessage_ptr(ptr) std::make_unique<TAddNewFileMessage>(ptr)
@@ -220,7 +249,11 @@ typedef std::unique_ptr<TAddNewFileMessage> TAddNewFileMessage_ptr;
 ////////////////////////////////////////
 //        TUpdateFileMessage          //
 ////////////////////////////////////////
+#ifdef STORAGE_SERVER
 public class TUpdateFileMessage : public TBaseMessage {
+#else
+class TUpdateFileMessage : public TBaseMessage {
+#endif
 private:
 	string_ptr fToken = nullptr;
 	string_ptr fFilePath = nullptr;
@@ -230,7 +263,7 @@ private:
 
 public:
 	TUpdateFileMessage(TBaseMessage_ptr& aBase);
-	TUpdateFileMessage(const string aToken, string aFilePath);
+	TUpdateFileMessage(const string& aToken, const string& aFilePath);
 	~TUpdateFileMessage();
 
 	string_ptr encodeMessage();
@@ -240,8 +273,8 @@ public:
 	const string getToken(){ return *(this->fToken); }
 	const string getFilePath(){ return *(this->fFilePath); }
 	const time_t getFileDate(){ return this->fFileDate; }
-	const string getChecksum(){ return *(this->fChecksum); }
-	const string getFileContent(){ return *(this->fFileContent); }
+	string_ptr getChecksum(){ return move_string_ptr(this->fChecksum); }
+	string_ptr getFileContent(){ return move_string_ptr(this->fFileContent); }
 };
 typedef std::unique_ptr<TUpdateFileMessage> TUpdateFileMessage_ptr;
 #define make_TUpdateFileMessage_ptr(ptr) std::make_unique<TUpdateFileMessage>(ptr)
@@ -250,14 +283,18 @@ typedef std::unique_ptr<TUpdateFileMessage> TUpdateFileMessage_ptr;
 ////////////////////////////////////////
 //        TRemoveFileMessage          //
 ////////////////////////////////////////
+#ifdef STORAGE_SERVER
 public class TRemoveFileMessage : public TBaseMessage {
+#else
+class TRemoveFileMessage : public TBaseMessage {
+#endif
 private:
 	string_ptr fToken = nullptr;
 	string_ptr fFilePath = nullptr;
 
 public:
 	TRemoveFileMessage(TBaseMessage_ptr& aBase);
-	TRemoveFileMessage(const string aToken, string aFilePath);
+	TRemoveFileMessage(const string& aToken, const string& aFilePath);
 	~TRemoveFileMessage();
 
 	string_ptr encodeMessage();
@@ -274,14 +311,18 @@ typedef std::unique_ptr<TRemoveFileMessage> TRemoveFileMessage_ptr;
 ///////////////////////////////////
 //        TFileAckMessage        //
 ///////////////////////////////////
+#ifdef STORAGE_SERVER
 public class TFileAckMessage : public TBaseMessage {
+#else
+class TFileAckMessage : public TBaseMessage {
+#endif
 private:
 	bool fResp = false;
 	string_ptr fFilePath = nullptr;
 
 public:
 	TFileAckMessage(TBaseMessage_ptr& aBase);
-	TFileAckMessage(const bool aResp, const string aFilePath);
+	TFileAckMessage(const bool aResp, const string& aFilePath);
 	~TFileAckMessage();
 
 	string_ptr encodeMessage();
@@ -299,13 +340,17 @@ typedef std::unique_ptr<TFileAckMessage> TFileAckMessage_ptr;
 ////////////////////////////////////////
 //      TUpdateStopReqMessage         //
 ////////////////////////////////////////
+#ifdef STORAGE_SERVER
 public class TUpdateStopReqMessage : public TBaseMessage {
+#else
+class TUpdateStopReqMessage : public TBaseMessage {
+#endif
 private:
 	string_ptr fToken = nullptr;
 
 public:
 	TUpdateStopReqMessage(TBaseMessage_ptr& aBase);
-	TUpdateStopReqMessage(const string aToken);
+	TUpdateStopReqMessage(const string& aToken);
 	~TUpdateStopReqMessage();
 
 	string_ptr encodeMessage();
@@ -321,7 +366,11 @@ typedef std::unique_ptr<TUpdateStopReqMessage> TUpdateStopReqMessage_ptr;
 ////////////////////////////////////////
 //      TUpdateStopReplyMessage       //
 ////////////////////////////////////////
+#ifdef STORAGE_SERVER
 public class TUpdateStopReplyMessage : public TBaseMessage {
+#else
+class TUpdateStopReplyMessage : public TBaseMessage {
+#endif
 private:
 	bool fResp = false;
 	int fVersion = -1;
@@ -348,14 +397,18 @@ typedef std::unique_ptr<TUpdateStopReplyMessage> TUpdateStopReplyMessage_ptr;
 ////////////////////////////////////////
 //      TGetVersionsReqMessage        //
 ////////////////////////////////////////
+#ifdef STORAGE_SERVER
 public class TGetVersionsReqMessage : public TBaseMessage {
+#else
+class TGetVersionsReqMessage : public TBaseMessage {
+#endif
 private:
 	string_ptr fUser = nullptr;
 	string_ptr fPass = nullptr;
 
 public:
 	TGetVersionsReqMessage(TBaseMessage_ptr& aBase);
-	TGetVersionsReqMessage(const string aUser, const string aPass);
+	TGetVersionsReqMessage(const string& aUser, const string& aPass);
 	~TGetVersionsReqMessage();
 
 	string_ptr encodeMessage();
@@ -372,17 +425,21 @@ typedef std::unique_ptr<TGetVersionsReqMessage> TGetVersionsReqMessage_ptr;
 ////////////////////////////////////////
 //      TGetVersionsReplyMessage      //
 ////////////////////////////////////////
+#ifdef STORAGE_SERVER
 public class TGetVersionsReplyMessage : public TBaseMessage {
+#else
+class TGetVersionsReplyMessage : public TBaseMessage {
+#endif
 private:
 	unsigned int fTotVersions = -1;
 	unsigned int fOldestVersion = -1;
 	unsigned int fLastVersion = -1;
-	map<unsigned int, time_t> fVersions;
+	TVersionList_ptr fVersions = nullptr;
 
 public:
 	TGetVersionsReplyMessage(TBaseMessage_ptr& aBase);
-	TGetVersionsReplyMessage(const unsigned int aTotVersions, const unsigned int aOldestVersion, const unsigned int aLastVersion, map<unsigned int, time_t> aVersions);
-	~TGetVersionsReplyMessage(){};
+	TGetVersionsReplyMessage(const unsigned int aTotVersions, const unsigned int aOldestVersion, const unsigned int aLastVersion, TVersionList_ptr& aVersions);
+	~TGetVersionsReplyMessage();
 
 	string_ptr encodeMessage();
 	void decodeMessage();
@@ -391,7 +448,7 @@ public:
 	const unsigned int getTotVersions(){ return this->fTotVersions; }
 	const unsigned int getOldestVersion(){ return this->fOldestVersion; }
 	const unsigned int getLastVersion(){ return this->fLastVersion; }
-	const time_t getVersion(const unsigned int aVersion){ return this->fVersions.at(aVersion); }
+	const time_t getVersion(const unsigned int aVersion){ return this->fVersions->at(aVersion)->getDate(); }
 };
 typedef std::unique_ptr<TGetVersionsReplyMessage> TGetVersionsReplyMessage_ptr;
 #define new_TGetVersionsReplyMessage_ptr(aTotVersions, aOldestVersion, aLastVersion, aVersions) std::make_unique<TGetVersionsReplyMessage>(aTotVersions, aOldestVersion, aLastVersion, aVersions)
@@ -401,7 +458,11 @@ typedef std::unique_ptr<TGetVersionsReplyMessage> TGetVersionsReplyMessage_ptr;
 ////////////////////////////////////////
 //       TRestoreVerReqMessage        //
 ////////////////////////////////////////
+#ifdef STORAGE_SERVER
 public class TRestoreVerReqMessage : public TBaseMessage {
+#else
+class TRestoreVerReqMessage : public TBaseMessage {
+#endif
 private:
 	string_ptr fUser = nullptr;
 	string_ptr fPass = nullptr;
@@ -409,7 +470,7 @@ private:
 
 public:
 	TRestoreVerReqMessage(TBaseMessage_ptr& aBase);
-	TRestoreVerReqMessage(const string aUser, const string aPass, const unsigned int aVersion);
+	TRestoreVerReqMessage(const string& aUser, const string& aPass, const unsigned int aVersion);
 	~TRestoreVerReqMessage();
 
 	string_ptr encodeMessage();
@@ -427,14 +488,18 @@ typedef std::unique_ptr<TRestoreVerReqMessage> TRestoreVerReqMessage_ptr;
 ////////////////////////////////////////
 //      TRestoreVerReplyMessage       //
 ////////////////////////////////////////
+#ifdef STORAGE_SERVER
 public class TRestoreVerReplyMessage : public TBaseMessage {
+#else
+class TRestoreVerReplyMessage : public TBaseMessage {
+#endif
 private:
 	bool fResp = false;
 	string_ptr fToken = nullptr;
 
 public:
 	TRestoreVerReplyMessage(TBaseMessage_ptr& aBase);
-	TRestoreVerReplyMessage(const bool aResp, const string aToken);
+	TRestoreVerReplyMessage(const bool aResp, const string& aToken);
 	~TRestoreVerReplyMessage();
 
 	string_ptr encodeMessage();
@@ -452,7 +517,11 @@ typedef std::unique_ptr<TRestoreVerReplyMessage> TRestoreVerReplyMessage_ptr;
 ////////////////////////////////////////
 //        TRestoreFileMessage         //
 ////////////////////////////////////////
+#ifdef STORAGE_SERVER
 public class TRestoreFileMessage : public TBaseMessage {
+#else
+class TRestoreFileMessage : public TBaseMessage {
+#endif
 private:
 	string_ptr fFilePath = nullptr;
 	time_t fFileDate;
@@ -461,7 +530,7 @@ private:
 
 public:
 	TRestoreFileMessage(TBaseMessage_ptr& aBase);
-	TRestoreFileMessage(string aFilePath);
+	TRestoreFileMessage(const string& aFilePath);
 	~TRestoreFileMessage();
 
 	string_ptr encodeMessage();
@@ -474,13 +543,18 @@ public:
 	const time_t getFileDate(){ return this->fFileDate; }
 };
 typedef std::unique_ptr<TRestoreFileMessage> TRestoreFileMessage_ptr;
+#define new_TRestoreFileMessage_ptr(aFilePath) std::make_unique<TRestoreFileMessage>(aFilePath)
 #define make_TRestoreFileMessage_ptr(ptr) std::make_unique<TRestoreFileMessage>(ptr)
 
 
 //////////////////////////////////////////
 //        TRestoreFileAckMessage        //
 //////////////////////////////////////////
+#ifdef STORAGE_SERVER
 public class TRestoreFileAckMessage : public TBaseMessage {
+#else
+class TRestoreFileAckMessage : public TBaseMessage {
+#endif
 private:
 	string_ptr fToken = nullptr;
 	bool fResp = false;
@@ -488,7 +562,7 @@ private:
 
 public:
 	TRestoreFileAckMessage(TBaseMessage_ptr& aBase);
-	TRestoreFileAckMessage(const bool aResp, const string aToken, const string aFilePath);
+	TRestoreFileAckMessage(const bool aResp, const string& aToken, const string& aFilePath);
 	~TRestoreFileAckMessage();
 
 	string_ptr encodeMessage();
@@ -507,7 +581,11 @@ typedef std::unique_ptr<TRestoreFileAckMessage> TRestoreFileAckMessage_ptr;
 ////////////////////////////////////
 //      TRestoreStopMessage       //
 ////////////////////////////////////
+#ifdef STORAGE_SERVER
 public class TRestoreStopMessage : public TBaseMessage {
+#else
+class TRestoreStopMessage : public TBaseMessage {
+#endif
 private:
 	unsigned int fVersion = -1;
 	time_t fTime;
@@ -531,7 +609,11 @@ typedef std::unique_ptr<TRestoreStopMessage> TRestoreStopMessage_ptr;
 //////////////////////////////////////
 //        TPingReqMessage           //
 //////////////////////////////////////
+#ifdef STORAGE_SERVER
 public class TPingReqMessage : public TBaseMessage {
+#else
+class TPingReqMessage : public TBaseMessage {
+#endif
 private:
 	time_t fTime;
 
@@ -553,7 +635,11 @@ typedef std::unique_ptr<TPingReqMessage> TPingReqMessage_ptr;
 //////////////////////////////////////
 //        TPingReplyMessage         //
 //////////////////////////////////////
+#ifdef STORAGE_SERVER
 public class TPingReplyMessage : public TBaseMessage {
+#else
+class TPingReplyMessage : public TBaseMessage {
+#endif
 private:
 	time_t fTime;
 

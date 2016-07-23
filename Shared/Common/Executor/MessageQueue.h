@@ -19,7 +19,11 @@
 //////////////////////////////////////
 //       TMessageContainer          //
 //////////////////////////////////////
+#ifdef STORAGE_SERVER
 public class TMessageContainer{
+#else
+class TMessageContainer{
+#endif
 private:
 	TBaseMessage_ptr fMsg = nullptr;
 	TConnectionHandle fConnection;
@@ -44,7 +48,11 @@ typedef std::unique_ptr<TMessageContainer> TMessageContainer_ptr;
 //////////////////////////////////////
 //        TMessageQueue	            //
 //////////////////////////////////////
+#ifdef STORAGE_SERVER
 public class TMessageQueue{
+#else
+class TMessageQueue{
+#endif
 private:
 	queue<TMessageContainer_ptr> fQueue;
 	mutex fMutex;

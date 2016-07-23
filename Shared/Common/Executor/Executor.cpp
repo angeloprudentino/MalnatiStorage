@@ -24,6 +24,7 @@
 #ifdef STORAGE_SERVER
 TMessageExecutor::TMessageExecutor(IServerExecutorController* aCallbackObj){
 #else
+TMessageExecutor::TMessageExecutor(IClientExecutorController* aCallbackObj){
 #endif
 	this->fCallbackObj = aCallbackObj;
 	//create all threads
@@ -72,6 +73,7 @@ void TMessageExecutor::serverExecutor(){
 				try{
 					TUserRegistrReqMessage_ptr mptr = make_TUserRegistrReqMessage_ptr(bm);
 					this->fCallbackObj->processRegistrationRequest(msg->getConnection(), mptr);
+					mptr.reset();
 				}
 				catch (EMessageException& e){
 					doServerError(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "error creating TUserRegistrReqMessage: " + e.getMessage());
@@ -83,6 +85,7 @@ void TMessageExecutor::serverExecutor(){
 				try{
 					TUpdateStartReqMessage_ptr mptr = make_TUpdateStartReqMessage_ptr(bm);
 					this->fCallbackObj->processUpdateStart(msg->getConnection(), mptr);
+					mptr.reset();
 				}
 				catch (EMessageException& e){
 					doServerError(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "error creating TUpdateStartReqMessage: " + e.getMessage());
@@ -94,6 +97,7 @@ void TMessageExecutor::serverExecutor(){
 				try{
 					TAddNewFileMessage_ptr mptr = make_TAddNewFileMessage_ptr(bm);
 					this->fCallbackObj->processAddNewFile(msg->getConnection(), mptr);
+					mptr.reset();
 				}
 				catch (EMessageException& e){
 					doServerError(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "error creating TAddNewFileMessage: " + e.getMessage());
@@ -105,6 +109,7 @@ void TMessageExecutor::serverExecutor(){
 				try{
 					TUpdateFileMessage_ptr mptr = make_TUpdateFileMessage_ptr(bm);
 					this->fCallbackObj->processUpdateFile(msg->getConnection(), mptr);
+					mptr.reset();
 				}
 				catch (EMessageException& e){
 					doServerError(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "error creating TUpdateFileMessage: " + e.getMessage());
@@ -116,6 +121,7 @@ void TMessageExecutor::serverExecutor(){
 				try{
 					TRemoveFileMessage_ptr mptr = make_TRemoveFileMessage_ptr(bm);
 					this->fCallbackObj->processRemoveFile(msg->getConnection(), mptr);
+					mptr.reset();
 				}
 				catch (EMessageException& e){
 					doServerError(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "error creating TRemoveFileMessage: " + e.getMessage());
@@ -127,6 +133,7 @@ void TMessageExecutor::serverExecutor(){
 				try{
 					TUpdateStopReqMessage_ptr mptr = make_TUpdateStopReqMessage_ptr(bm);
 					this->fCallbackObj->processUpdateStop(msg->getConnection(), mptr);
+					mptr.reset();
 				}
 				catch (EMessageException& e){
 					doServerError(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "error creating TUpdateStopReqMessage: " + e.getMessage());
@@ -138,6 +145,7 @@ void TMessageExecutor::serverExecutor(){
 				try{
 					TGetVersionsReqMessage_ptr mptr = make_TGetVersionsReqMessage_ptr(bm);
 					this->fCallbackObj->processGetVersions(msg->getConnection(), mptr);
+					mptr.reset();
 				}
 				catch (EMessageException& e){
 					doServerError(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "error creating TGetVersionsReqMessage: " + e.getMessage());
@@ -149,6 +157,7 @@ void TMessageExecutor::serverExecutor(){
 				try{
 					TRestoreVerReqMessage_ptr mptr = make_TRestoreVerReqMessage_ptr(bm);
 					this->fCallbackObj->processRestoreVersion(msg->getConnection(), mptr);
+					mptr.reset();
 				}
 				catch (EMessageException& e){
 					doServerError(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "error creating TRestoreVerReqMessage: " + e.getMessage());
@@ -160,6 +169,7 @@ void TMessageExecutor::serverExecutor(){
 				try{
 					TRestoreFileAckMessage_ptr mptr = make_TRestoreFileAckMessage_ptr(bm);
 					this->fCallbackObj->processRestoreFileAck(msg->getConnection(), mptr);
+					mptr.reset();
 				}
 				catch (EMessageException& e){
 					doServerError(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "error creating TRestoreFileAckMessage: " + e.getMessage());
@@ -171,6 +181,7 @@ void TMessageExecutor::serverExecutor(){
 				try{
 					TPingReqMessage_ptr mptr = make_TPingReqMessage_ptr(bm);
 					this->fCallbackObj->processPingRequest(msg->getConnection(), mptr);
+					mptr.reset();
 				}
 				catch (EMessageException& e){
 					doServerError(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "error creating TPingReqMessage: " + e.getMessage());
@@ -181,7 +192,9 @@ void TMessageExecutor::serverExecutor(){
 				//should never get here
 				break;
 			}
+			bm.reset();
 		}
+		msg.reset();
 	}
 
 	//safe thread exit
