@@ -9,7 +9,7 @@
 #include "Message.h"
 #include <sqlite3.h>
 #include "SQlite_db.h"
-
+#include <string.h>
 using namespace std;
 //using namespace boost;
 //using namespace boost::asio;
@@ -32,4 +32,5 @@ public:
 	bool PasswordCheck(string user, string pass);
 	void sendMsg();
 	int CheckFile(wstring name, wstring path, double time, double version);
+	char* ShowTableInFile();
 };

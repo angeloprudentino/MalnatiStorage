@@ -13,5 +13,6 @@ public:
 	int OpenSQlite_db();
 	void CloseSQlite_db();
 	int CreateTable(const char *sqlCreateTable);
+	char* DisplayTable();
 };
 
