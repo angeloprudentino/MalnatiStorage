@@ -289,10 +289,10 @@ void StorageClient::StorageClientAPP::Button_Click(Platform::Object^ sender, Win
 				sp->Children->Append(tb);
 
 				WriteGrid->Children->Append(sp);
-				FileProperties::BasicProperties^ prop; 
-				
+				FileProperties::BasicProperties^ prop;
 
-				create_task(file->GetBasicPropertiesAsync()).then([this, &outputtext,file](FileProperties::BasicProperties^ p){
+
+				create_task(file->GetBasicPropertiesAsync()).then([this, &outputtext, file](FileProperties::BasicProperties^ p){
 					//Messages->Text = "size: " + p->Size.ToString() + " last mod: " + p->DateModified.UniversalTime;
 					//p->SavePropertiesAsync();
 					//p->DateModified.UniversalTime.
@@ -307,6 +307,31 @@ void StorageClient::StorageClientAPP::Button_Click(Platform::Object^ sender, Win
 			Messages->Text = outputtext;
 		});
 	});
+
+	//scrivo in un file la tabella sql per monitorare il DB
+	// Create sample file; replace if exists.
+
+	//StorageFolder^ storageFolder = ApplicationData::Current->LocalFolder;
+	StorageFolder^ storageFolder = KnownFolders::PicturesLibrary;
+
+	StorageFile^ sampleFile;
+
+
+	create_task(storageFolder->CreateFileAsync("sql_result.txt", CreationCollisionOption::ReplaceExisting)).then([this, storageFolder](StorageFile^ f){
+		create_task(storageFolder->GetFileAsync("sql_result.txt")).then([this, storageFolder](StorageFile^ f){
+			c->getInstance();
+
+			char* char_str = c->ShowTableInFile();
+			std::string s_str = std::string(char_str);
+			std::wstring wid_str = std::wstring(s_str.begin(), s_str.end());
+			const wchar_t* w_char = wid_str.c_str();
+			Platform::String^ p_string = ref new Platform::String(w_char);
+			create_task(FileIO::WriteTextAsync(f, p_string));
+		});
+	});
+
+	c = ClientMain::getInstance();
+	c->ShowTableInFile();
 }
 
 void StorageClient::StorageClientAPP::First_read_folder(Platform::Object^ sender, Platform::Object^ e){

@@ -24,6 +24,11 @@ ClientMain::ClientMain(): fMainIoService(), fSock(fMainIoService){
 
 }
 
+char* ClientMain::ShowTableInFile(){
+	char* w = db.DisplayTable();
+	return w;
+}
+
 ClientMain::~ClientMain(){
 	db.CloseSQlite_db();
 }
@@ -31,8 +36,7 @@ ClientMain::~ClientMain(){
 ClientMain* ClientMain::getInstance(){
 		if (instance == NULL)
 			instance = new ClientMain();
-
-		
+	
 		return instance;
 }
 
