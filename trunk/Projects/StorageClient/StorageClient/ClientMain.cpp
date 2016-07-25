@@ -38,8 +38,13 @@ ClientMain* ClientMain::getInstance(){
 
 //funzioni per il Db lato client
 
-char* ClientMain::InitializeDB(){
-	db.OpenSQlite_db();
+char* ClientMain::InitializeDB(StorageFolder^ sf){
+	String^ path = sf->Path;
+	std::wstring fooW(path->Begin());
+	std::string fooA(fooW.begin(), fooW.end());
+	const char* path_char = fooA.c_str();
+	
+	db.OpenSQlite_db(path_char);
 	const char *sqlCreateTable = "CREATE TABLE IF NOT EXISTS Files (id STRING PRIMARY KEY,path STRING PRIMARY KEY,time DOUBLE,version DOUBLE);";
 	char* result = db.CreateTable(sqlCreateTable); //decommentare
 	//if (result != 0){

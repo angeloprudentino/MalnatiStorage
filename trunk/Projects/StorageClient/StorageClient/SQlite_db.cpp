@@ -15,10 +15,14 @@ SQlite_db::~SQlite_db()
 {
 }
 
-char* SQlite_db::OpenSQlite_db(){
+char* SQlite_db::OpenSQlite_db(const char* path){
 	char w[1000]="";
 	int rc;
-	rc = sqlite3_open("MyDb.db", &db);
+	char path2[1000] ="";
+	strcpy(path2, path);
+	//rc = sqlite3_open("MyDb.db", &db);
+	strcat(path2, "/MyDb.db");
+	rc = sqlite3_open(path, &db);
 	if (rc)
 	{
 		cerr << "Error opening SQLite3 database: " << sqlite3_errmsg(db) << endl << endl;
