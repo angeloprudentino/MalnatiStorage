@@ -37,7 +37,7 @@ using namespace Windows::Storage::Search;
 using namespace Windows::UI::Popups;
 using namespace Windows::System;
 
-
+void InitializeDB();
 
 ClientMain* c;
 double Version = 1; //DA AGGIORNARE
@@ -105,6 +105,8 @@ void StorageClientAPP::OnNavigatedTo(NavigationEventArgs^ e)
 	//Mypath = (String^)e->Parameter;
 	Myfolder = (StorageFolder^)e->Parameter;
 	NavigationHelper->OnNavigatedTo(e);
+
+	InitializeDB();
 	//this->Messages->Text = Myfolder->Path;
 	//dt = ref new DispatcherTimer();
 	//dt->Tick += ref new Windows::Foundation::EventHandler<Platform::Object ^>(this, &StorageClient::StorageClientAPP::First_read_folder);
@@ -233,7 +235,8 @@ void StorageClient::StorageClientAPP::Button_Click(Platform::Object^ sender, Win
 			String^ outputtext = ref new String();
 			//outputtext = Myfolder->Name + " (" + count.ToString() + ")\n\n";
 			outputtext = KnownFolders::PicturesLibrary->Name + " (" + count.ToString() + ")\n\n";
-			std::for_each(begin(folders), end(folders), [this, &outputtext](StorageFolder^ folder)
+			StorageFolder^ ActualFolder = KnownFolders::PicturesLibrary;
+			std::for_each(begin(folders), end(folders), [this, &outputtext,ActualFolder](StorageFolder^ folder)
 			{
 				outputtext += "    " + folder->DisplayName + "\\\n";
 				//per ogni cartella che trova
@@ -262,7 +265,7 @@ void StorageClient::StorageClientAPP::Button_Click(Platform::Object^ sender, Win
 
 				/////
 			});
-			std::for_each(begin(files), end(files), [this, &outputtext](StorageFile^ file)
+			std::for_each(begin(files), end(files), [this, &outputtext, ActualFolder](StorageFile^ file)
 			{
 				outputtext += "    " + file->Name + "\n";
 				//aggiungo il bottone per il file
@@ -292,14 +295,23 @@ void StorageClient::StorageClientAPP::Button_Click(Platform::Object^ sender, Win
 				FileProperties::BasicProperties^ prop;
 
 
-				create_task(file->GetBasicPropertiesAsync()).then([this, &outputtext, file](FileProperties::BasicProperties^ p){
+				create_task(file->GetBasicPropertiesAsync()).then([this, &outputtext, file, ActualFolder](FileProperties::BasicProperties^ p){
 					//Messages->Text = "size: " + p->Size.ToString() + " last mod: " + p->DateModified.UniversalTime;
 					//p->SavePropertiesAsync();
 					//p->DateModified.UniversalTime.
-					c = ClientMain::getInstance();
-					std::wstring name(file->Name->Data());
-					std::wstring path(file->Path->Data());
-					c->CheckFile(name, path, p->DateModified.UniversalTime, Version);
+					create_task(ActualFolder->CreateFileAsync("sql_insert_result.txt", CreationCollisionOption::ReplaceExisting)).then([this, ActualFolder,p](StorageFile^ f){
+						create_task(ActualFolder->GetFileAsync("sql_insert_result.txt")).then([this, ActualFolder, p](StorageFile^ f){
+							c->getInstance();
+							char* char_str = c->CheckFile(f->Name, f->Path, p->DateModified.UniversalTime, Version);
+							std::string s_str = std::string(char_str);
+							std::wstring wid_str = std::wstring(s_str.begin(), s_str.end());
+							const wchar_t* w_char = wid_str.c_str();
+							Platform::String^ p_string = ref new Platform::String(w_char);
+							create_task(FileIO::WriteTextAsync(f, p_string));
+						});
+					});
+					//c = ClientMain::getInstance();
+					//c->CheckFile(file->Name, file->Path, p->DateModified.UniversalTime, Version);
 				});
 
 
@@ -419,4 +431,23 @@ void StorageClient::StorageClientAPP::Button_Open_Folder(Platform::Object^ sende
 	auto uri = ref new Windows::Foundation::Uri(path);
 
 	Windows::System::Launcher::LaunchUriAsync(uri);
+}
+
+void InitializeDB(){
+
+	StorageFolder^ storageFolder = KnownFolders::PicturesLibrary;
+	create_task(storageFolder->CreateFileAsync("sql_result.txt", CreationCollisionOption::ReplaceExisting)).then([storageFolder](StorageFile^ f){
+		create_task(storageFolder->GetFileAsync("sql_result.txt")).then([storageFolder](StorageFile^ f){
+			c->getInstance();
+
+			char* char_str = c->InitializeDB();
+			std::string s_str = std::string(char_str);
+			std::wstring wid_str = std::wstring(s_str.begin(), s_str.end());
+			const wchar_t* w_char = wid_str.c_str();
+			Platform::String^ p_string = ref new Platform::String(w_char);
+			create_task(FileIO::WriteTextAsync(f, p_string));
+		});
+	});
+
+	SQLiteAsyncConnection^ s;
 }

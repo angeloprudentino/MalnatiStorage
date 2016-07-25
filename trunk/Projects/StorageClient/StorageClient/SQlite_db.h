@@ -10,9 +10,11 @@ private:
 public:
 	SQlite_db();
 	~SQlite_db();
-	int OpenSQlite_db();
+	char* OpenSQlite_db();
 	void CloseSQlite_db();
-	int CreateTable(const char *sqlCreateTable);
-	char* DisplayTable();
+	char* CreateTable(const char *sqlCreateTable);
+	char* DisplayTable(char *sqlSelect);
+	char* ExecuteSQl(char *sqlInsert);
+	
 };
 

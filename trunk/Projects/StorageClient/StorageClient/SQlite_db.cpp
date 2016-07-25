@@ -15,19 +15,25 @@ SQlite_db::~SQlite_db()
 {
 }
 
-int SQlite_db::OpenSQlite_db(){
+char* SQlite_db::OpenSQlite_db(){
+	char w[1000]="";
 	int rc;
 	rc = sqlite3_open("MyDb.db", &db);
 	if (rc)
 	{
 		cerr << "Error opening SQLite3 database: " << sqlite3_errmsg(db) << endl << endl;
+		strcat(w, "Error executing SQLite3 query: ");
+		strcat(w, sqlite3_errmsg(db));
+		strcat(w, "\n");
 		sqlite3_close(db);
-		return 1;
+		return w;
 	}
 	else
 	{
 		//cout << "Opened MyDb.db." << endl << endl;
-		return 0;
+		strcat(w, "Db Open");
+		strcat(w, " DONE");
+		return w;
 	}
 
 }
@@ -37,23 +43,30 @@ void SQlite_db::CloseSQlite_db(){
 	//cout << "Closed MyDb.db" << endl << endl;
 }
 
-int SQlite_db::CreateTable(const char *sqlCreateTable){
+char* SQlite_db::CreateTable(const char *sqlCreateTable){
+	
+	char w[1000] = ""; 
 	rc = sqlite3_exec(db, sqlCreateTable, NULL, NULL, &error);
 	if (rc)
 	{
 		cerr << "Error executing SQLite3 statement: " << sqlite3_errmsg(db) << endl << endl;
+		strcat(w, "Error executing SQLite3 query: ");
+		strcat(w, sqlite3_errmsg(db));
+		strcat(w, "\n");
 		sqlite3_free(error);
-		return 1;
+		return w;
 	}
 	else
 	{
 		//cout << "Created MyTable." << endl << endl;
-		return 0;
+		strcat(w, sqlCreateTable);
+		strcat(w, " DONE");
+		return w;
 	}
 
 }
 
-char* SQlite_db::DisplayTable(){
+char* SQlite_db::DisplayTable(char *sqlSelect){
 	//wchar_t* str=L"";
 	//wstring str;
 	//char* w = "provo a scrivere in char*\n";
@@ -63,7 +76,6 @@ char* SQlite_db::DisplayTable(){
 
 	char **results = NULL;
 	int rows, columns;
-	char *sqlSelect = "Files";
 	rc = sqlite3_get_table(db, sqlSelect, &results, &rows, &columns, &error);
 	if (rc)
 	{
@@ -76,6 +88,7 @@ char* SQlite_db::DisplayTable(){
 	else
 	{
 		// Display Table
+		strcat(w, "No errors, now display table\n");
 		for (int rowCtr = 0; rowCtr <= rows; ++rowCtr)
 		{
 			for (int colCtr = 0; colCtr < columns; ++colCtr)
@@ -118,4 +131,26 @@ char* SQlite_db::DisplayTable(){
 
 	strcat(w,"End of writing on file.\n");
 	return w;
+}
+
+char* SQlite_db::ExecuteSQl(char *sqlInsert){
+	char w[10000] = "";
+	rc = sqlite3_exec(db, sqlInsert, NULL, NULL, &error);
+	if (rc)
+	{
+		cerr << "Error executing SQLite3 statement: " << sqlite3_errmsg(db) << endl << endl;
+		strcat(w, "Error executing SQLite3 query: ");
+		strcat(w, sqlite3_errmsg(db));
+		strcat(w, "\n");
+		sqlite3_free(error);
+		return w;
+	}
+	else
+	{
+		//cout << "Inserted a value into MyTable." << endl << endl;
+		strcat(w, sqlInsert);
+		strcat(w, " DONE");
+		return w;
+	}
+
 }
