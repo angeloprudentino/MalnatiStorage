@@ -15,17 +15,12 @@ using namespace boost::asio::ip;
 ClientMain* ClientMain::instance = NULL;
 
 ClientMain::ClientMain(): fMainIoService(), fSock(fMainIoService){
-	db.OpenSQlite_db();
-	const char *sqlCreateTable = "CREATE TABLE IF NOT EXISTS Files (id STRING PRIMARY KEY,path STRING PRIMARY KEY,time DOUBLE,version DOUBLE);";
-	int result = db.CreateTable(sqlCreateTable); //decommentare
-	if (result != 0){
-		cout << "tabella già esistente" << endl;
-	}
 
 }
 
 char* ClientMain::ShowTableInFile(){
-	char* w = db.DisplayTable();
+	char *sqlSelect = "SELECT * FROM Files;";
+	char* w = db.DisplayTable(sqlSelect);
 	return w;
 }
 
@@ -43,9 +38,47 @@ ClientMain* ClientMain::getInstance(){
 
 //funzioni per il Db lato client
 
-int ClientMain::CheckFile(wstring name, wstring path, double time, double version){
-	cout << "sono dentro il check" << endl;
-	return 0;
+char* ClientMain::InitializeDB(){
+	db.OpenSQlite_db();
+	const char *sqlCreateTable = "CREATE TABLE IF NOT EXISTS Files (id STRING PRIMARY KEY,path STRING PRIMARY KEY,time DOUBLE,version DOUBLE);";
+	char* result = db.CreateTable(sqlCreateTable); //decommentare
+	//if (result != 0){
+	//	cout << "tabella già esistente" << endl;
+	//}
+	return result;
+}
+
+char* ClientMain::CheckFile(Platform::String^ name, Platform::String^ path, double time, double version){
+	//cout << "sono dentro il check" << endl;
+	//Platform::String^ fooRT = "aoeu";
+	//conversione in char*
+	std::wstring fooW(name->Begin());
+	std::string fooA(fooW.begin(), fooW.end());
+	const char* name_char = fooA.c_str();
+
+	std::wstring fooW2(path->Begin());
+	std::string fooA2(fooW2.begin(), fooW2.end());
+	const char* path_char = fooA2.c_str();
+
+	//provo a fare una insert
+	string query_p("INSERT INTO Files VALUES('");
+	query_p += name_char;
+	query_p += "','";
+	query_p += path_char;
+	query_p += "','";
+	query_p += time;
+	query_p += "','";
+	query_p += version;
+	query_p += "');";
+	//copia di string in un char* , da inserire nel DB
+	char* query = new char[query_p.length() + 1];
+	strcpy_s(query, query_p.length() + 1, query_p.c_str());
+	//cout << "insert query" << query << endl;
+	
+	char* res = db.ExecuteSQl(query);
+	// res = db.ExecuteSQl();
+	
+	return res;
 }
 
 
