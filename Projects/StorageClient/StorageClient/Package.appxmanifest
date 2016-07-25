@@ -26,6 +26,15 @@
             </SupportedFileTypes>
           </FileOpenPicker>
         </Extension>
+        <Extension Category="windows.fileTypeAssociation">
+          <FileTypeAssociation Name="esempio">
+            <SupportedFileTypes>
+              <FileType>.jpg</FileType>
+              <FileType>.docx</FileType>
+              <FileType>.pptx</FileType>
+            </SupportedFileTypes>
+          </FileTypeAssociation>
+        </Extension>
       </Extensions>
     </Application>
   </Applications>
@@ -38,6 +47,7 @@
     <Capability Name="internetClientServer" />
     <Capability Name="musicLibrary" />
     <Capability Name="videosLibrary" />
+    <Capability Name="documentsLibrary" />
     <Capability Name="privateNetworkClientServer" />
     <DeviceCapability Name="proximity" />
     <DeviceCapability Name="location" />

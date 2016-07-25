@@ -8,7 +8,7 @@
     mc:Ignorable="d">
 
 
-    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Margin="784,0,0,140" RenderTransformOrigin="0.533,0.777">
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
         <Grid.ChildrenTransitions>
             <TransitionCollection>
                 <EntranceThemeTransition/>
@@ -28,7 +28,7 @@
             <TextBlock x:Name="pageTitle" Text="Storage Client" Style="{StaticResource HeaderTextBlockStyle}" Grid.Column="1" 
                         IsHitTestVisible="false" TextWrapping="NoWrap" VerticalAlignment="Bottom" Margin="30,0,0,37"/>
         </Grid>
-       
+
         <HyperlinkButton Content="LogIn" BorderBrush="White" Foreground="White"  Margin="247,132,0,0" Grid.Row="2" VerticalAlignment="Top" Click="HyperlinkButton_Click" Width="88"/>
         <HyperlinkButton Content="Register" BorderBrush="White" Foreground="White"  Margin="247,195,0,0" Grid.Row="2" VerticalAlignment="Top" Click="HyperlinkButton_Click_1"/>
 

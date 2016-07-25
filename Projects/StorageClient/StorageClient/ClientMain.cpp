@@ -15,17 +15,17 @@ using namespace boost::asio::ip;
 ClientMain* ClientMain::instance = NULL;
 
 ClientMain::ClientMain(): fMainIoService(), fSock(fMainIoService){
-	//db.OpenSQlite_db();
-	//const char *sqlCreateTable = "CREATE TABLE IF NOT EXISTS Files (id STRING PRIMARY KEY,path STRING,time STRING,version DOUBLE);";
-	//int result = db.CreateTable(sqlCreateTable); //decommentare
-	//if (result != 0){
-	//	cout << "tabella già esistente" << endl;
-	//}
+	db.OpenSQlite_db();
+	const char *sqlCreateTable = "CREATE TABLE IF NOT EXISTS Files (id STRING PRIMARY KEY,path STRING PRIMARY KEY,time DOUBLE,version DOUBLE);";
+	int result = db.CreateTable(sqlCreateTable); //decommentare
+	if (result != 0){
+		cout << "tabella già esistente" << endl;
+	}
 
 }
 
 ClientMain::~ClientMain(){
-//	db.CloseSQlite_db();
+	db.CloseSQlite_db();
 }
 
 ClientMain* ClientMain::getInstance(){
@@ -35,7 +35,14 @@ ClientMain* ClientMain::getInstance(){
 		
 		return instance;
 }
+
+
 //funzioni per il Db lato client
+
+int ClientMain::CheckFile(wstring name, wstring path, double time, double version){
+	cout << "sono dentro il check" << endl;
+	return 0;
+}
 
 
 bool ClientMain::PasswordCheck(string user, string pass){

@@ -179,12 +179,13 @@ void StorageClient::Register::Register_Click(Platform::Object^ sender, Windows::
 
 
 	String^ pass = this->passwordbox->Password;
+	String^ pass2 = this->passwordbox2->Password;
 	this->Prova->Text = pass;
 	//int res=String::CompareOrdinal(prova_pass,pass);
-
-	if (folderMia == nullptr){
+	int res = String::CompareOrdinal(pass, pass2);
+	if (res != 0){
 		//messaggio di errore, bisogna scegliere una cartella
-		auto messageDialog = ref new MessageDialog("Please choose a folder, try again", "Invalid Folder");
+		auto messageDialog = ref new MessageDialog("The two password must be equal, try again", "Invalid Password");
 		// Add commands and set their callbacks
 		messageDialog->Commands->Append(ref new UICommand("Try Again", ref new UICommandInvokedHandler([this](IUICommand^ command)
 		{
@@ -208,35 +209,36 @@ void StorageClient::Register::Register_Click(Platform::Object^ sender, Windows::
 
 
 
-
-void StorageClient::Register::backButton_Copy_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
-{
-	this->Prova->Text = ""; //prova è una text box per vedere i risultati
-
-	// Clear previous returned folder name, if it exists, between iterations of this scenario
-
-	FolderPicker^ folderPicker = ref new FolderPicker();
-	folderPicker->SuggestedStartLocation = PickerLocationId::ComputerFolder;
-
-	// Users expect to have a filtered view of their folders depending on the scenario.
-	// For example, when choosing a documents folder, restrict the filetypes to documents for your application.
-	//folderPicker->FileTypeFilter->Append(".docx");
-	//folderPicker->FileTypeFilter->Append(".xlsx");
-	//folderPicker->FileTypeFilter->Append(".pptx");
-	folderPicker->FileTypeFilter->Append("*");
-
-	
-	create_task(folderPicker->PickSingleFolderAsync()).then([this](StorageFolder^ folder)
-	{
-		if (folder)
-		{
-			Prova->Text = "Picked folder: " + folder->Path;
-			this->Directory->Text = folder->Path;
-			folderMia = folder;
-		}
-		else
-		{
-			Prova->Text = "Operation cancelled.";
-		}
-	});
-}
+//
+//void StorageClient::Register::backButton_Copy_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+//{
+//	this->Prova->Text = ""; //prova è una text box per vedere i risultati
+//
+//	// Clear previous returned folder name, if it exists, between iterations of this scenario
+//
+//	FolderPicker^ folderPicker = ref new FolderPicker();
+//	folderPicker->SuggestedStartLocation = PickerLocationId::ComputerFolder;
+//
+//	// Users expect to have a filtered view of their folders depending on the scenario.
+//	// For example, when choosing a documents folder, restrict the filetypes to documents for your application.
+//	//folderPicker->FileTypeFilter->Append(".docx");
+//	//folderPicker->FileTypeFilter->Append(".xlsx");
+//	//folderPicker->FileTypeFilter->Append(".pptx");
+//	folderPicker->FileTypeFilter->Append("*");
+//
+//	create_task(folderPicker->PickSingleFolderAsync()).then([this](StorageFolder^ folder)
+//	{
+//		if (folder)
+//		{
+//			Prova->Text = "Picked folder: " + folder->Path;
+//			this->Directory->Text = folder->Path;
+//			folderMia = folder;
+//
+//		}
+//		else
+//		{
+//			Prova->Text = "Operation cancelled.";
+//		}
+//	});
+//
+//}
