@@ -70,6 +70,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="StorageClient_TemporaryKey.pfx" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Page Include="MainPage.xaml" />

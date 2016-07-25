@@ -10,7 +10,7 @@ private:
 public:
 	SQlite_db();
 	~SQlite_db();
-	char* OpenSQlite_db();
+	char* OpenSQlite_db(const char* path);
 	void CloseSQlite_db();
 	char* CreateTable(const char *sqlCreateTable);
 	char* DisplayTable(char *sqlSelect);

@@ -11,6 +11,7 @@
 #include <array>
 #include <list>
 #include "ClientMain.h"
+#include <sqlite3.h>
 
 using namespace StorageClient;
 
@@ -435,12 +436,23 @@ void StorageClient::StorageClientAPP::Button_Open_Folder(Platform::Object^ sende
 
 void InitializeDB(){
 
+	
 	StorageFolder^ storageFolder = KnownFolders::PicturesLibrary;
+	////StorageFolder^ storageFolder = ApplicationData::Current->LocalFolder;
+	//create_task(storageFolder->CreateFileAsync("MyDb.db", CreationCollisionOption::FailIfExists)).then([storageFolder](StorageFile^ f){
+	//	sqlite3 *db;
+	//	String^ path = f->Path;
+	//	std::wstring fooW(path->Begin());
+	//	std::string fooA(fooW.begin(), fooW.end());
+	//	const char* path_char = fooA.c_str();
+	//	sqlite3_open(path_char, &db);
+	//
+	//});
 	create_task(storageFolder->CreateFileAsync("sql_result.txt", CreationCollisionOption::ReplaceExisting)).then([storageFolder](StorageFile^ f){
 		create_task(storageFolder->GetFileAsync("sql_result.txt")).then([storageFolder](StorageFile^ f){
 			c->getInstance();
 
-			char* char_str = c->InitializeDB();
+			char* char_str = c->InitializeDB(storageFolder);
 			std::string s_str = std::string(char_str);
 			std::wstring wid_str = std::wstring(s_str.begin(), s_str.end());
 			const wchar_t* w_char = wid_str.c_str();
@@ -449,5 +461,4 @@ void InitializeDB(){
 		});
 	});
 
-	SQLiteAsyncConnection^ s;
 }
