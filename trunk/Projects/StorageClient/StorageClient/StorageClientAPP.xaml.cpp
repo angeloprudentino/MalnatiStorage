@@ -10,6 +10,7 @@
 #include <string>
 #include <array>
 #include <list>
+#include "ClientMain.h"
 
 using namespace StorageClient;
 
@@ -38,13 +39,16 @@ using namespace Windows::System;
 
 
 
-
+ClientMain* c;
+double Version = 1; //DA AGGIORNARE
 // Il modello di elemento per la pagina base è documentato all'indirizzo http://go.microsoft.com/fwlink/?LinkId=234237
 String^ Mypath;
 StorageFolder^ Myfolder;
 //<StorageFile^,100> FileNow;
 map<String^, StorageFile^> FileNow;
 map<String^, StorageFolder^> FolderNow;
+
+//mappa dei last modified
 
 //StorageFolderQueryResult^ queryResult;
 //timer
@@ -206,7 +210,7 @@ void StorageClient::StorageClientAPP::Button_Click(Platform::Object^ sender, Win
 	////outputtext += pp + " : \n";
 
 	//LETTURA DA KNOWNFOLDER
-	Messages->Text = "Folder: " + Myfolder->Path;
+	//Messages->Text = "Folder: " + KnownFolders::DocumentsLibrary->Name;
 	//elimino gli elementi già presenti
 	WriteGrid->RowDefinitions->Clear();
 	WriteGrid->Children->Clear();
@@ -220,15 +224,15 @@ void StorageClient::StorageClientAPP::Button_Click(Platform::Object^ sender, Win
 	//queryResult->ContentsChanged += ref new Windows::Foundation::TypedEventHandler<Windows::Storage::Search::IStorageQueryResultBase ^, Platform::Object ^>(this, &StorageClient::StorageClientAPP::OnLocalAppDataChanged);
 	//queryResult->ContentsChanged += ref new Windows::Foundation::TypedEventHandler<Windows::Storage::Search::IStorageQueryResultBase ^, Platform::Object ^>(this, &StorageClient::StorageClientAPP::OnLocalAppDataChanged);
 
-	create_task(Myfolder->GetFoldersAsync()).then([this](IVectorView<StorageFolder^>^ folders)
+	create_task(KnownFolders::PicturesLibrary->GetFoldersAsync()).then([this](IVectorView<StorageFolder^>^ folders)
 	{
 
-		create_task(Myfolder->GetFilesAsync()).then([this, folders](IVectorView<StorageFile^>^ files)
+		create_task(KnownFolders::PicturesLibrary->GetFilesAsync()).then([this, folders](IVectorView<StorageFile^>^ files)
 		{
 			auto count = folders->Size + files->Size;
 			String^ outputtext = ref new String();
-			outputtext = Myfolder->Name + " (" + count.ToString() + ")\n\n";
-
+			//outputtext = Myfolder->Name + " (" + count.ToString() + ")\n\n";
+			outputtext = KnownFolders::PicturesLibrary->Name + " (" + count.ToString() + ")\n\n";
 			std::for_each(begin(folders), end(folders), [this, &outputtext](StorageFolder^ folder)
 			{
 				outputtext += "    " + folder->DisplayName + "\\\n";
@@ -255,6 +259,7 @@ void StorageClient::StorageClientAPP::Button_Click(Platform::Object^ sender, Win
 				sp->Children->Append(tb);
 
 				WriteGrid->Children->Append(sp);
+
 				/////
 			});
 			std::for_each(begin(files), end(files), [this, &outputtext](StorageFile^ file)
@@ -287,10 +292,14 @@ void StorageClient::StorageClientAPP::Button_Click(Platform::Object^ sender, Win
 				FileProperties::BasicProperties^ prop; 
 				
 
-				create_task(file->GetBasicPropertiesAsync()).then([this, &outputtext](FileProperties::BasicProperties^ p){
+				create_task(file->GetBasicPropertiesAsync()).then([this, &outputtext,file](FileProperties::BasicProperties^ p){
 					//Messages->Text = "size: " + p->Size.ToString() + " last mod: " + p->DateModified.UniversalTime;
 					//p->SavePropertiesAsync();
 					//p->DateModified.UniversalTime.
+					c = ClientMain::getInstance();
+					std::wstring name(file->Name->Data());
+					std::wstring path(file->Path->Data());
+					c->CheckFile(name, path, p->DateModified.UniversalTime, Version);
 				});
 
 

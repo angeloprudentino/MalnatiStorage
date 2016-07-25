@@ -31,4 +31,5 @@ public:
 	static ClientMain* getInstance();
 	bool PasswordCheck(string user, string pass);
 	void sendMsg();
+	int CheckFile(wstring name, wstring path, double time, double version);
 };
