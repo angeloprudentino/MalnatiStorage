@@ -36,7 +36,7 @@
 
         <Image HorizontalAlignment="Left" Height="100" Margin="36,22,0,0" Grid.Row="1" VerticalAlignment="Top" Width="100"/>
         <Button x:ConnectionId='1' Name="SynchNow" Content="SynchNow" HorizontalAlignment="Left" Margin="147,137,0,0" Grid.Row="1" VerticalAlignment="Top"                     />
-        <Button x:ConnectionId='2' Name="Versions" Content="Versions" HorizontalAlignment="Left" Margin="269,137,0,0" Grid.Row="1" VerticalAlignment="Top"                       />
+        <Button x:ConnectionId='2' Name="Versions" Content="Versions"  HorizontalAlignment="Left" Margin="269,137,0,0" Grid.Row="1" VerticalAlignment="Top"                       />
         <TextBox x:Name="Messages" ScrollViewer.VerticalScrollBarVisibility="Auto" HorizontalAlignment="Left" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Height="112" Width="405" Margin="59,10,0,0" Grid.Row="1"/>
 
         <Grid Name="SoWriteGrid" ScrollViewer.VerticalScrollBarVisibility="Auto" HorizontalAlignment="Left" Height="410" Margin="59,190,0,0" Grid.Row="1" VerticalAlignment="Top" Width="405">
