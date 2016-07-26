@@ -1,0 +1,82 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Machine>DANIELEWINDOWS</Machine>
+    <WindowsUser>Daniele</WindowsUser>
+    <TargetPlatformIdentifier>Windows</TargetPlatformIdentifier>
+    <SolutionConfiguration>Debug|AnyCPU</SolutionConfiguration>
+    <PackageArchitecture>neutral</PackageArchitecture>
+    <PackageIdentityName>742f0f4c-75ef-4e1e-9cea-45144b33fb48</PackageIdentityName>
+    <IntermediateOutputPath>C:\Projects\Projects\StorageClientCS\StorageClientCS\StorageClientCS.Windows\obj\Debug\</IntermediateOutputPath>
+    <RegisteredManifestChecksum>A6D390AA109316F4D73BF10D9CD55AD72B7858C2028FC17A598FB604CBB3F54A</RegisteredManifestChecksum>
+    <RegisteredPackageMoniker>742f0f4c-75ef-4e1e-9cea-45144b33fb48_1.0.0.0_neutral__z15vh46et9dgt</RegisteredPackageMoniker>
+    <RegisteredUserModeAppID>742f0f4c-75ef-4e1e-9cea-45144b33fb48_z15vh46et9dgt!App</RegisteredUserModeAppID>
+    <RegisteredPackageID>742f0f4c-75ef-4e1e-9cea-45144b33fb48</RegisteredPackageID>
+    <RegisteredPackagePublisher>CN=Daniele</RegisteredPackagePublisher>
+    <RegisteredVersion>1.0.0.0</RegisteredVersion>
+    <JitOptimizationSuppressed>True</JitOptimizationSuppressed>
+  </PropertyGroup>
+  <ItemGroup>
+    <AppXManifest Include="C:\Projects\Projects\StorageClientCS\StorageClientCS\StorageClientCS.Windows\bin\Debug\AppxManifest.xml">
+      <PackagePath>AppxManifest.xml</PackagePath>
+      <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
+      <Modified>2016-07-26T12:54:02.187</Modified>
+    </AppXManifest>
+  </ItemGroup>
+  <ItemGroup>
+    <AppxPackagedFile Include="C:\Projects\Projects\StorageClientCS\StorageClientCS\StorageClientCS.Windows\bin\Debug\StorageClientCS.Windows.exe">
+      <PackagePath>StorageClientCS.Windows.exe</PackagePath>
+      <Modified>2016-07-26T12:58:03.649</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\Projects\Projects\StorageClientCS\StorageClientCS\StorageClientCS.Windows\Assets\Logo.scale-100.png">
+      <PackagePath>Assets\Logo.scale-100.png</PackagePath>
+      <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
+      <Modified>2014-06-02T17:58:10.000</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\Projects\Projects\StorageClientCS\StorageClientCS\StorageClientCS.Windows\Assets\SmallLogo.scale-100.png">
+      <PackagePath>Assets\SmallLogo.scale-100.png</PackagePath>
+      <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
+      <Modified>2014-06-02T17:58:10.000</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\Projects\Projects\StorageClientCS\StorageClientCS\StorageClientCS.Windows\Assets\SplashScreen.scale-100.png">
+      <PackagePath>Assets\SplashScreen.scale-100.png</PackagePath>
+      <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
+      <Modified>2014-06-02T17:58:10.000</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\Projects\Projects\StorageClientCS\StorageClientCS\StorageClientCS.Windows\Assets\StoreLogo.scale-100.png">
+      <PackagePath>Assets\StoreLogo.scale-100.png</PackagePath>
+      <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
+      <Modified>2014-06-02T17:58:10.000</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\Projects\Projects\StorageClientCS\StorageClientCS\StorageClientCS.Windows\bin\Debug\App.xbf">
+      <PackagePath>App.xbf</PackagePath>
+      <Modified>2016-07-26T10:32:04.872</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\Projects\Projects\StorageClientCS\StorageClientCS\StorageClientCS.Windows\bin\Debug\Login.xbf">
+      <PackagePath>Login.xbf</PackagePath>
+      <Modified>2016-07-26T12:58:03.087</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\Projects\Projects\StorageClientCS\StorageClientCS\StorageClientCS.Windows\bin\Debug\MainPage.xbf">
+      <PackagePath>MainPage.xbf</PackagePath>
+      <Modified>2016-07-26T12:58:03.088</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\Projects\Projects\StorageClientCS\StorageClientCS\StorageClientCS.Windows\bin\Debug\Register.xbf">
+      <PackagePath>Register.xbf</PackagePath>
+      <Modified>2016-07-26T12:58:03.100</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\Projects\Projects\StorageClientCS\StorageClientCS\StorageClientCS.Windows\bin\Debug\StorageClientAPP.xbf">
+      <PackagePath>StorageClientAPP.xbf</PackagePath>
+      <Modified>2016-07-26T12:54:01.306</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\Projects\Projects\StorageClientCS\StorageClientCS\StorageClientCS.Windows\bin\Debug\StorageClientCS.Windows.xr.xml">
+      <PackagePath>StorageClientCS.Windows.xr.xml</PackagePath>
+      <Modified>2016-07-26T12:58:03.025</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\Projects\Projects\StorageClientCS\StorageClientCS\StorageClientCS.Windows\bin\Debug\resources.pri">
+      <PackagePath>resources.pri</PackagePath>
+      <Modified>2016-07-26T12:54:02.046</Modified>
+    </AppxPackagedFile>
+  </ItemGroup>
+  <ItemGroup>
+  </ItemGroup>
+</Project>
