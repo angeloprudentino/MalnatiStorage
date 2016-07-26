@@ -116,6 +116,8 @@
     <Compile Include="Register.xaml.cs">
       <DependentUpon>Register.xaml</DependentUpon>
     </Compile>
+    <Compile Include="SQLite.cs" />
+    <Compile Include="SQLiteAsync.cs" />
     <Compile Include="StorageClientAPP.xaml.cs">
       <DependentUpon>StorageClientAPP.xaml</DependentUpon>
     </Compile>
@@ -124,6 +126,7 @@
     <AppxManifest Include="Package.appxmanifest">
       <SubType>Designer</SubType>
     </AppxManifest>
+    <None Include="packages.config" />
     <None Include="StorageClientCS.Windows_TemporaryKey.pfx" />
   </ItemGroup>
   <ItemGroup>

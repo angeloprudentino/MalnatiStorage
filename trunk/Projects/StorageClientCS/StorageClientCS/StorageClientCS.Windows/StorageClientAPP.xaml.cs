@@ -18,6 +18,8 @@ using Windows.UI.Xaml.Navigation;
 using Windows.Storage;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using SQLite;
+using UniversalSqlLite.Model;
 
 
 // Il modello di elemento per la pagina vuota è documentato all'indirizzo http://go.microsoft.com/fwlink/?LinkId=234238
@@ -36,22 +38,26 @@ namespace StorageClientCS
         StringBuilder outputText;
         Dictionary<String, StorageFile> map_files;
         StorageFolder fold = KnownFolders.PicturesLibrary;
-
+        SQLiteAsyncConnection connection;
+        
+        
         public StorageClientAPP()
         {
             files = new ObservableCollection<string>();
            map_files = new Dictionary<string, StorageFile>();
+            //apre se esiste, crea se non esiste
+
             this.InitializeComponent();
-           // this.GetFiles(fold);
-
+            
+           // this.CreateDatabase();
             this.Messages.Text = "Starting now...\n Press SynchNow to Start";
-
+            this.Initialize();
 
         }
 
         private async void Button_Click(object sender, RoutedEventArgs e)
         {
-            
+          
             //synch now
             Button _button = (Button)sender;
             _button.IsEnabled = false;
@@ -70,7 +76,7 @@ namespace StorageClientCS
             }
             catch (Exception ecc)
             {
-                Debug.WriteLine("Errore: "+ ecc.Message);
+                Debug.WriteLine("Errore nel button_click: "+ ecc.Message);
             }
             //this.GetFiles(fold);
 
@@ -84,6 +90,43 @@ namespace StorageClientCS
             this.DrawBottonsFiles();
             this.setListenerOnChanges();
             _button.IsEnabled = true;
+        }
+
+        private async void Initialize()
+        {
+            //synch now
+            SynchNow.IsEnabled = false;
+            Versions.IsEnabled = false;
+            WriteGrid.RowDefinitions.Clear();
+            WriteGrid.Children.Clear();
+            //  StorageFolder fold = KnownFolders.PicturesLibrary;
+
+            outputtext = "Files in " + fold.Name + ": \n";
+            //outputText = new StringBuilder();
+            //outputText.AppendLine("Seach in " + KnownFolders.PicturesLibrary.Name);
+            // this.GetFiles(fold);
+            try
+            {
+                var task = Task.Run(async () => { await this.GetFiles(fold); });
+                task.Wait();
+            }
+            catch (Exception ecc)
+            {
+                Debug.WriteLine("Errore nel button_click: " + ecc.Message);
+            }
+            //this.GetFiles(fold);
+
+            Debug.WriteLine("numero di file in map: " + this.map_files.Count);
+
+            foreach (StorageFile f in this.map_files.Values)
+            {
+                outputtext += f.Path + ": \n";
+            }
+            this.Messages.Text = outputtext;
+            this.DrawBottonsFiles();
+            this.setListenerOnChanges();
+            SynchNow.IsEnabled = true;
+            Versions.IsEnabled = true;
         }
 
         //modificare per fargli ritornare direttamente la mappa di oggetti
@@ -139,7 +182,7 @@ namespace StorageClientCS
                 tb.Content = f.Name;
                 tb.Tag = f.Path;
                 tb.Click += tb_Click;
-                
+                tb.BorderBrush = "black";
 
                 StackPanel sp = new StackPanel();
                 sp.Children.Clear();
@@ -207,5 +250,30 @@ namespace StorageClientCS
 
             _button.IsEnabled = true;
         }
+        public async void CreateDatabase()
+        {
+            connection = new SQLiteAsyncConnection("Files.db");
+            Debug.WriteLine("creo la tabella");
+            await connection.CreateTableAsync<Files>();
+
+        }
+    }
+}
+
+namespace UniversalSqlLite.Model
+{
+    [Table("Files")]
+    public class Files
+    {
+        [PrimaryKey]
+        public string Name { get; set; }
+       
+        [PrimaryKey]
+        public string Path { get; set; }
+
+
+        public string DateMod { get; set; }
+
+        public string Version { get; set; }
     }
 }
