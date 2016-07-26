@@ -43,6 +43,7 @@ namespace StorageClientCS
            map_files = new Dictionary<string, StorageFile>();
             this.InitializeComponent();
            // this.GetFiles(fold);
+
         }
 
         private async void Button_Click(object sender, RoutedEventArgs e)
@@ -153,7 +154,7 @@ namespace StorageClientCS
 
         void query_ContentsChanged(Windows.Storage.Search.IStorageQueryResultBase sender, object args)
         {
-            this.Messages.Text = "Update now...";
+            //this.Messages.Text = "Update now...";
 
             this.SynchNow.IsEnabled=false;
             this.Versions.IsEnabled=false;
