@@ -8,7 +8,7 @@
     <PackageArchitecture>neutral</PackageArchitecture>
     <PackageIdentityName>742f0f4c-75ef-4e1e-9cea-45144b33fb48</PackageIdentityName>
     <IntermediateOutputPath>C:\Projects\Projects\StorageClientCS\StorageClientCS\StorageClientCS.Windows\obj\Debug\</IntermediateOutputPath>
-    <RegisteredManifestChecksum>A6D390AA109316F4D73BF10D9CD55AD72B7858C2028FC17A598FB604CBB3F54A</RegisteredManifestChecksum>
+    <RegisteredManifestChecksum>F1DA96325176D09B7E71A7F212060E89FB330DF83AC133A191A40056459D304C</RegisteredManifestChecksum>
     <RegisteredPackageMoniker>742f0f4c-75ef-4e1e-9cea-45144b33fb48_1.0.0.0_neutral__z15vh46et9dgt</RegisteredPackageMoniker>
     <RegisteredUserModeAppID>742f0f4c-75ef-4e1e-9cea-45144b33fb48_z15vh46et9dgt!App</RegisteredUserModeAppID>
     <RegisteredPackageID>742f0f4c-75ef-4e1e-9cea-45144b33fb48</RegisteredPackageID>
@@ -20,13 +20,13 @@
     <AppXManifest Include="C:\Projects\Projects\StorageClientCS\StorageClientCS\StorageClientCS.Windows\bin\Debug\AppxManifest.xml">
       <PackagePath>AppxManifest.xml</PackagePath>
       <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
-      <Modified>2016-07-26T12:54:02.187</Modified>
+      <Modified>2016-07-26T15:21:48.052</Modified>
     </AppXManifest>
   </ItemGroup>
   <ItemGroup>
     <AppxPackagedFile Include="C:\Projects\Projects\StorageClientCS\StorageClientCS\StorageClientCS.Windows\bin\Debug\StorageClientCS.Windows.exe">
       <PackagePath>StorageClientCS.Windows.exe</PackagePath>
-      <Modified>2016-07-26T12:58:03.649</Modified>
+      <Modified>2016-07-26T16:36:04.491</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Projects\Projects\StorageClientCS\StorageClientCS\StorageClientCS.Windows\Assets\Logo.scale-100.png">
       <PackagePath>Assets\Logo.scale-100.png</PackagePath>
@@ -50,31 +50,31 @@
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Projects\Projects\StorageClientCS\StorageClientCS\StorageClientCS.Windows\bin\Debug\App.xbf">
       <PackagePath>App.xbf</PackagePath>
-      <Modified>2016-07-26T10:32:04.872</Modified>
+      <Modified>2016-07-26T15:21:47.215</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Projects\Projects\StorageClientCS\StorageClientCS\StorageClientCS.Windows\bin\Debug\Login.xbf">
       <PackagePath>Login.xbf</PackagePath>
-      <Modified>2016-07-26T12:58:03.087</Modified>
+      <Modified>2016-07-26T15:21:47.217</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Projects\Projects\StorageClientCS\StorageClientCS\StorageClientCS.Windows\bin\Debug\MainPage.xbf">
       <PackagePath>MainPage.xbf</PackagePath>
-      <Modified>2016-07-26T12:58:03.088</Modified>
+      <Modified>2016-07-26T15:21:47.218</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Projects\Projects\StorageClientCS\StorageClientCS\StorageClientCS.Windows\bin\Debug\Register.xbf">
       <PackagePath>Register.xbf</PackagePath>
-      <Modified>2016-07-26T12:58:03.100</Modified>
+      <Modified>2016-07-26T15:21:47.219</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Projects\Projects\StorageClientCS\StorageClientCS\StorageClientCS.Windows\bin\Debug\StorageClientAPP.xbf">
       <PackagePath>StorageClientAPP.xbf</PackagePath>
-      <Modified>2016-07-26T12:54:01.306</Modified>
+      <Modified>2016-07-26T16:36:04.021</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Projects\Projects\StorageClientCS\StorageClientCS\StorageClientCS.Windows\bin\Debug\StorageClientCS.Windows.xr.xml">
       <PackagePath>StorageClientCS.Windows.xr.xml</PackagePath>
-      <Modified>2016-07-26T12:58:03.025</Modified>
+      <Modified>2016-07-26T16:36:03.927</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Projects\Projects\StorageClientCS\StorageClientCS\StorageClientCS.Windows\bin\Debug\resources.pri">
       <PackagePath>resources.pri</PackagePath>
-      <Modified>2016-07-26T12:54:02.046</Modified>
+      <Modified>2016-07-26T15:21:47.917</Modified>
     </AppxPackagedFile>
   </ItemGroup>
   <ItemGroup>
