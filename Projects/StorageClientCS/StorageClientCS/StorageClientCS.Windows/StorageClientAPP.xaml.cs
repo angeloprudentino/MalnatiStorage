@@ -15,6 +15,7 @@ using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
+using Windows.UI.Core;
 using Windows.Storage;
 using System.Diagnostics;
 using System.Threading.Tasks;
@@ -49,7 +50,7 @@ namespace StorageClientCS
 
             this.InitializeComponent();
             
-           // this.CreateDatabase();
+            this.CreateDatabase();
             this.Messages.Text = "Starting now...\n Press SynchNow to Start";
             this.Initialize();
 
@@ -193,6 +194,8 @@ namespace StorageClientCS
             }
         }
 
+
+
         private void setListenerOnChanges()
         {
             var options = new Windows.Storage.Search.QueryOptions
@@ -203,18 +206,17 @@ namespace StorageClientCS
             query.ContentsChanged += query_ContentsChanged;
             var files = query.GetFilesAsync();
         }
-
-        void query_ContentsChanged(Windows.Storage.Search.IStorageQueryResultBase sender, object args)
+        public async void OnChanges()
         {
             Messages.Text = "Update now...";
 
-            SynchNow.IsEnabled=false;
-            Versions.IsEnabled=false;
-            Debug.WriteLine("contenuto cambiato: "+sender.Folder);
+            SynchNow.IsEnabled = false;
+            Versions.IsEnabled = false;
             this.outputtext = "";
             var task = Task.Run(async () => { await this.GetFiles(fold); });
+
+            //si pianta qui quando viene invocato
             task.Wait();
-            //  Debug.WriteLine("numero di file in map: " + this.map_files.Count);
 
             foreach (StorageFile f in this.map_files.Values)
             {
@@ -223,8 +225,19 @@ namespace StorageClientCS
             this.setListenerOnChanges();
             this.DrawBottonsFiles();
 
-           // this.SynchNow.IsEnabled=true;
-          //  this.Versions.IsEnabled=true;
+            // this.SynchNow.IsEnabled=true;
+            //  this.Versions.IsEnabled=true;
+
+        }
+       async void query_ContentsChanged(Windows.Storage.Search.IStorageQueryResultBase sender, object args)
+        {
+            Debug.WriteLine("contenuto cambiato: " + sender.Folder);
+            await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+            {
+                //rootPage.NotifyUser("The toast encountered an error", NotifyType.ErrorMessage);
+                this.OnChanges();
+            });
+
         }
         
         void tb_Click(object sender, RoutedEventArgs e)
@@ -263,13 +276,11 @@ namespace UniversalSqlLite.Model
 {
     [Table("Files")]
     public class Files
-    {
-        [PrimaryKey]
-        public string Name { get; set; }
-       
+    {       
         [PrimaryKey]
         public string Path { get; set; }
 
+        public string Name { get; set; }
 
         public string DateMod { get; set; }
 
