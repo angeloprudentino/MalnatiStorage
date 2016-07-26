@@ -44,6 +44,9 @@ namespace StorageClientCS
             this.InitializeComponent();
            // this.GetFiles(fold);
 
+            this.Messages.Text = "Starting now...\n Press SynchNow to Start";
+
+
         }
 
         private async void Button_Click(object sender, RoutedEventArgs e)
@@ -86,6 +89,7 @@ namespace StorageClientCS
         //modificare per fargli ritornare direttamente la mappa di oggetti
         private async Task GetFiles(IStorageItem folder)
         {
+
           //  outputText.Append("entro in getFiles  \n");
             //per vedere se accede in memoria alla pictures
             // StorageFile f = await KnownFolders.PicturesLibrary.GetFileAsync("maxresdefault.jpg");
@@ -154,10 +158,10 @@ namespace StorageClientCS
 
         void query_ContentsChanged(Windows.Storage.Search.IStorageQueryResultBase sender, object args)
         {
-            //this.Messages.Text = "Update now...";
+            //Messages.Text = "Update now...";
 
-            this.SynchNow.IsEnabled=false;
-            this.Versions.IsEnabled=false;
+            //SynchNow.IsEnabled=false;
+            //Versions.IsEnabled=false;
             Debug.WriteLine("contenuto cambiato: "+sender.Folder);
             this.outputtext = "";
             var task = Task.Run(async () => { await this.GetFiles(fold); });
@@ -171,8 +175,8 @@ namespace StorageClientCS
             this.setListenerOnChanges();
             this.DrawBottonsFiles();
 
-            this.SynchNow.IsEnabled=true;
-            this.Versions.IsEnabled=true;
+           // this.SynchNow.IsEnabled=true;
+          //  this.Versions.IsEnabled=true;
         }
         
         void tb_Click(object sender, RoutedEventArgs e)
