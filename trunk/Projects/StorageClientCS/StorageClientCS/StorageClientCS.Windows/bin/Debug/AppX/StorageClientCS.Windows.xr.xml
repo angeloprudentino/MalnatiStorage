@@ -63,6 +63,7 @@
       <RootProperty Name="Margin" />
       <RootProperty Name="Inlines" />
       <RootProperty Name="Height" />
+      <RootProperty Name="HorizontalAlignment" />
     </RootType>
     <RootType FullName="Windows.UI.Xaml.Controls.PasswordBox">
       <RootProperty Name="Name" />
