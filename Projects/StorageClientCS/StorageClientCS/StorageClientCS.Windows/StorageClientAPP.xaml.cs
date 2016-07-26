@@ -103,12 +103,18 @@ namespace StorageClientCS
                 {
                     // outputText.Append("file " +file.Name + "\n");
                  //   outputtext += item.Path + "\n";
-                    Debug.WriteLine(item.Path + ", " + item.DateCreated);
+                    
                     StorageFile f = (StorageFile)item;
                     map_files.Add(item.Path,f);
                   //  Debug.WriteLine("numero di file in map: " + this.map_files.Count);
 
 
+                    Windows.Storage.FileProperties.BasicProperties basicProperties = await f.GetBasicPropertiesAsync();
+                    string fileSize = string.Format("{0:n0}", basicProperties.Size);
+                   // string dateMod = string.Format("{0:n0}", basicProperties.DateModified);
+                    string  dateMod = basicProperties.DateModified.ToString();
+
+                    Debug.WriteLine(item.Path + ",created: " + item.DateCreated + ",size: " + fileSize + ",modified: " + dateMod);
 
                 }else if(item is StorageFolder){
                      var task = Task.Run(async () => { await this.GetFiles(item); });
@@ -158,10 +164,10 @@ namespace StorageClientCS
 
         void query_ContentsChanged(Windows.Storage.Search.IStorageQueryResultBase sender, object args)
         {
-            //Messages.Text = "Update now...";
+            Messages.Text = "Update now...";
 
-            //SynchNow.IsEnabled=false;
-            //Versions.IsEnabled=false;
+            SynchNow.IsEnabled=false;
+            Versions.IsEnabled=false;
             Debug.WriteLine("contenuto cambiato: "+sender.Folder);
             this.outputtext = "";
             var task = Task.Run(async () => { await this.GetFiles(fold); });
