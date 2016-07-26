@@ -26,7 +26,7 @@
   <ItemGroup>
     <AppxPackagedFile Include="C:\Projects\Projects\StorageClientCS\StorageClientCS\StorageClientCS.Windows\bin\Debug\StorageClientCS.Windows.exe">
       <PackagePath>StorageClientCS.Windows.exe</PackagePath>
-      <Modified>2016-07-26T17:56:23.117</Modified>
+      <Modified>2016-07-26T18:06:44.288</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Projects\Projects\StorageClientCS\StorageClientCS\StorageClientCS.Windows\Assets\Logo.scale-100.png">
       <PackagePath>Assets\Logo.scale-100.png</PackagePath>
@@ -66,7 +66,7 @@
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Projects\Projects\StorageClientCS\StorageClientCS\StorageClientCS.Windows\bin\Debug\StorageClientAPP.xbf">
       <PackagePath>StorageClientAPP.xbf</PackagePath>
-      <Modified>2016-07-26T17:43:03.771</Modified>
+      <Modified>2016-07-26T18:06:43.614</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Projects\Projects\StorageClientCS\StorageClientCS\StorageClientCS.Windows\bin\Debug\StorageClientCS.Windows.xr.xml">
       <PackagePath>StorageClientCS.Windows.xr.xml</PackagePath>

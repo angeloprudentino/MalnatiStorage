@@ -182,7 +182,6 @@ namespace StorageClientCS
                 tb.Content = f.Name;
                 tb.Tag = f.Path;
                 tb.Click += tb_Click;
-                tb.BorderBrush = "black";
 
                 StackPanel sp = new StackPanel();
                 sp.Children.Clear();
