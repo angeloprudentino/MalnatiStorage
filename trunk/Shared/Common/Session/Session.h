@@ -119,7 +119,7 @@ public:
 	//getters
 	const int getKind() { return this->fKind; }
 	const string getToken() { return *(this->fToken); }
-	const int getVersion() { this->fVersion->getVersion(); }
+	const int getVersion() { return this->fVersion->getVersion(); }
 	TFile_ptr getNextFileToSend(){ return move_TFile_ptr(this->fVersion->getNextFile()); }
 	TFile_ptr updateNextFileToSend(){ this->fVersion->updateNext(); return move_TFile_ptr(this->fVersion->getNextFile()); }
 
