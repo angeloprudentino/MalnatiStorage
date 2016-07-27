@@ -106,6 +106,8 @@ namespace StorageClientCS
             //outputText = new StringBuilder();
             //outputText.AppendLine("Seach in " + KnownFolders.PicturesLibrary.Name);
             // this.GetFiles(fold);
+            this.map_files.Clear();
+
             try
             {
                 var task = Task.Run(async () => { await this.GetFiles(fold); });
@@ -212,21 +214,24 @@ namespace StorageClientCS
 
             SynchNow.IsEnabled = false;
             Versions.IsEnabled = false;
+            WriteGrid.RowDefinitions.Clear();
+            WriteGrid.Children.Clear();
             this.outputtext = "";
-            var task = Task.Run(async () => { await this.GetFiles(fold); });
+            this.map_files.Clear();
+            try
+            {
+                var task = Task.Run(async () => { await this.GetFiles(fold); });
+                task.Wait();
+            }
+            catch (Exception ecc)
+            {
+                Debug.WriteLine("Errore nell' ON CHANGE: " + ecc.Message);
+            }
+            //this.GetFiles(fold);
+
+            Debug.WriteLine("numero di file in map AGGIORNATA: " + this.map_files.Count);
 
             //si pianta qui quando viene invocato
-            task.Wait();
-
-            foreach (StorageFile f in this.map_files.Values)
-            {
-                outputtext += f.Path + " \n";
-            }
-            this.setListenerOnChanges();
-            this.DrawBottonsFiles();
-
-            // this.SynchNow.IsEnabled=true;
-            //  this.Versions.IsEnabled=true;
 
         }
        async void query_ContentsChanged(Windows.Storage.Search.IStorageQueryResultBase sender, object args)
@@ -236,6 +241,20 @@ namespace StorageClientCS
             {
                 //rootPage.NotifyUser("The toast encountered an error", NotifyType.ErrorMessage);
                 this.OnChanges();
+            });
+
+            await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+            {
+
+                foreach (StorageFile f in this.map_files.Values)
+                {
+                    outputtext += f.Path + " \n";
+                }
+                this.Messages.Text = outputtext;
+                this.setListenerOnChanges();
+                this.DrawBottonsFiles();
+                SynchNow.IsEnabled = true;
+                Versions.IsEnabled = true;
             });
 
         }
