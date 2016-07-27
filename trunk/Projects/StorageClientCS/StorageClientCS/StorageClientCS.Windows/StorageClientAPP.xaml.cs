@@ -25,6 +25,13 @@ using UniversalSqlLite.Model;
 
 // Il modello di elemento per la pagina vuota è documentato all'indirizzo http://go.microsoft.com/fwlink/?LinkId=234238
 
+//TO DO: nella funzione getFiles, gestione dell' inserimento nel DB
+//la politica è descritta lì dove va implementata
+
+//questa politica andrà applicata anche nella funzione Initialize()
+//che controlla se ci sono stati cambiamenti da quando la app è stata chiusa
+//e dovrà quindi confrontarsi col contenuto del db
+
 namespace StorageClientCS
 {
     /// <summary>
@@ -66,8 +73,8 @@ namespace StorageClientCS
             WriteGrid.RowDefinitions.Clear();
             WriteGrid.Children.Clear();
           //  StorageFolder fold = KnownFolders.PicturesLibrary;
-            
-            outputtext = "Files in " + fold.Name + ": \n";
+
+            outputtext = "Files in " + fold.Name + "Version: " + this.Actual_Version + ": \n";
             //outputText = new StringBuilder();
             //outputText.AppendLine("Seach in " + KnownFolders.PicturesLibrary.Name);
            // this.GetFiles(fold);
@@ -103,7 +110,7 @@ namespace StorageClientCS
             WriteGrid.Children.Clear();
             //  StorageFolder fold = KnownFolders.PicturesLibrary;
 
-            outputtext = "Files in " + fold.Name + ": \n";
+            outputtext = "Files in " + fold.Name + "Version: "+ this.Actual_Version +"\n";
             //outputText = new StringBuilder();
             //outputText.AppendLine("Seach in " + KnownFolders.PicturesLibrary.Name);
             // this.GetFiles(fold);
@@ -172,7 +179,15 @@ namespace StorageClientCS
                         DateMod = dateMod,
                         Versione = this.Actual_Version
                     };
-                    await connection.InsertAsync(File_db);
+                    //DA DECOMMENTARE
+                    //prima di file la insert, vedere se il file era già presente
+                    //se non era presente, inserisci (con numero di versione +1)
+                    //(potrebbe anche solo essere stato spostato, ma considero una nuova entry)
+                    //se sì, verificare se il dateMod è uguale
+                    // se sì,cambiare il numero di versione (+1),se no
+                    //se i dateMod non coincidono, elimina la entry vecchia e inserisci la nuova (versione +1 e datemod nuovo)
+
+                  //  await connection.InsertAsync(File_db);
 
                 }else if(item is StorageFolder){
                      var task = Task.Run(async () => { await this.GetFiles(item); });
@@ -299,7 +314,17 @@ namespace StorageClientCS
             connection = new SQLiteAsyncConnection("Files.db");
             Debug.WriteLine("creo la tabella");
             await connection.CreateTableAsync<Files>();
+            Debug.WriteLine("trovo il numero  della versione più recente");
 
+            var result = await connection.QueryAsync<int>("SELECT max(Versione) FROM Files");
+
+            foreach (var item in result)
+            {
+                this.Actual_Version = item;
+            }
+            if (this.Actual_Version == 0) this.Actual_Version = 1;
+       
+            Debug.WriteLine("versione più recente: "+ this.Actual_Version );
         }
 
     }
