@@ -28,9 +28,6 @@ using UniversalSqlLite.Model;
 //TO DO: nella funzione getFiles, gestione dell' inserimento nel DB
 //la politica è descritta lì dove va implementata
 
-//questa politica andrà applicata anche nella funzione Initialize()
-//che controlla se ci sono stati cambiamenti da quando la app è stata chiusa
-//e dovrà quindi confrontarsi col contenuto del db
 
 namespace StorageClientCS
 {
@@ -101,6 +98,7 @@ namespace StorageClientCS
             _button.IsEnabled = true;
         }
 
+        //funzione chiamata all' avvio della app
         private async void Initialize()
         {
             //synch now
@@ -129,6 +127,9 @@ namespace StorageClientCS
 
             Debug.WriteLine("numero di file in map: " + this.map_files.Count);
 
+            this.UpdateVersionVariable();
+           
+
             foreach (StorageFile f in this.map_files.Values)
             {
                 outputtext += f.Path + ": \n";
@@ -141,6 +142,7 @@ namespace StorageClientCS
         }
 
         //funzione che cerca ricorsivamente nella cartella e salva gli elementi nel dictionary
+        // e si confronta e aggiorna il db
         private async Task GetFiles(IStorageItem folder)
         {
 
@@ -171,14 +173,47 @@ namespace StorageClientCS
                     string name_db = item.Name;
                     Debug.WriteLine(item.Path + ",created: " + item.DateCreated + ",size: " + fileSize + ",modified: " + dateMod);
 
-                    //aggiunta al db
-                    var File_db = new Files()
-                    {                     
-                        Path = path_db,
-                        Name = name_db,
-                        DateMod = dateMod,
-                        Versione = this.Actual_Version
-                    };
+
+
+                    //vede se è presente nel db
+                    var result = await connection.QueryAsync<FileDB>("SELECT * FROM Files WHERE Path = ?",path_db);
+                    if(result.Count==1){
+                        //era presente nel db
+                        //Debug.WriteLine("file già presente nel db: "+ path_db);
+                        foreach (var it in result)
+                        {
+                            string OldDateMod = it.DateMod;
+                            it.Versione = this.Actual_Version + 1;
+                            if (OldDateMod.Equals(dateMod))
+                            {
+                                //il file non è stato modificato
+                                //faccio l' update della versione
+                                await connection.UpdateAsync(it);
+                            }
+                            else
+                            {
+                                //il file è stato modificato
+                                //sarà da mandare al server
+                                //aggiorno dateMod e versione
+                                it.DateMod = dateMod;
+                                await connection.UpdateAsync(it);
+                            }
+                        }
+
+                    }
+                    else
+                    {
+                        //non era presente nel db;
+                        var File_db = new FileDB()
+                        {
+                            Path = path_db,
+                            Name = name_db,
+                            DateMod = dateMod,
+                            Versione = this.Actual_Version+1
+                        };
+                        await connection.InsertAsync(File_db);
+                    }
+
                     //DA DECOMMENTARE
                     //prima di file la insert, vedere se il file era già presente
                     //se non era presente, inserisci (con numero di versione +1)
@@ -187,7 +222,7 @@ namespace StorageClientCS
                     // se sì,cambiare il numero di versione (+1),se no
                     //se i dateMod non coincidono, elimina la entry vecchia e inserisci la nuova (versione +1 e datemod nuovo)
 
-                  //  await connection.InsertAsync(File_db);
+                 
 
                 }else if(item is StorageFolder){
                      var task = Task.Run(async () => { await this.GetFiles(item); });
@@ -195,7 +230,6 @@ namespace StorageClientCS
                 }
             }
            // this.Messages.Text = outputtext;
-
         }
 
         //disegna i bottoni con i link ai file
@@ -271,6 +305,13 @@ namespace StorageClientCS
                 this.OnChanges();
             });
 
+           //aggiorno la versione corrente (la variabile)
+            await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+            {
+                this.UpdateVersionVariable();
+            });
+
+           //aggiorno la pagina
             await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
             {
 
@@ -281,6 +322,9 @@ namespace StorageClientCS
                 this.Messages.Text = outputtext;
                 this.setListenerOnChanges();
                 this.DrawBottonsFiles();
+
+                //aggiorno la variabile con la versione corrente
+
                 SynchNow.IsEnabled = true;
                 Versions.IsEnabled = true;
             });
@@ -313,9 +357,15 @@ namespace StorageClientCS
         {
             connection = new SQLiteAsyncConnection("Files.db");
             Debug.WriteLine("creo la tabella");
-            await connection.CreateTableAsync<Files>();
+            await connection.CreateTableAsync<FileDB>();
             Debug.WriteLine("trovo il numero  della versione più recente");
 
+            this.UpdateVersionVariable();
+       
+        }
+
+        public async void UpdateVersionVariable()
+        {
             var result = await connection.QueryAsync<int>("SELECT max(Versione) FROM Files");
 
             foreach (var item in result)
@@ -323,8 +373,7 @@ namespace StorageClientCS
                 this.Actual_Version = item;
             }
             if (this.Actual_Version == 0) this.Actual_Version = 1;
-       
-            Debug.WriteLine("versione più recente: "+ this.Actual_Version );
+            Debug.WriteLine("versione più recente: " + this.Actual_Version);
         }
 
     }
@@ -333,7 +382,7 @@ namespace StorageClientCS
 namespace UniversalSqlLite.Model
 {
     [Table("Files")]
-    public class Files
+    public class FileDB
     {       
         [PrimaryKey]
         public string Path { get; set; }
