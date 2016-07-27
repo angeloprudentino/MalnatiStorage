@@ -40,6 +40,7 @@ namespace StorageClientCS
         Dictionary<String, StorageFile> map_files;
         StorageFolder fold = KnownFolders.PicturesLibrary;
         SQLiteAsyncConnection connection;
+        int Actual_Version = 1;
         
         
         public StorageClientAPP()
@@ -132,7 +133,7 @@ namespace StorageClientCS
             Versions.IsEnabled = true;
         }
 
-        //modificare per fargli ritornare direttamente la mappa di oggetti
+        //funzione che cerca ricorsivamente nella cartella e salva gli elementi nel dictionary
         private async Task GetFiles(IStorageItem folder)
         {
 
@@ -159,8 +160,19 @@ namespace StorageClientCS
                     string fileSize = string.Format("{0:n0}", basicProperties.Size);
                    // string dateMod = string.Format("{0:n0}", basicProperties.DateModified);
                     string  dateMod = basicProperties.DateModified.ToString();
-
+                    string path_db = item.Path;
+                    string name_db = item.Name;
                     Debug.WriteLine(item.Path + ",created: " + item.DateCreated + ",size: " + fileSize + ",modified: " + dateMod);
+
+                    //aggiunta al db
+                    var File_db = new Files()
+                    {                     
+                        Path = path_db,
+                        Name = name_db,
+                        DateMod = dateMod,
+                        Versione = this.Actual_Version
+                    };
+                    await connection.InsertAsync(File_db);
 
                 }else if(item is StorageFolder){
                      var task = Task.Run(async () => { await this.GetFiles(item); });
@@ -171,6 +183,7 @@ namespace StorageClientCS
 
         }
 
+        //disegna i bottoni con i link ai file
         private void DrawBottonsFiles()
         {
             foreach (StorageFile f in this.map_files.Values)
@@ -231,9 +244,9 @@ namespace StorageClientCS
 
             Debug.WriteLine("numero di file in map AGGIORNATA: " + this.map_files.Count);
 
-            //si pianta qui quando viene invocato
-
         }
+
+        //evento invocato quando avviene un cambiamento nella cartella Pictures
        async void query_ContentsChanged(Windows.Storage.Search.IStorageQueryResultBase sender, object args)
         {
             Debug.WriteLine("contenuto cambiato: " + sender.Folder);
@@ -288,6 +301,7 @@ namespace StorageClientCS
             await connection.CreateTableAsync<Files>();
 
         }
+
     }
 }
 
@@ -303,6 +317,6 @@ namespace UniversalSqlLite.Model
 
         public string DateMod { get; set; }
 
-        public string Version { get; set; }
+        public int Versione { get; set; }
     }
 }
