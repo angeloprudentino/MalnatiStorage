@@ -38,7 +38,7 @@ using namespace std;
 #define RESTORE_FILE_TOK_NUM 6
 #define RESTORE_FILE_ACK_TOK_NUM 5
 #define RESTORE_STOP_TOK_NUM 4
-#define PING_TOK_NUM 3
+#define PING_TOK_NUM 4
 
 //Message names
 #define MSG_NUM 19
@@ -135,7 +135,8 @@ TBaseMessage::~TBaseMessage() {
 
 void TBaseMessage::decodeMessageID(){
 	if (this->fEncodedMsg == nullptr)
-		throw EMessageException("fEncodedMsg field is nullptr");
+		return;
+		//throw EMessageException("fEncodedMsg field is nullptr");
 
 	// Turn the string into a stream.
 	stringstream ss(*(this->fEncodedMsg));
@@ -457,9 +458,11 @@ void TUpdateStartReplyMessage::decodeMessage(){
 		this->fResp = false;
 
 	//user token
-	if (*(this->fItems->at(2)) == EMPTY)
-		throw EMessageException("The token field cannot be empty");
-	this->fToken = move_string_ptr(this->fItems->at(2)); //TODO: implement -> checkToken(this->fItems->at(2));
+	if (this->fResp){
+		if (*(this->fItems->at(2)) == EMPTY)
+			throw EMessageException("The token field cannot be empty");
+	}
+	this->fToken = move_string_ptr(this->fItems->at(2));
 }
 #pragma endregion
 
@@ -571,18 +574,21 @@ void TAddNewFileMessage::decodeMessage(){
 	if (*(this->fItems->at(5)) == EMPTY)
 		throw EMessageException("The file content field cannot be empty");
 	this->fFileContent = move_string_ptr(this->fItems->at(5));
+}
 
-	//verify file correctness
+const bool TAddNewFileMessage::matchChecksum(){
+	bool res = false;
 	string_ptr myChecksum = nullptr;
 	try{
 		myChecksum = opensslB64Checksum(*(this->fFileContent));
+		res = (*(myChecksum) != *(this->fChecksum));
 	}
 	catch (EOpensslException& e){
-		throw EMessageException("error calculating file checksum: " + e.getMessage());
+		res = false;
 	}
 
-	if (*(myChecksum) != *(this->fChecksum))
-		throw EMessageException("The received file could be corrupted; checksums do not match");
+	myChecksum.reset();
+	return res;
 }
 #pragma endregion
 
@@ -694,18 +700,21 @@ void TUpdateFileMessage::decodeMessage(){
 	if (*(this->fItems->at(5)) == EMPTY)
 		throw EMessageException("The file content field cannot be empty");
 	this->fFileContent = move_string_ptr(this->fItems->at(5));
+}
 
-	//verify file correctness
+const bool TUpdateFileMessage::matchChecksum(){
+	bool res = false;
 	string_ptr myChecksum = nullptr;
 	try{
 		myChecksum = opensslB64Checksum(*(this->fFileContent));
+		res = (*(myChecksum) != *(this->fChecksum));
 	}
 	catch (EOpensslException& e){
-		throw EMessageException("error calculating file checksum: " + e.getMessage());
+		res = false;
 	}
 
-	if (*(myChecksum) != *(this->fChecksum))
-		throw EMessageException("The received file could be corrupted; checksums do not match");
+	myChecksum.reset();
+	return res;
 }
 #pragma endregion
 
@@ -990,8 +999,12 @@ void TUpdateStopReplyMessage::decodeMessage(){
 	//version number
 	if (*(this->fItems->at(2)) == EMPTY)
 		throw EMessageException("The version field cannot be empty");
-	//TODO: check if this->fItems->at(2) contains a number
-	this->fVersion = stoi(*(this->fItems->at(2)));
+	try{
+		this->fVersion = stoi(*(this->fItems->at(2)));
+	}
+	catch (...){
+		throw EMessageException("The version field cannot be converted into an int value");
+	}
 
 	//version timestamp
 	if (*(this->fItems->at(3)) == EMPTY)
@@ -1140,20 +1153,35 @@ void TGetVersionsReplyMessage::decodeMessage(){
 	//tot number of versions
 	if (*(this->fItems->at(1)) == EMPTY)
 		throw EMessageException("The total versions number field cannot be empty");
-	//TODO: check if this->fItems->at(1) contains a number
-	this->fTotVersions = stoi(*(this->fItems->at(1)));
+	
+	try{
+		this->fTotVersions = stoi(*(this->fItems->at(1)));
+	}
+	catch (...){
+		throw EMessageException("The total versions number field cannot be converted into an int value");
+	}	
 
 	//oldest version
 	if (*(this->fItems->at(2)) == EMPTY)
 		throw EMessageException("The oldest version number field cannot be empty");
-	//TODO: check if this->fItems->at(2) contains a number
-	this->fOldestVersion = stoi(*(this->fItems->at(2)));
+	
+	try{
+		this->fOldestVersion = stoi(*(this->fItems->at(2)));
+	}
+	catch (...){
+		throw EMessageException("The oldest version number field cannot be converted into an int value");
+	}
 
 	//last version
 	if (*(this->fItems->at(3)) == EMPTY)
 		throw EMessageException("The last version number field cannot be empty");
-	//TODO: check if this->fItems->at(3) contains a number
-	this->fLastVersion = stoi(*(this->fItems->at(3)));
+
+	try{
+		this->fLastVersion = stoi(*(this->fItems->at(3)));
+	}
+	catch (...){
+		throw EMessageException("The last version number field cannot be converted into an int value");
+	}
 
 	int totSize = GET_VERSIONS_REPLY_MIN_TOK_NUM + (this->fLastVersion - this->fOldestVersion);
 	if (size != totSize)
@@ -1241,8 +1269,13 @@ void TRestoreVerReqMessage::decodeMessage(){
 	//version
 	if (*(this->fItems->at(3)) == EMPTY)
 		throw EMessageException("The version number field cannot be empty");
-	//TODO: check if this->fItems->at(3) contains a number
-	this->fVersion = stoi(*(this->fItems->at(3)));
+
+	try{
+		this->fVersion = stoi(*(this->fItems->at(3)));
+	}
+	catch (...){
+		throw EMessageException("The version number field cannot be converted into an int value");
+	}
 }
 #pragma endregion
 
@@ -1419,18 +1452,21 @@ void TRestoreFileMessage::decodeMessage(){
 	if (*(this->fItems->at(4)) == EMPTY)
 		throw EMessageException("The file content field cannot be empty");
 	this->fFileContent = move_string_ptr(this->fItems->at(4));
+}
 
-	//verify file correctness
+const bool TRestoreFileMessage::matchChecksum(){
+	bool res = false;
 	string_ptr myChecksum = nullptr;
 	try{
 		myChecksum = opensslB64Checksum(*(this->fFileContent));
+		res = (*(myChecksum) != *(this->fChecksum));
 	}
 	catch (EOpensslException& e){
-		throw EMessageException("error calculating file checksum: " + e.getMessage());
+		res = false;
 	}
 
-	if (*(myChecksum) != *(this->fChecksum))
-		throw EMessageException("The received file could be corrupted; checksums do not match");
+	myChecksum.reset();
+	return res;
 }
 #pragma endregion
 
@@ -1575,8 +1611,13 @@ void TRestoreStopMessage::decodeMessage(){
 	//version number
 	if (*(this->fItems->at(1)) == EMPTY)
 		throw EMessageException("The version field cannot be empty");
-	//TODO: check if this->fItems->at(1) contains a number
-	this->fVersion = stoi(*(this->fItems->at(1)));
+
+	try{
+		this->fVersion = stoi(*(this->fItems->at(1)));
+	}
+	catch (...){
+		throw EMessageException("The version number field cannot be converted into an int value");
+	}
 
 	//version timestamp
 	if (*(this->fItems->at(2)) == EMPTY)
@@ -1598,22 +1639,25 @@ TPingReqMessage::TPingReqMessage(TBaseMessage_ptr& aBase){
 	this->decodeMessage();
 }
 
-TPingReqMessage::TPingReqMessage(){
+TPingReqMessage::TPingReqMessage(const string& aToken){
 	this->fID = PING_REQ_ID;
 	this->fTime = time(nullptr);
+	this->fToken = make_string_ptr(aToken);
 }
 
 string_ptr TPingReqMessage::encodeMessage(){
 	this->fItems->push_back(make_string_ptr(getMessageName(this->fID)));
 	this->fItems->push_back(make_string_ptr(timeToString(this->fTime)));
+	this->fItems->push_back(move_string_ptr(this->fToken));
 
 	return TBaseMessage::encodeMessage();
 }
 
 void TPingReqMessage::decodeMessage(){
-	/*
+   /*
 	* item[0] -> msg name
 	* item[1] -> timestamp
+	* item[2] -> user token
 	*/
 	TBaseMessage::decodeMessage();
 	
@@ -1632,6 +1676,12 @@ void TPingReqMessage::decodeMessage(){
 	if (*(this->fItems->at(1)) == EMPTY)
 		throw EMessageException("The time-stamp field cannot be empty");
 	this->fTime = stringToTime(*(this->fItems->at(1)));
+
+	//user token
+	if (*(this->fItems->at(2)) == EMPTY)
+		throw EMessageException("The token field cannot be empty");
+	this->fToken = move_string_ptr(this->fItems->at(2)); //TODO: implement -> checkToken(this->fItems->at(2));
+
 }
 #pragma endregion
 
@@ -1648,22 +1698,25 @@ TPingReplyMessage::TPingReplyMessage(TBaseMessage_ptr& aBase){
 	this->decodeMessage();
 }
 
-TPingReplyMessage::TPingReplyMessage(){
+TPingReplyMessage::TPingReplyMessage(const string& aToken){
 	this->fID = PING_REPLY_ID;
 	this->fTime = time(nullptr);
+	this->fToken = make_string_ptr(aToken);
 }
 
 string_ptr TPingReplyMessage::encodeMessage(){
 	this->fItems->push_back(make_string_ptr(getMessageName(this->fID)));
 	this->fItems->push_back(make_string_ptr(timeToString(this->fTime)));
+	this->fItems->push_back(move_string_ptr(this->fToken));
 
 	return TBaseMessage::encodeMessage();
 }
 
 void TPingReplyMessage::decodeMessage(){
-	/*
+   /*
 	* item[0] -> msg name
 	* item[1] -> timestamp
+	* item[2] -> user token
 	*/
 	TBaseMessage::decodeMessage();
 
@@ -1682,5 +1735,10 @@ void TPingReplyMessage::decodeMessage(){
 	if (*(this->fItems->at(1)) == EMPTY)
 		throw EMessageException("The time-stamp field cannot be empty");
 	this->fTime = stringToTime(*(this->fItems->at(1)));
+
+	//user token
+	if (*(this->fItems->at(2)) == EMPTY)
+		throw EMessageException("The token field cannot be empty");
+	this->fToken = move_string_ptr(this->fItems->at(2)); //TODO: implement -> checkToken(this->fItems->at(2));
 }
 #pragma endregion

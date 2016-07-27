@@ -11,30 +11,19 @@
 #include "Executor.h"
 #include "MessageQueue.h"
 
-#ifdef STORAGE_SERVER
-  #define EXECUTOR_NUM 5
-#else
-  #define EXECUTOR_NUM 1
-#endif
+#define EXECUTOR_NUM 5
+
 
 //////////////////////////////////////
 //        TMessageExecutor          //
 //////////////////////////////////////
 #pragma region "TMessageExecutor"
-#ifdef STORAGE_SERVER
 TMessageExecutor::TMessageExecutor(IServerExecutorController* aCallbackObj){
-#else
-TMessageExecutor::TMessageExecutor(IClientExecutorController* aCallbackObj){
-#endif
 	this->fCallbackObj = aCallbackObj;
 	//create all threads
 	for (int i = 0; i < EXECUTOR_NUM; i++){
 		doServerLog(this->fCallbackObj, "TMessageExecutor", "constructor", "creating executor thread " + to_string(i+1));
-#ifdef STORAGE_SERVER
 		auto main = bind(&TMessageExecutor::serverExecutor, this);
-#else
-		auto main = bind(&TMessageExecutor::clientExecutor, this);
-#endif
 		fThreadPool.create_thread(main);
 	}
 
@@ -55,15 +44,14 @@ TMessageExecutor::~TMessageExecutor(){
 	this->fCallbackObj = nullptr;
 }
 
-#ifdef STORAGE_SERVER
 void TMessageExecutor::serverExecutor(){
     //exit even if other messages are queued to be processed
-	while (!this->fMustExit.load(boost::memory_order_acquire)/* && this->fCallbackObj != nullptr && !this->fCallbackObj->isInQueueEmpty()*/){
-		TMessageContainer_ptr msg;
+	while (!this->fMustExit.load(boost::memory_order_acquire)){
+		TMessageContainer_ptr msg = nullptr;
 		if (this->fCallbackObj != nullptr)
 			msg = this->fCallbackObj->getMessageToProcess();
 
-		if (!msg->isEmpty()){
+		if (msg != nullptr && !msg->isEmpty()){
 			TBaseMessage_ptr bm = msg->getMessage();
 			int kind = bm->getID();
 
@@ -200,14 +188,4 @@ void TMessageExecutor::serverExecutor(){
 	//safe thread exit
 	return;
 }
-#else
-void TMessageExecutor::clientExecutor(){
-	while (!this->fMustExit.load(boost::memory_order_acquire)){
-
-	}
-
-	//safe thread exit
-}
-#endif
-
 #pragma endregion

@@ -56,8 +56,8 @@ public:
 	TStorageServer(int AServerPort, IManagedServerSockController^ aCallbackObj);
 	~TStorageServer();
 
-	void startServer();
-	void stopServer();
+	const bool startServer();
+	//void stopServer();
 
 	void onServerLog(string aClassName, string aFuncName, string aMsg) override;
 	void onServerWarning(string aClassName, string aFuncName, string aMsg) override;

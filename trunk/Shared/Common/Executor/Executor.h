@@ -20,11 +20,7 @@ using namespace boost;
 ///////////////////////////////////
 //    IBaseExecutorController    //
 ///////////////////////////////////
-#ifdef STORAGE_SERVER
 public class IBaseExecutorController : public IServerBaseController {
-#else
-class IBaseExecutorController : public IClientBaseController {
-#endif
 public:
 	virtual bool isInQueueEmpty() = 0;
 	virtual TMessageContainer_ptr getMessageToProcess() = 0;
@@ -32,7 +28,6 @@ public:
 };
 
 
-#ifdef STORAGE_SERVER
 //////////////////////////////////////
 //    IServerExecutorController    //
 //////////////////////////////////////
@@ -49,45 +44,21 @@ public:
 	virtual void processRestoreFileAck(TConnectionHandle aConnection, TRestoreFileAckMessage_ptr& aMsg) = 0;
 	virtual void processPingRequest(TConnectionHandle aConnection, TPingReqMessage_ptr& aMsg) = 0;
 };
-#else
-//////////////////////////////////////
-//    IClientExecutorController    //
-//////////////////////////////////////
-class IClientExecutorController : public IBaseExecutorController {
-public:
-};
-#endif
 
 
 //////////////////////////////////////
 //        TMessageExecutor          //
 //////////////////////////////////////
-#ifdef STORAGE_SERVER
 public class TMessageExecutor{
-#else
-class TMessageExecutor{
-#endif
 private:
 	atomic<bool> fMustExit;
 	thread_group fThreadPool;
-#ifdef STORAGE_SERVER
 	IServerExecutorController* fCallbackObj = nullptr;
-#else
-	IClientExecutorController* fCallbackObj = nullptr;
-#endif
 
-#ifdef STORAGE_SERVER
 	void serverExecutor();
-#else
-	void clientExecutor();
-#endif
 
 public:
-#ifdef STORAGE_SERVER
 	TMessageExecutor(IServerExecutorController* aCallbackObj);
-#else
-	TMessageExecutor(IClientExecutorController* aCallbackObj);
-#endif
 
 	void stopExecutors();
 	~TMessageExecutor();

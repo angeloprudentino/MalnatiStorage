@@ -22,7 +22,6 @@ using namespace System::Data;
 using namespace System::Data::SqlClient;
 
 
-#ifdef STORAGE_SERVER
 //////////////////////////////////
 //       EDBException	        //
 //////////////////////////////////
@@ -64,5 +63,3 @@ public:
 	TVersion_ptr getLastVersion(const string& aUser);
 	TVersionList_ptr getAllVersions(const string& aUser);
 };
-#endif;
-

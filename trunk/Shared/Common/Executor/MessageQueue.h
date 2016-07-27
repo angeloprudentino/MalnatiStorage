@@ -12,6 +12,7 @@
 #include <memory>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
+#include <boost/atomic.hpp>
 
 #include "Message.h"
 #include "NetworkController.h"
@@ -19,11 +20,7 @@
 //////////////////////////////////////
 //       TMessageContainer          //
 //////////////////////////////////////
-#ifdef STORAGE_SERVER
 public class TMessageContainer{
-#else
-class TMessageContainer{
-#endif
 private:
 	TBaseMessage_ptr fMsg = nullptr;
 	TConnectionHandle fConnection;
@@ -48,19 +45,16 @@ typedef std::unique_ptr<TMessageContainer> TMessageContainer_ptr;
 //////////////////////////////////////
 //        TMessageQueue	            //
 //////////////////////////////////////
-#ifdef STORAGE_SERVER
 public class TMessageQueue{
-#else
-class TMessageQueue{
-#endif
 private:
 	queue<TMessageContainer_ptr> fQueue;
 	mutex fMutex;
 	condition_variable fCond;
+	atomic<bool> fMustExit;
 
 public:
-	TMessageQueue() = default;
-	~TMessageQueue(){ this->fCond.notify_all(); };
+	TMessageQueue();
+	~TMessageQueue();
 	TMessageQueue(const TMessageQueue&) = delete;            // disable copying
 	TMessageQueue& operator=(const TMessageQueue&) = delete; // disable assignment
 

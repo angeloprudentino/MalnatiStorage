@@ -8,7 +8,6 @@
 #pragma once
 #include "DBManager.h"
 
-#ifdef STORAGE_SERVER
 using namespace System::Configuration;
 using namespace System::Data;
 
@@ -108,4 +107,3 @@ TVersionList_ptr TDBManager::getAllVersions(const string& aUser){
 }
 
 #pragma endregion
-#endif

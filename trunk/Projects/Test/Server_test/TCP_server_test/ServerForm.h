@@ -274,12 +274,18 @@ namespace Server_test {
 	}
 
 	private: void afterStopServer(){
-				this->ServerStatusLabel->Text = "Server is stopped";
-				this->ServerStatusLabel->ForeColor = System::Drawing::Color::Red;
-				this->btnStart->Text = "Start";
-				this->tbPort->Enabled = true;
-				this->btnStart->Enabled = true;
-				this->server_is_started = false;
+		if (this->ServerStatusLabel->InvokeRequired){
+			afterStartServerDelegate^ d = gcnew afterStartServerDelegate(this, &TServerForm::afterStopServer);
+			this->Invoke(d);
+		}
+		else {
+			this->ServerStatusLabel->Text = "Server is stopped";
+			this->ServerStatusLabel->ForeColor = System::Drawing::Color::Red;
+			this->btnStart->Text = "Start";
+			this->tbPort->Enabled = true;
+			this->btnStart->Enabled = true;
+			this->server_is_started = false;
+		}
 	}
 
 	private: void Log(std::string className, std::string funcName, std::string msg){

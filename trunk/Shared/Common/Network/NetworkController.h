@@ -27,7 +27,6 @@ typedef list<TConnection> TConnectionList;
 typedef TConnectionList::iterator TConnectionHandle;
 
 
-#ifdef STORAGE_SERVER
 //////////////////////////////////////
 //   IManagedServerSockController	//
 //////////////////////////////////////
@@ -52,7 +51,3 @@ public:
 	virtual void onServerSockRead(TConnectionHandle aConnection, string_ptr& aMsg) = 0;
 	virtual void onServerSockWrite() = 0;
 };
-#else
-//client sock controller
-
-#endif
