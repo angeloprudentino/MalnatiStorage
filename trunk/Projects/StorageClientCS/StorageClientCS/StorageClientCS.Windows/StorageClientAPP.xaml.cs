@@ -44,7 +44,7 @@ namespace StorageClientCS
         Dictionary<String, StorageFile> map_files;
         StorageFolder fold = KnownFolders.PicturesLibrary;
         SQLiteAsyncConnection connection;
-        int Actual_Version = 1;
+        int Actual_Version;
         
         
         public StorageClientAPP()
@@ -67,6 +67,7 @@ namespace StorageClientCS
             //synch now
             Button _button = (Button)sender;
             _button.IsEnabled = false;
+            this.Actual_Version++;
             WriteGrid.RowDefinitions.Clear();
             WriteGrid.Children.Clear();
           //  StorageFolder fold = KnownFolders.PicturesLibrary;
@@ -177,13 +178,14 @@ namespace StorageClientCS
 
                     //vede se è presente nel db
                     var result = await connection.QueryAsync<FileDB>("SELECT * FROM Files WHERE Path = ?",path_db);
+               
                     if(result.Count==1){
                         //era presente nel db
                         //Debug.WriteLine("file già presente nel db: "+ path_db);
                         foreach (var it in result)
                         {
                             string OldDateMod = it.DateMod;
-                            it.Versione = this.Actual_Version + 1;
+                            it.Versione = this.Actual_Version;
                             if (OldDateMod.Equals(dateMod))
                             {
                                 //il file non è stato modificato
@@ -209,7 +211,7 @@ namespace StorageClientCS
                             Path = path_db,
                             Name = name_db,
                             DateMod = dateMod,
-                            Versione = this.Actual_Version+1
+                            Versione = this.Actual_Version
                         };
                         await connection.InsertAsync(File_db);
                     }
@@ -278,7 +280,7 @@ namespace StorageClientCS
             Versions.IsEnabled = false;
             WriteGrid.RowDefinitions.Clear();
             WriteGrid.Children.Clear();
-            this.outputtext = "";
+            this.outputtext = "Update now...\nFiles in " + fold.Name + "Version: " + this.Actual_Version + "\n";
             this.map_files.Clear();
             try
             {
@@ -301,33 +303,49 @@ namespace StorageClientCS
             Debug.WriteLine("contenuto cambiato: " + sender.Folder);
             await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
             {
+                this.Actual_Version++;
                 //rootPage.NotifyUser("The toast encountered an error", NotifyType.ErrorMessage);
                 this.OnChanges();
+                 Debug.WriteLine("aggiorno la versione a seguito del contenuto cambiato");
+           //     this.UpdateVersionVariable();
+                 foreach (StorageFile f in this.map_files.Values)
+                 {
+                     outputtext += f.Path + " \n";
+                 }
+                 this.Messages.Text = outputtext;
+                 this.setListenerOnChanges();
+                 this.DrawBottonsFiles();
+
+                 //aggiorno la variabile con la versione corrente
+
+                 SynchNow.IsEnabled = true;
+                 Versions.IsEnabled = true;
             });
 
-           //aggiorno la versione corrente (la variabile)
-            await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
-            {
-                this.UpdateVersionVariable();
-            });
+           ////aggiorno la versione corrente (la variabile)
+           // await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+           // {
+           //     Debug.WriteLine("aggiorno la versione a seguito del contenuto cambiato");
+           //     this.UpdateVersionVariable();
+           // });
 
-           //aggiorno la pagina
-            await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
-            {
+           ////aggiorno la pagina
+           // await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+           // {
 
-                foreach (StorageFile f in this.map_files.Values)
-                {
-                    outputtext += f.Path + " \n";
-                }
-                this.Messages.Text = outputtext;
-                this.setListenerOnChanges();
-                this.DrawBottonsFiles();
+           //     foreach (StorageFile f in this.map_files.Values)
+           //     {
+           //         outputtext += f.Path + " \n";
+           //     }
+           //     this.Messages.Text = outputtext;
+           //     this.setListenerOnChanges();
+           //     this.DrawBottonsFiles();
 
-                //aggiorno la variabile con la versione corrente
+           //     //aggiorno la variabile con la versione corrente
 
-                SynchNow.IsEnabled = true;
-                Versions.IsEnabled = true;
-            });
+           //     SynchNow.IsEnabled = true;
+           //     Versions.IsEnabled = true;
+           // });
 
         }
         
