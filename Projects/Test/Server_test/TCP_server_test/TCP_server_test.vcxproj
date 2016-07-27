@@ -116,7 +116,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>STORAGE_SERVER;WIN32;HAVE_FORM;BOOST_ALL_DYN_LINK;BOOST_THREAD_USE_DLL;BOOST_LIB_DIAGNOSTIC;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;HAVE_FORM;BOOST_ALL_DYN_LINK;BOOST_THREAD_USE_DLL;BOOST_LIB_DIAGNOSTIC;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <CompileAsManaged>true</CompileAsManaged>
     </ClCompile>

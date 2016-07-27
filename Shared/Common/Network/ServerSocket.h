@@ -23,6 +23,7 @@ using namespace boost::asio::ip;
 
 class TServerSocket;
 
+
 //////////////////////////////////////
 //      TServerSockController	    //
 //////////////////////////////////////
@@ -43,8 +44,8 @@ public:
 	TServerSockController(int AServerPort, IServerSockController* aCallback);
 	virtual ~TServerSockController();
 
-	void startSocket();
-	void stopSocketIn();
+	const bool startSocket();
+	//void stopSocketIn();
 	
 	void onServerLog(string aClassName, string aFuncName, string aMsg) override;
 	void onServerWarning(string aClassName, string aFuncName, string aMsg) override;
@@ -87,6 +88,6 @@ public:
 	bool setAcceptState(int aAcceptPort);
 	void doAccept();
 	void doSend(TConnectionHandle aConnection, TBaseMessage_ptr& aMsg);
-	void stopIncoming();
+	//void stopIncoming();
 };
 

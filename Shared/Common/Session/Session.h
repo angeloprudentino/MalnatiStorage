@@ -28,11 +28,7 @@ using namespace std;
 //////////////////////////////////
 //           TFile	            //
 //////////////////////////////////
-#ifdef STORAGE_SERVER
 public class TFile{
-#else
-class TFile{
-#endif
 private:
 	string_ptr fServerPathPrefix = nullptr;
 	string_ptr fClientRelativePath = nullptr;
@@ -69,11 +65,7 @@ typedef TFile_list::iterator TFileHandle;
 //////////////////////////////////
 //          TVersion	        //
 //////////////////////////////////
-#ifdef STORAGE_SERVER
 public class TVersion{
-#else
-class TVersion{
-#endif
 private:
 	int fId = NO_ID;
 	time_t fVersionDate;
@@ -108,11 +100,7 @@ typedef unique_ptr<TVersionList> TVersionList_ptr;
 //////////////////////////////////
 //          TSession	        //
 //////////////////////////////////
-#ifdef STORAGE_SERVER
 public class TSession{
-#else
-class TSession{
-#endif
 private:
 	int fKind = NO_SESSION;
 	string_ptr fToken = nullptr;
@@ -131,7 +119,7 @@ public:
 	//getters
 	const int getKind() { return this->fKind; }
 	const string getToken() { return *(this->fToken); }
-	const int getVersion() { return this->fVersion->getVersion(); }
+	const int getVersion() { this->fVersion->getVersion(); }
 	TFile_ptr getNextFileToSend(){ return move_TFile_ptr(this->fVersion->getNextFile()); }
 	TFile_ptr updateNextFileToSend(){ this->fVersion->updateNext(); return move_TFile_ptr(this->fVersion->getNextFile()); }
 

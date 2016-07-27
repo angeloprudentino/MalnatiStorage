@@ -198,6 +198,9 @@ TStorageServer::TStorageServer(int AServerPort, IManagedServerSockController^ aC
 }
 
 TStorageServer::~TStorageServer(){
+	if (this->fExecutor != nullptr)
+		this->fExecutor->stopExecutors();
+
 	if (this->fSockController != nullptr){
 		this->onServerLog("TStorageServer", "destructor", "deleting TServerSockController object...");
 		delete this->fSockController;
@@ -241,25 +244,32 @@ TStorageServer::~TStorageServer(){
 	this->fCallbackObj = nullptr;
 }
 
-void TStorageServer::startServer(){
+const bool TStorageServer::startServer(){
 	this->onServerLog("TStorageServer", "startServer", "starting the internal server socket...");
-	this->fSockController->startSocket();
-	this->onServerLog("TStorageServer", "startServer", "internal server socket started");
+	if (this->fSockController->startSocket()){
+		this->onServerLog("TStorageServer", "startServer", "internal server socket started");
 
-	this->onServerLog("TStorageServer", "startServer", "creating TMessageExecutor object...");
-	this->fExecutor = new TMessageExecutor(this);
-	this->onServerLog("TStorageServer", "startServer", "TMessageExecutor object created");
+		this->onServerLog("TStorageServer", "startServer", "creating TMessageExecutor object...");
+		this->fExecutor = new TMessageExecutor(this);
+		this->onServerLog("TStorageServer", "startServer", "TMessageExecutor object created");
+
+		return true;
+	}
+	else{
+		this->onServerLog("TStorageServer", "startServer", "internal server socket cannot be started");
+		return false;
+	}
 }
 
-void TStorageServer::stopServer(){
-	this->onServerLog("TStorageServer", "stopServer", "stopping the internal server socket for incoming messages...");
-	this->fSockController->stopSocketIn();
-	this->onServerLog("TStorageServer", "stopServer", "internal server socket for incoming messages stopped");
-
-	this->onServerLog("TStorageServer", "stopServer", "stopping server executors...");
-	this->fExecutor->stopExecutors();
-	this->onServerLog("TStorageServer", "stopServer", "server executors stopped");
-}
+//void TStorageServer::stopServer(){
+//	this->onServerLog("TStorageServer", "stopServer", "stopping the internal server socket for incoming messages...");
+//	this->fSockController->stopSocketIn();
+//	this->onServerLog("TStorageServer", "stopServer", "internal server socket for incoming messages stopped");
+//
+//	this->onServerLog("TStorageServer", "stopServer", "stopping server executors...");
+//	this->fExecutor->stopExecutors();
+//	this->onServerLog("TStorageServer", "stopServer", "server executors stopped");
+//}
 
 #pragma region "IServerBaseController implementation"
 void TStorageServer::onServerLog(string aClassName, string aFuncName, string aMsg){
@@ -365,8 +375,8 @@ void TStorageServer::processRegistrationRequest(TConnectionHandle aConnection, T
 			reply = new_TUserRegistrReplyMessage_ptr(true);
 		}
 
-		TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)reply, aConnection); //reply is moved
-		this->enqueueMessageToSend(replyContainer); //replyContainer is moved
+		TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(reply), aConnection); //reply is moved
+		this->enqueueMessageToSend(move_TMessageContainer_ptr(replyContainer)); //replyContainer is moved
 	}
 	else{
 		this->onServerError("TStorageServer", "processRegistrationRequest", "received an empty message; skipped.");
@@ -402,8 +412,8 @@ void TStorageServer::processUpdateStart(TConnectionHandle aConnection, TUpdateSt
 
 			//send back negative response
 			TUpdateStartReplyMessage_ptr reply = new_TUpdateStartReplyMessage_ptr(false, "");
-			TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)reply, aConnection); //reply is moved
-			this->enqueueMessageToSend(replyContainer); //replyContainer is moved
+			TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(reply), aConnection); //reply is moved
+			this->enqueueMessageToSend(move_TMessageContainer_ptr(replyContainer)); //replyContainer is moved
 			return;
 		}
 
@@ -420,8 +430,8 @@ void TStorageServer::processUpdateStart(TConnectionHandle aConnection, TUpdateSt
 
 		//send back positive response
 		TUpdateStartReplyMessage_ptr reply = new_TUpdateStartReplyMessage_ptr(true, token_ptr->c_str());
-		TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)reply, aConnection); //reply is moved
-		this->enqueueMessageToSend(replyContainer); //replyContainer is moved
+		TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(reply), aConnection); //reply is moved
+		this->enqueueMessageToSend(move_TMessageContainer_ptr(replyContainer)); //replyContainer is moved
 
 		token_ptr.reset();
 	}
@@ -456,21 +466,25 @@ void TStorageServer::processAddNewFile(TConnectionHandle aConnection, TAddNewFil
 		TSession_ptr session = this->isThereAnUpdateSessionFor(u);
 		if (session == nullptr){
 			this->onServerError("TStorageServer", "processAddNewFile", "There is no update session opened for user: " + u);
-
-			//enqueue negative response
-			TFileAckMessage_ptr reply = new_TFileAckMessage_ptr(false, fp);
-			TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)reply, aConnection); //reply is moved
-			this->enqueueMessageToSend(replyContainer); //replyContainer is moved
+			return;
 		}
 
-	//	//update session object
+		//check if checksum is correct
+		//if (!aMsg->matchChecksum()){
+		//	//enqueue negative response
+		//	TFileAckMessage_ptr reply = new_TFileAckMessage_ptr(false, fp);
+		//	TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(reply), aConnection); //reply is moved
+		//	this->enqueueMessageToSend(move_TMessageContainer_ptr(replyContainer)); //replyContainer is moved
+		//}
+
+		//update session object
 		TFile_ptr file = new_TFile_ptr(STORAGE_ROOT_PATH + u, fp, fd, move_string_ptr(c), true);
 		path p = file->getServerPathPrefix();
 		int v = session->getVersion()+1; //to get the new version index
 		file->setVersion(v);
 		p /= to_string(v);
 		p /= file->getClientRelativePath();
-		session->addFile(move_TFile_ptr(file));
+		//session->addFile(move_TFile_ptr(file));
 
 		if (this->fFileSystemManager != nullptr){
 			this->fFileSystemManager->storeFile(p, move_string_ptr(f));
@@ -478,8 +492,8 @@ void TStorageServer::processAddNewFile(TConnectionHandle aConnection, TAddNewFil
 
 		//send a positive response
 		TFileAckMessage_ptr reply = new_TFileAckMessage_ptr(true, fp);
-		TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)reply, aConnection); //reply is moved
-		this->enqueueMessageToSend(replyContainer); //replyContainer is moved
+		TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(reply), aConnection); //reply is moved
+		this->enqueueMessageToSend(move_TMessageContainer_ptr(replyContainer)); //replyContainer is moved
 	}
 	else{
 		this->onServerError("TStorageServer", "processAddNewFile", "received an empty message; skipped.");
@@ -512,11 +526,15 @@ void TStorageServer::processUpdateFile(TConnectionHandle aConnection, TUpdateFil
 		TSession_ptr session = this->isThereAnUpdateSessionFor(u);
 		if (session == nullptr){
 			this->onServerError("TStorageServer", "processUpdateFile", "There is no update session opened for user: " + u);
+			return;
+		}
 
+		//check if checksum is correct
+		if (!aMsg->matchChecksum()){
 			//enqueue negative response
 			TFileAckMessage_ptr reply = new_TFileAckMessage_ptr(false, fp);
-			TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)reply, aConnection); //reply is moved
-			this->enqueueMessageToSend(replyContainer); //replyContainer is moved
+			TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(reply), aConnection); //reply is moved
+			this->enqueueMessageToSend(move_TMessageContainer_ptr(replyContainer)); //replyContainer is moved
 		}
 
 		//update session object
@@ -535,8 +553,8 @@ void TStorageServer::processUpdateFile(TConnectionHandle aConnection, TUpdateFil
 
 		//send a positive response
 		TFileAckMessage_ptr reply = new_TFileAckMessage_ptr(true, fp);
-		TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)reply, aConnection); //reply is moved
-		this->enqueueMessageToSend(replyContainer); //replyContainer is moved
+		TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(reply), aConnection); //reply is moved
+		this->enqueueMessageToSend(move_TMessageContainer_ptr(replyContainer)); //replyContainer is moved
 	}
 	else{
 		this->onServerError("TStorageServer", "processUpdateFile", "received an empty message; skipped.");
@@ -564,12 +582,13 @@ void TStorageServer::processRemoveFile(TConnectionHandle aConnection, TRemoveFil
 		TSession_ptr session = this->isThereAnUpdateSessionFor(u);
 		if (session == nullptr){
 			this->onServerError("TStorageServer", "processRemoveFile", "There is no update session opened for user: " + u);
-
-			//enqueue negative response
-			TFileAckMessage_ptr reply = new_TFileAckMessage_ptr(false, fp);
-			TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)reply, aConnection); //reply is moved
-			this->enqueueMessageToSend(replyContainer); //replyContainer is moved
+			return;
 		}
+		//	//enqueue negative response
+		//	TFileAckMessage_ptr reply = new_TFileAckMessage_ptr(false, fp);
+		//	TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(reply), aConnection); //reply is moved
+		//	this->enqueueMessageToSend(move_TMessageContainer_ptr(replyContainer)); //replyContainer is moved
+		//}
 
 		//update session object
 		string_ptr s = new_string_ptr();
@@ -578,8 +597,8 @@ void TStorageServer::processRemoveFile(TConnectionHandle aConnection, TRemoveFil
 
 		//send a positive response
 		TFileAckMessage_ptr reply = new_TFileAckMessage_ptr(true, fp);
-		TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)reply, aConnection); //reply is moved
-		this->enqueueMessageToSend(replyContainer); //replyContainer is moved
+		TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(reply), aConnection); //reply is moved
+		this->enqueueMessageToSend(move_TMessageContainer_ptr(replyContainer)); //replyContainer is moved
 	}
 	else{
 		this->onServerError("TStorageServer", "processRemoveFile", "received an empty message; skipped.");
@@ -605,12 +624,13 @@ void TStorageServer::processUpdateStop(TConnectionHandle aConnection, TUpdateSto
 		TSession_ptr session = this->isThereAnUpdateSessionFor(u);
 		if (session == nullptr){
 			this->onServerError("TStorageServer", "processUpdateStop", "There is no update session opened for user: " + u);
-
-			//enqueue negative response
-			TUpdateStopReplyMessage_ptr reply = new_TUpdateStopReplyMessage_ptr(false, NO_VERSION, time(nullptr));
-			TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)reply, aConnection); //reply is moved
-			this->enqueueMessageToSend(replyContainer); //replyContainer is moved
+			return;
 		}
+		//	//enqueue negative response
+		//	TUpdateStopReplyMessage_ptr reply = new_TUpdateStopReplyMessage_ptr(false, NO_VERSION, time(nullptr));
+		//	TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(reply), aConnection); //reply is moved
+		//	this->enqueueMessageToSend(move_TMessageContainer_ptr(replyContainer)); //replyContainer is moved
+		//}
 
 		//end update session and store modifictions permanently
 		TVersion_ptr v = session->terminateWithSucces();
@@ -622,8 +642,8 @@ void TStorageServer::processUpdateStop(TConnectionHandle aConnection, TUpdateSto
 
 		// send back info about the newly created version
 		TUpdateStopReplyMessage_ptr reply = new_TUpdateStopReplyMessage_ptr(true, vID, vDate);
-		TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)reply, aConnection); //reply is moved
-		this->enqueueMessageToSend(replyContainer); //replyContainer is moved
+		TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(reply), aConnection); //reply is moved
+		this->enqueueMessageToSend(move_TMessageContainer_ptr(replyContainer)); //replyContainer is moved
 	}
 	else{
 		this->onServerError("TStorageServer", "processUpdateStop", "received an empty message; skipped.");
@@ -676,8 +696,8 @@ void TStorageServer::processGetVersions(TConnectionHandle aConnection, TGetVersi
 		}
 
 		TGetVersionsReplyMessage_ptr reply = new_TGetVersionsReplyMessage_ptr(totVers, oldest, last, vers);
-		TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)reply, aConnection); //reply is moved
-		this->enqueueMessageToSend(replyContainer); //replyContainer is moved
+		TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(reply), aConnection); //reply is moved
+		this->enqueueMessageToSend(move_TMessageContainer_ptr(replyContainer)); //replyContainer is moved
 	}
 	else{
 		this->onServerError("TStorageServer", "processGetVersions", "received an empty message; skipped.");
@@ -715,8 +735,8 @@ void TStorageServer::processRestoreVersion(TConnectionHandle aConnection, TResto
 
 			//send back negative response
 			TRestoreVerReplyMessage_ptr reply = new_TRestoreVerReplyMessage_ptr(false, "");
-			TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)reply, aConnection); //reply is moved
-			this->enqueueMessageToSend(replyContainer); //replyContainer is moved
+			TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(reply), aConnection); //reply is moved
+			this->enqueueMessageToSend(move_TMessageContainer_ptr(replyContainer)); //replyContainer is moved
 			return;
 		}
 
@@ -747,8 +767,8 @@ void TStorageServer::processRestoreVersion(TConnectionHandle aConnection, TResto
 
 			//send back positive response
 			TRestoreVerReplyMessage_ptr reply = new_TRestoreVerReplyMessage_ptr(true, token_ptr->c_str());
-			TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)reply, aConnection); //reply is moved
-			this->enqueueMessageToSend(replyContainer); //replyContainer is moved
+			TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(reply), aConnection); //reply is moved
+			this->enqueueMessageToSend(move_TMessageContainer_ptr(replyContainer)); //replyContainer is moved
 
 			//send the first file of the required version
 			TFile_ptr f = session->getNextFileToSend();
@@ -757,15 +777,15 @@ void TStorageServer::processRestoreVersion(TConnectionHandle aConnection, TResto
 				p /= (to_string(f->getVersion()));
 				p /= f->getClientRelativePath();
 				TRestoreFileMessage_ptr first = new_TRestoreFileMessage_ptr(p.string());
-				TMessageContainer_ptr firstContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)first, aConnection);
-				this->enqueueMessageToSend(firstContainer);
+				TMessageContainer_ptr firstContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(first), aConnection);
+				this->enqueueMessageToSend(move_TMessageContainer_ptr(firstContainer));
 			}
 		}
 		else{
 			//send back negative response
 			TRestoreVerReplyMessage_ptr reply = new_TRestoreVerReplyMessage_ptr(false, "");
-			TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)reply, aConnection); //reply is moved
-			this->enqueueMessageToSend(replyContainer); //replyContainer is moved
+			TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(reply), aConnection); //reply is moved
+			this->enqueueMessageToSend(move_TMessageContainer_ptr(replyContainer)); //replyContainer is moved
 		}
 	}
 	else{
@@ -816,8 +836,8 @@ void TStorageServer::processRestoreFileAck(TConnectionHandle aConnection, TResto
 			p /= (to_string(f->getVersion()));
 			p /= f->getClientRelativePath();
 			TRestoreFileMessage_ptr next = new_TRestoreFileMessage_ptr(p.string());
-			TMessageContainer_ptr nextContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)next, aConnection);
-			this->enqueueMessageToSend(nextContainer);
+			TMessageContainer_ptr nextContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(next), aConnection);
+			this->enqueueMessageToSend(move_TMessageContainer_ptr(nextContainer));
 		}
 	}
 	else{
@@ -828,6 +848,7 @@ void TStorageServer::processRestoreFileAck(TConnectionHandle aConnection, TResto
 void TStorageServer::processPingRequest(TConnectionHandle aConnection, TPingReqMessage_ptr& aMsg){
 	if (aMsg != nullptr){
 		string t = formatFileDate(aMsg->getTime());
+		string tok = aMsg->getToken();
 
 		//Log the message
 		this->onServerLog("TStorageServer", "processPingRequest", "####################################");
@@ -835,14 +856,15 @@ void TStorageServer::processPingRequest(TConnectionHandle aConnection, TPingReqM
 		this->onServerLog("TStorageServer", "processPingRequest", "## PingReqMessage ");
 		this->onServerLog("TStorageServer", "processPingRequest", "## ");
 		this->onServerLog("TStorageServer", "processPingRequest", "## time: " + t);
+		this->onServerLog("TStorageServer", "processPingRequest", "## token: " + tok);
 		this->onServerLog("TStorageServer", "processPingRequest", "## ");
 		this->onServerLog("TStorageServer", "processPingRequest", "####################################");
 		this->onServerLog("TStorageServer", "processPingRequest", "####################################");
 
 		//send ping reply
-		TPingReplyMessage_ptr reply = new_TPingReplyMessage_ptr();
-		TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)reply, aConnection); //reply is moved
-		this->enqueueMessageToSend(replyContainer); //replyContainer is moved
+		TPingReplyMessage_ptr reply = new_TPingReplyMessage_ptr(tok);
+		TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(reply), aConnection); //reply is moved
+		this->enqueueMessageToSend(move_TMessageContainer_ptr(replyContainer)); //replyContainer is moved
 	}
 	else{
 		this->onServerError("TStorageServer", "processPingRequest", "received an empty message; skipped.");

@@ -27,15 +27,18 @@ void TServerForm::initTCPserver(Object^ data){
 	this->Log("TServerForm", "initTCPserver", "start creating TStorageServer object...");
 	this->serverEngine = new TStorageServer(port, this);
 	this->Log("TServerForm", "initTCPserver", "TStorageServer object created; starting the server...");
-	this->serverEngine->startServer();
+	if (this->serverEngine->startServer())
+		afterStartServer();
+	else
+		afterStopServer();
 }
 
 void TServerForm::dismissTCPserver(){
 
 	if (this->serverEngine != nullptr){
-		this->Log("TServerForm", "dismissTCPserver", "stopping serverEngine object...");
-		this->serverEngine->stopServer();
-		this->Log("TServerForm", "dismissTCPserver", "serverEngine stopped");
+		//this->Log("TServerForm", "dismissTCPserver", "stopping serverEngine object...");
+		//this->serverEngine->stopServer();
+		//this->Log("TServerForm", "dismissTCPserver", "serverEngine stopped");
 		beforeStopServer();
 
 		this->Log("TServerForm", "dismissTCPserver", "start deleting TStorageServer object...");

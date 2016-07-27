@@ -49,6 +49,24 @@ const bool TMessageContainer::isEmpty(){
 //        TMessageQueue	            //
 //////////////////////////////////////
 #pragma region "TMessageQueue"
+TMessageQueue::TMessageQueue() {
+	this->fMustExit.store(false, boost::memory_order_release); 
+};
+
+TMessageQueue::~TMessageQueue(){
+	this->fMustExit.store(true, boost::memory_order_release);
+	this->fCond.notify_all();
+
+	//unique_lock<mutex> lock(this->fMutex);
+
+	//int size = (int)this->fQueue.size();
+	//for (int i = 0; i < size; i++){
+	//	TMessageContainer_ptr temp = move_TMessageContainer_ptr(this->fQueue.front());
+	//	this->fQueue.pop();
+	//	temp.reset();
+	//}
+}
+
 bool TMessageQueue::isEmpty(){
 	unique_lock<mutex> lock(this->fMutex);
 	return this->fQueue.empty();
@@ -57,9 +75,23 @@ bool TMessageQueue::isEmpty(){
 TMessageContainer_ptr TMessageQueue::popMessage(){
 	unique_lock<mutex> lock(this->fMutex);
 
-	while (this->fQueue.empty()){
+	while (this->fQueue.empty() && !this->fMustExit.load(boost::memory_order_acquire)){
 		this->fCond.wait(lock);
 	}
+
+	//return null object if should exit
+	if (this->fMustExit.load(boost::memory_order_acquire)){
+		//empty queue before leaving
+		int size = (int)this->fQueue.size();
+		for (int i = 0; i < size; i++){
+			TMessageContainer_ptr temp = move_TMessageContainer_ptr(this->fQueue.front());
+			this->fQueue.pop();
+			temp.reset();
+		}
+
+		return nullptr;
+	}
+
 	TMessageContainer_ptr res = move_TMessageContainer_ptr(this->fQueue.front());
 	this->fQueue.pop();
 
@@ -67,6 +99,10 @@ TMessageContainer_ptr TMessageQueue::popMessage(){
 }
 
 void TMessageQueue::pushMessage(TMessageContainer_ptr& aMsg){
+	//do not push if should exit
+	if (this->fMustExit.load(boost::memory_order_acquire))
+		return;
+
 	try{
 		unique_lock<mutex> lock(this->fMutex);
 

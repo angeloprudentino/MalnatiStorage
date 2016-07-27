@@ -32,17 +32,10 @@ typedef struct{
 	char* data;
 }B64result;
 
-#ifdef STORAGE_SERVER
 //////////////////////////////////////
 //      IServerBaseController	    //
 //////////////////////////////////////
 public class IServerBaseController{
-#else
-//////////////////////////////////////
-//      IClientBaseController	    //
-//////////////////////////////////////
-class IClientBaseController{
-#endif
 public:
 	virtual void onServerLog(string aClassName, string aFuncName, string aMsg) = 0;
 	virtual void onServerWarning(string aClassName, string aFuncName, string aMsg) = 0;
@@ -58,11 +51,7 @@ public:
 //////////////////////////////////////
 //        EBaseException	        //
 //////////////////////////////////////
-#ifdef STORAGE_SERVER
 public class EBaseException : public std::exception {
-#else
-class EBaseException : public std::exception {
-#endif
 private:
 	string fMessage;
 public:
@@ -73,11 +62,7 @@ public:
 //////////////////////////////////////
 //       EOpensslException	        //
 //////////////////////////////////////
-#ifdef STORAGE_SERVER
 public class EOpensslException : public EBaseException{
-#else
-class EOpensslException : public EBaseException{
-#endif
 public:
 	EOpensslException(const string aMsg) : EBaseException(aMsg){}
 };
