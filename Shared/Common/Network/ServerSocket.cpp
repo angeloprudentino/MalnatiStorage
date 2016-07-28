@@ -308,7 +308,10 @@ void TServerSocket::handleRead(TConnectionHandle aConnection, const boost::syste
 	}
 	else {
 		this->fConnections.erase(aConnection);
-		doServerError(this->fCallbackObj, "TServerSocket", "handleRead", "Error \"" + aErr.message() + "\" from " + peer.address().to_string() + ":" + std::to_string(peer.port()));
+		if (aErr.value() == 2)
+			doServerLog(this->fCallbackObj, "TServerSocket", "handleRead", "Received disconnection from " + peer.address().to_string() + ":" + std::to_string(peer.port()))
+		else
+			doServerError(this->fCallbackObj, "TServerSocket", "handleRead", "Error \"" + aErr.message() + "\" from " + peer.address().to_string() + ":" + std::to_string(peer.port()))
 	}
 }
 

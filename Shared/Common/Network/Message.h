@@ -206,7 +206,6 @@ public:
 
 	string_ptr encodeMessage();
 	void decodeMessage();
-	const bool matchChecksum();
 
 	//getters
 	const string getToken(){ return *(this->fToken); }
@@ -237,7 +236,6 @@ public:
 
 	string_ptr encodeMessage();
 	void decodeMessage();
-	const bool matchChecksum();
 
 	//getters
 	const string getToken(){ return *(this->fToken); }
@@ -469,7 +467,6 @@ public:
 
 	string_ptr encodeMessage();
 	void decodeMessage();
-	const bool matchChecksum();
 
 	//getters
 	const string getFilePath(){ return *(this->fFilePath); }
