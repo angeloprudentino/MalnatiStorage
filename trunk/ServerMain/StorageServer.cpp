@@ -392,10 +392,11 @@ void TStorageServer::processUpdateStart(TConnectionHandle aConnection, TUpdateSt
 		//Log the message
 		this->onServerLog("TStorageServer", "processUpdateStart", "####################################");
 		this->onServerLog("TStorageServer", "processUpdateStart", "####################################");
-		this->onServerLog("TStorageServer", "processUpdateStart", "## UpdateStartReqMessage ");
 		this->onServerLog("TStorageServer", "processUpdateStart", "## ");
-		this->onServerLog("TStorageServer", "processUpdateStart", "## user: " + u);
-		this->onServerLog("TStorageServer", "processUpdateStart", "## coded pass: " + p);
+		this->onServerLog("TStorageServer", "processUpdateStart", "##  UpdateStartReqMessage ");
+		this->onServerLog("TStorageServer", "processUpdateStart", "## ");
+		this->onServerLog("TStorageServer", "processUpdateStart", "##  user: " + u);
+		this->onServerLog("TStorageServer", "processUpdateStart", "##  coded pass: " + p);
 		this->onServerLog("TStorageServer", "processUpdateStart", "## ");
 		this->onServerLog("TStorageServer", "processUpdateStart", "####################################");
 		this->onServerLog("TStorageServer", "processUpdateStart", "####################################");
@@ -431,6 +432,7 @@ void TStorageServer::processUpdateStart(TConnectionHandle aConnection, TUpdateSt
 
 		//send back positive response
 		TUpdateStartReplyMessage_ptr reply = new_TUpdateStartReplyMessage_ptr(true, token_ptr->c_str());
+		token_ptr.reset();
 		TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(reply), aConnection); //reply is moved
 		this->enqueueMessageToSend(move_TMessageContainer_ptr(replyContainer)); //replyContainer is moved
 
@@ -452,12 +454,13 @@ void TStorageServer::processAddNewFile(TConnectionHandle aConnection, TAddNewFil
 		//Log the message
 		this->onServerLog("TStorageServer", "processAddNewFile", "####################################");
 		this->onServerLog("TStorageServer", "processAddNewFile", "####################################");
-		this->onServerLog("TStorageServer", "processAddNewFile", "## AddNewFileMessage ");
 		this->onServerLog("TStorageServer", "processAddNewFile", "## ");
-		this->onServerLog("TStorageServer", "processAddNewFile", "## token: " + t);
-		this->onServerLog("TStorageServer", "processAddNewFile", "## file path: " + fp);
-		this->onServerLog("TStorageServer", "processAddNewFile", "## file checksum: " + *c);
-		this->onServerLog("TStorageServer", "processAddNewFile", "## file date: " + formatFileDate(fd));
+		this->onServerLog("TStorageServer", "processAddNewFile", "##  AddNewFileMessage ");
+		this->onServerLog("TStorageServer", "processAddNewFile", "## ");
+		this->onServerLog("TStorageServer", "processAddNewFile", "##  token: " + t);
+		this->onServerLog("TStorageServer", "processAddNewFile", "##  file path: " + fp);
+		this->onServerLog("TStorageServer", "processAddNewFile", "##  file checksum: " + *c);
+		this->onServerLog("TStorageServer", "processAddNewFile", "##  file date: " + formatFileDate(fd));
 		this->onServerLog("TStorageServer", "processAddNewFile", "## ");
 		this->onServerLog("TStorageServer", "processAddNewFile", "####################################");
 		this->onServerLog("TStorageServer", "processAddNewFile", "####################################");
@@ -471,19 +474,35 @@ void TStorageServer::processAddNewFile(TConnectionHandle aConnection, TAddNewFil
 		}
 
 		//check if checksum is correct
-		//if (!aMsg->matchChecksum()){
-		//	//enqueue negative response
-		//	TFileAckMessage_ptr reply = new_TFileAckMessage_ptr(false, fp);
-		//	TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(reply), aConnection); //reply is moved
-		//	this->enqueueMessageToSend(move_TMessageContainer_ptr(replyContainer)); //replyContainer is moved
-		//}
+		bool checksumMatches = false;
+		string_ptr myChecksum = nullptr;
+		try{
+			myChecksum = opensslB64Checksum(*f);
+			checksumMatches = (*(myChecksum) == *(c));
+		}
+		catch (...){
+			checksumMatches = false;
+		}
+
+		myChecksum.reset();
+
+		if (!checksumMatches){
+			//enqueue negative response
+			TFileAckMessage_ptr reply = new_TFileAckMessage_ptr(false, fp);
+			TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(reply), aConnection); //reply is moved
+			this->enqueueMessageToSend(move_TMessageContainer_ptr(replyContainer)); //replyContainer is moved
+		}
 
 		//update session object
-		TFile_ptr file = new_TFile_ptr(STORAGE_ROOT_PATH + u, fp, fd, move_string_ptr(c), true);
+		string_ptr coded_u = opensslB64Checksum(u);
+		TFile_ptr file = new_TFile_ptr(STORAGE_ROOT_PATH + *coded_u, fp, fd, move_string_ptr(c), true);
+		coded_u.reset();
 		path p = file->getServerPathPrefix();
 		int v = session->getVersion()+1; //to get the new version index
 		file->setVersion(v);
-		p /= to_string(v);
+		string_ptr coded_v = opensslB64Checksum(to_string(v));
+		p /= *coded_v;
+		coded_v.reset();
 		p /= file->getClientRelativePath();
 		//session->addFile(move_TFile_ptr(file));
 
@@ -512,12 +531,13 @@ void TStorageServer::processUpdateFile(TConnectionHandle aConnection, TUpdateFil
 		//Log the message
 		this->onServerLog("TStorageServer", "processUpdateFile", "####################################");
 		this->onServerLog("TStorageServer", "processUpdateFile", "####################################");
-		this->onServerLog("TStorageServer", "processUpdateFile", "## UpdateFileMessage ");
 		this->onServerLog("TStorageServer", "processUpdateFile", "## ");
-		this->onServerLog("TStorageServer", "processUpdateFile", "## token: " + t);
-		this->onServerLog("TStorageServer", "processUpdateFile", "## file path: " + fp);
-		this->onServerLog("TStorageServer", "processUpdateFile", "## file checksum: " + *c);
-		this->onServerLog("TStorageServer", "processUpdateFile", "## file date: " + formatFileDate(fd));
+		this->onServerLog("TStorageServer", "processUpdateFile", "##  UpdateFileMessage ");
+		this->onServerLog("TStorageServer", "processUpdateFile", "## ");
+		this->onServerLog("TStorageServer", "processUpdateFile", "##  token: " + t);
+		this->onServerLog("TStorageServer", "processUpdateFile", "##  file path: " + fp);
+		this->onServerLog("TStorageServer", "processUpdateFile", "##  file checksum: " + *c);
+		this->onServerLog("TStorageServer", "processUpdateFile", "##  file date: " + formatFileDate(fd));
 		this->onServerLog("TStorageServer", "processUpdateFile", "## ");
 		this->onServerLog("TStorageServer", "processUpdateFile", "####################################");
 		this->onServerLog("TStorageServer", "processUpdateFile", "####################################");
@@ -531,7 +551,19 @@ void TStorageServer::processUpdateFile(TConnectionHandle aConnection, TUpdateFil
 		}
 
 		//check if checksum is correct
-		if (!aMsg->matchChecksum()){
+		bool checksumMatches = false;
+		string_ptr myChecksum = nullptr;
+		try{
+			myChecksum = opensslB64Checksum(*f);
+			checksumMatches = (*(myChecksum) == *(c));
+		}
+		catch (...){
+			checksumMatches = false;
+		}
+
+		myChecksum.reset();
+
+		if (!checksumMatches){
 			//enqueue negative response
 			TFileAckMessage_ptr reply = new_TFileAckMessage_ptr(false, fp);
 			TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(reply), aConnection); //reply is moved
@@ -539,11 +571,15 @@ void TStorageServer::processUpdateFile(TConnectionHandle aConnection, TUpdateFil
 		}
 
 		//update session object
-		TFile_ptr file = new_TFile_ptr(STORAGE_ROOT_PATH + u, fp, fd, move_string_ptr(c), true);
+		string_ptr coded_u = opensslB64Checksum(u);
+		TFile_ptr file = new_TFile_ptr(STORAGE_ROOT_PATH + *coded_u, fp, fd, move_string_ptr(c), true);
+		coded_u.reset();
 		path p = file->getServerPathPrefix();
 		int v = session->getVersion() + 1; //to get the new version index
 		file->setVersion(v);
-		p /= to_string(v);
+		string_ptr coded_v = opensslB64Checksum(to_string(v));
+		p /= *coded_v;
+		coded_v.reset();
 		p /= file->getClientRelativePath();
 		session->updateFile(move_TFile_ptr(file));
 
@@ -570,10 +606,11 @@ void TStorageServer::processRemoveFile(TConnectionHandle aConnection, TRemoveFil
 		//Log the message
 		this->onServerLog("TStorageServer", "processRemoveFile", "####################################");
 		this->onServerLog("TStorageServer", "processRemoveFile", "####################################");
-		this->onServerLog("TStorageServer", "processRemoveFile", "## RemoveFileMessage ");
 		this->onServerLog("TStorageServer", "processRemoveFile", "## ");
-		this->onServerLog("TStorageServer", "processRemoveFile", "## token: " + t);
-		this->onServerLog("TStorageServer", "processRemoveFile", "## file path: " + fp);
+		this->onServerLog("TStorageServer", "processRemoveFile", "##  RemoveFileMessage ");
+		this->onServerLog("TStorageServer", "processRemoveFile", "## ");
+		this->onServerLog("TStorageServer", "processRemoveFile", "##  token: " + t);
+		this->onServerLog("TStorageServer", "processRemoveFile", "##  file path: " + fp);
 		this->onServerLog("TStorageServer", "processRemoveFile", "## ");
 		this->onServerLog("TStorageServer", "processRemoveFile", "####################################");
 		this->onServerLog("TStorageServer", "processRemoveFile", "####################################");
@@ -613,9 +650,10 @@ void TStorageServer::processUpdateStop(TConnectionHandle aConnection, TUpdateSto
 		//Log the message
 		this->onServerLog("TStorageServer", "processUpdateStop", "####################################");
 		this->onServerLog("TStorageServer", "processUpdateStop", "####################################");
-		this->onServerLog("TStorageServer", "processUpdateStop", "## UpdateStopReqMessage ");
 		this->onServerLog("TStorageServer", "processUpdateStop", "## ");
-		this->onServerLog("TStorageServer", "processUpdateStop", "## token: " + t);
+		this->onServerLog("TStorageServer", "processUpdateStop", "##  UpdateStopReqMessage ");
+		this->onServerLog("TStorageServer", "processUpdateStop", "## ");
+		this->onServerLog("TStorageServer", "processUpdateStop", "##  token: " + t);
 		this->onServerLog("TStorageServer", "processUpdateStop", "## ");
 		this->onServerLog("TStorageServer", "processUpdateStop", "####################################");
 		this->onServerLog("TStorageServer", "processUpdateStop", "####################################");
@@ -659,10 +697,11 @@ void TStorageServer::processGetVersions(TConnectionHandle aConnection, TGetVersi
 		//Log the message
 		this->onServerLog("TStorageServer", "processGetVersions", "####################################");
 		this->onServerLog("TStorageServer", "processGetVersions", "####################################");
-		this->onServerLog("TStorageServer", "processGetVersions", "## GetVersionsReqMessage ");
 		this->onServerLog("TStorageServer", "processGetVersions", "## ");
-		this->onServerLog("TStorageServer", "processGetVersions", "## user: " + u);
-		this->onServerLog("TStorageServer", "processGetVersions", "## coded pass: " + p);
+		this->onServerLog("TStorageServer", "processGetVersions", "##  GetVersionsReqMessage ");
+		this->onServerLog("TStorageServer", "processGetVersions", "## ");
+		this->onServerLog("TStorageServer", "processGetVersions", "##  user: " + u);
+		this->onServerLog("TStorageServer", "processGetVersions", "##  coded pass: " + p);
 		this->onServerLog("TStorageServer", "processGetVersions", "## ");
 		this->onServerLog("TStorageServer", "processGetVersions", "####################################");
 		this->onServerLog("TStorageServer", "processGetVersions", "####################################");
@@ -714,11 +753,12 @@ void TStorageServer::processRestoreVersion(TConnectionHandle aConnection, TResto
 		//Log the message
 		this->onServerLog("TStorageServer", "processRestoreVersion", "####################################");
 		this->onServerLog("TStorageServer", "processRestoreVersion", "####################################");
-		this->onServerLog("TStorageServer", "processRestoreVersion", "## RestoreVerReqMessage ");
 		this->onServerLog("TStorageServer", "processRestoreVersion", "## ");
-		this->onServerLog("TStorageServer", "processRestoreVersion", "## user: " + u);
-		this->onServerLog("TStorageServer", "processRestoreVersion", "## coded pass: " + p);
-		this->onServerLog("TStorageServer", "processRestoreVersion", "## required version: " + to_string(v));
+		this->onServerLog("TStorageServer", "processRestoreVersion", "##  RestoreVerReqMessage ");
+		this->onServerLog("TStorageServer", "processRestoreVersion", "## ");
+		this->onServerLog("TStorageServer", "processRestoreVersion", "##  user: " + u);
+		this->onServerLog("TStorageServer", "processRestoreVersion", "##  coded pass: " + p);
+		this->onServerLog("TStorageServer", "processRestoreVersion", "##  required version: " + to_string(v));
 		this->onServerLog("TStorageServer", "processRestoreVersion", "## ");
 		this->onServerLog("TStorageServer", "processRestoreVersion", "####################################");
 		this->onServerLog("TStorageServer", "processRestoreVersion", "####################################");
@@ -768,6 +808,7 @@ void TStorageServer::processRestoreVersion(TConnectionHandle aConnection, TResto
 
 			//send back positive response
 			TRestoreVerReplyMessage_ptr reply = new_TRestoreVerReplyMessage_ptr(true, token_ptr->c_str());
+			token_ptr.reset();
 			TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(reply), aConnection); //reply is moved
 			this->enqueueMessageToSend(move_TMessageContainer_ptr(replyContainer)); //replyContainer is moved
 
@@ -803,14 +844,15 @@ void TStorageServer::processRestoreFileAck(TConnectionHandle aConnection, TResto
 		//Log the message
 		this->onServerLog("TStorageServer", "processRestoreFileAck", "####################################");
 		this->onServerLog("TStorageServer", "processRestoreFileAck", "####################################");
-		this->onServerLog("TStorageServer", "processRestoreFileAck", "## RestoreFileAckMessage ");
 		this->onServerLog("TStorageServer", "processRestoreFileAck", "## ");
-		this->onServerLog("TStorageServer", "processRestoreFileAck", "## token: " + t);
-		this->onServerLog("TStorageServer", "processRestoreFileAck", "## file path: " + fp);
+		this->onServerLog("TStorageServer", "processRestoreFileAck", "##  RestoreFileAckMessage ");
+		this->onServerLog("TStorageServer", "processRestoreFileAck", "## ");
+		this->onServerLog("TStorageServer", "processRestoreFileAck", "##  token: " + t);
+		this->onServerLog("TStorageServer", "processRestoreFileAck", "##  file path: " + fp);
 		if (r)
-			this->onServerLog("TStorageServer", "processRestoreFileAck", "## result: ok");
+			this->onServerLog("TStorageServer", "processRestoreFileAck", "##  result: ok");
 		else
-			this->onServerLog("TStorageServer", "processRestoreFileAck", "## result: error");
+			this->onServerLog("TStorageServer", "processRestoreFileAck", "##  result: error");
 		this->onServerLog("TStorageServer", "processRestoreFileAck", "## ");
 		this->onServerLog("TStorageServer", "processRestoreFileAck", "####################################");
 		this->onServerLog("TStorageServer", "processRestoreFileAck", "####################################");
@@ -854,10 +896,11 @@ void TStorageServer::processPingRequest(TConnectionHandle aConnection, TPingReqM
 		//Log the message
 		this->onServerLog("TStorageServer", "processPingRequest", "####################################");
 		this->onServerLog("TStorageServer", "processPingRequest", "####################################");
-		this->onServerLog("TStorageServer", "processPingRequest", "## PingReqMessage ");
 		this->onServerLog("TStorageServer", "processPingRequest", "## ");
-		this->onServerLog("TStorageServer", "processPingRequest", "## time: " + t);
-		this->onServerLog("TStorageServer", "processPingRequest", "## token: " + tok);
+		this->onServerLog("TStorageServer", "processPingRequest", "##  PingReqMessage ");
+		this->onServerLog("TStorageServer", "processPingRequest", "## ");
+		this->onServerLog("TStorageServer", "processPingRequest", "##  time: " + t);
+		this->onServerLog("TStorageServer", "processPingRequest", "##  token: " + tok);
 		this->onServerLog("TStorageServer", "processPingRequest", "## ");
 		this->onServerLog("TStorageServer", "processPingRequest", "####################################");
 		this->onServerLog("TStorageServer", "processPingRequest", "####################################");

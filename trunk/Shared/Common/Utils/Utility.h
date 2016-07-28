@@ -42,10 +42,10 @@ public:
 	virtual void onServerError(string aClassName, string aFuncName, string aMsg) = 0;
 	virtual void onServerCriticalError(string aClassName, string aFuncName, string aMsg) = 0;
 };
-#define doServerLog(ptr, aClassName, aFuncName, aMsg) if(ptr!=nullptr){ptr->onServerLog(aClassName, aFuncName, aMsg);}
-#define doServerWarning(ptr, aClassName, aFuncName, aMsg) if(ptr!=nullptr){ptr->onServerWarning(aClassName, aFuncName, aMsg);}
-#define doServerError(ptr, aClassName, aFuncName, aMsg) if(ptr!=nullptr){ptr->onServerError(aClassName, aFuncName, aMsg);}
-#define doServerCriticalError(ptr, aClassName, aFuncName, aMsg) if(ptr!=nullptr){ptr->onServerCriticalError(aClassName, aFuncName, aMsg);}
+#define doServerLog(ptr, aClassName, aFuncName, aMsg) if(ptr!=nullptr) ptr->onServerLog(aClassName, aFuncName, aMsg);
+#define doServerWarning(ptr, aClassName, aFuncName, aMsg) if(ptr!=nullptr) ptr->onServerWarning(aClassName, aFuncName, aMsg);
+#define doServerError(ptr, aClassName, aFuncName, aMsg) if(ptr!=nullptr) ptr->onServerError(aClassName, aFuncName, aMsg);
+#define doServerCriticalError(ptr, aClassName, aFuncName, aMsg) if(ptr!=nullptr) ptr->onServerCriticalError(aClassName, aFuncName, aMsg);
 
 
 //////////////////////////////////////

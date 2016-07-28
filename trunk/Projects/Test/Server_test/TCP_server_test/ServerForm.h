@@ -52,6 +52,8 @@ namespace Server_test {
 	private: System::Windows::Forms::RichTextBox^  rtbLog;
 	private: System::Windows::Forms::Label^  label1;
 	private: System::Windows::Forms::Label^  ServerStatusLabel;
+	private: System::Windows::Forms::Label^  clearLog;
+
 
 
 
@@ -117,6 +119,7 @@ namespace Server_test {
 			this->rtbLog = (gcnew System::Windows::Forms::RichTextBox());
 			this->label1 = (gcnew System::Windows::Forms::Label());
 			this->ServerStatusLabel = (gcnew System::Windows::Forms::Label());
+			this->clearLog = (gcnew System::Windows::Forms::Label());
 			this->SuspendLayout();
 			// 
 			// btnStart
@@ -182,13 +185,27 @@ namespace Server_test {
 			this->ServerStatusLabel->TabIndex = 4;
 			this->ServerStatusLabel->Text = L"Server is stopped";
 			// 
+			// clearLog
+			// 
+			this->clearLog->AutoSize = true;
+			this->clearLog->Font = (gcnew System::Drawing::Font(L"Microsoft Sans Serif", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+				static_cast<System::Byte>(0)));
+			this->clearLog->ForeColor = System::Drawing::SystemColors::HotTrack;
+			this->clearLog->Location = System::Drawing::Point(823, 125);
+			this->clearLog->Name = L"clearLog";
+			this->clearLog->Size = System::Drawing::Size(66, 16);
+			this->clearLog->TabIndex = 5;
+			this->clearLog->Text = L"Clear Log";
+			this->clearLog->Click += gcnew System::EventHandler(this, &TServerForm::clearLog_Click);
+			// 
 			// TServerForm
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->AutoSizeMode = System::Windows::Forms::AutoSizeMode::GrowAndShrink;
-			this->BackColor = System::Drawing::SystemColors::ControlDark;
+			this->BackColor = System::Drawing::Color::DarkGray;
 			this->ClientSize = System::Drawing::Size(931, 622);
+			this->Controls->Add(this->clearLog);
 			this->Controls->Add(this->ServerStatusLabel);
 			this->Controls->Add(this->label1);
 			this->Controls->Add(this->rtbLog);
@@ -294,6 +311,12 @@ namespace Server_test {
 				 toLog.append(" ").append(className).append("::").append(funcName).append(" => ").append(msg).append("\n");
 				 this->LogDelegateMethod(gcnew String(toLog.c_str()));
 				 System::Threading::Monitor::Exit(rtbLog);
+	}
+	
+	private: System::Void clearLog_Click(System::Object^  sender, System::EventArgs^  e) {
+		System::Threading::Monitor::Enter(rtbLog);
+		this->rtbLog->Text = gcnew String("");
+		System::Threading::Monitor::Exit(rtbLog);
 	}
 
 	private: void LogDelegateMethod(String^ strToLog);

@@ -125,7 +125,7 @@ TBaseMessage::TBaseMessage(string_ptr& aMsg){
 
 TBaseMessage::~TBaseMessage() {
 	if (this->fItems != nullptr){
-		for (string_vector::iterator it = this->fItems->begin(); it < this->fItems->end(); it++)
+		for (string_vector::iterator it = this->fItems->begin(); it != this->fItems->end(); it++)
 			it->reset();
 		this->fItems->clear();
 		this->fItems.reset();
@@ -575,21 +575,6 @@ void TAddNewFileMessage::decodeMessage(){
 		throw EMessageException("The file content field cannot be empty");
 	this->fFileContent = move_string_ptr(this->fItems->at(5));
 }
-
-const bool TAddNewFileMessage::matchChecksum(){
-	bool res = false;
-	string_ptr myChecksum = nullptr;
-	try{
-		myChecksum = opensslB64Checksum(*(this->fFileContent));
-		res = (*(myChecksum) != *(this->fChecksum));
-	}
-	catch (EOpensslException& e){
-		res = false;
-	}
-
-	myChecksum.reset();
-	return res;
-}
 #pragma endregion
 
 
@@ -700,21 +685,6 @@ void TUpdateFileMessage::decodeMessage(){
 	if (*(this->fItems->at(5)) == EMPTY)
 		throw EMessageException("The file content field cannot be empty");
 	this->fFileContent = move_string_ptr(this->fItems->at(5));
-}
-
-const bool TUpdateFileMessage::matchChecksum(){
-	bool res = false;
-	string_ptr myChecksum = nullptr;
-	try{
-		myChecksum = opensslB64Checksum(*(this->fFileContent));
-		res = (*(myChecksum) != *(this->fChecksum));
-	}
-	catch (EOpensslException& e){
-		res = false;
-	}
-
-	myChecksum.reset();
-	return res;
 }
 #pragma endregion
 
@@ -1105,7 +1075,7 @@ TGetVersionsReplyMessage::TGetVersionsReplyMessage(const unsigned int aTotVersio
 
 TGetVersionsReplyMessage::~TGetVersionsReplyMessage(){
 	if (this->fVersions != nullptr){
-		for (TVersionList::iterator it = this->fVersions->begin(); it < this->fVersions->end(); it++)
+		for (TVersionList::iterator it = this->fVersions->begin(); it != this->fVersions->end(); it++)
 			it->reset();
 		this->fVersions->clear();
 		this->fVersions.reset();
@@ -1452,21 +1422,6 @@ void TRestoreFileMessage::decodeMessage(){
 	if (*(this->fItems->at(4)) == EMPTY)
 		throw EMessageException("The file content field cannot be empty");
 	this->fFileContent = move_string_ptr(this->fItems->at(4));
-}
-
-const bool TRestoreFileMessage::matchChecksum(){
-	bool res = false;
-	string_ptr myChecksum = nullptr;
-	try{
-		myChecksum = opensslB64Checksum(*(this->fFileContent));
-		res = (*(myChecksum) != *(this->fChecksum));
-	}
-	catch (EOpensslException& e){
-		res = false;
-	}
-
-	myChecksum.reset();
-	return res;
 }
 #pragma endregion
 
