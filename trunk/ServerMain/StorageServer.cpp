@@ -21,10 +21,10 @@
 void TStorageServer::newUpdateSession(const string& aUser, const string& aToken){
 	TSession_ptr s = new_TSession_ptr(UPDATE_SESSION, aToken);
 	//load initial data abaout the session from DB
-	if (this->fDBManager != nullptr){
-		TVersion_ptr v = this->fDBManager->getLastVersion(aUser);
-		s->setVersion(move_TVersion_ptr(v));
-	}
+	//if (this->fDBManager != nullptr){
+	//	TVersion_ptr v = this->fDBManager->getLastVersion(aUser);
+	//	s->setVersion(move_TVersion_ptr(v));
+	//}
 
 	//access map in mutual exclusion to avoid 2 thread inserting the same session in the table
 	unique_lock<mutex> lock(this->fSessionsMutex);
@@ -34,10 +34,10 @@ void TStorageServer::newUpdateSession(const string& aUser, const string& aToken)
 void TStorageServer::newRestoreSession(const string& aUser, const string& aToken){
 	TSession_ptr s = new_TSession_ptr(RESTORE_SESSION, aToken);
 	//load initial data abaout the session from DB
-	if (this->fDBManager != nullptr){
-		TVersion_ptr v = this->fDBManager->getLastVersion(aUser);
-		s->setVersion(move_TVersion_ptr(v));
-	}
+	//if (this->fDBManager != nullptr){
+	//	TVersion_ptr v = this->fDBManager->getLastVersion(aUser);
+	//	s->setVersion(move_TVersion_ptr(v));
+	//}
 
 	//access map in mutual exclusion to avoid 2 thread inserting the same session in the table
 	unique_lock<mutex> lock(this->fSessionsMutex);
@@ -338,10 +338,11 @@ void TStorageServer::processRegistrationRequest(TConnectionHandle aConnection, T
 		//Log the message
 		this->onServerLog("TStorageServer", "processRegistrationRequest", "####################################");
 		this->onServerLog("TStorageServer", "processRegistrationRequest", "####################################");
-		this->onServerLog("TStorageServer", "processRegistrationRequest", "## UserRegistrReqMessage ");
 		this->onServerLog("TStorageServer", "processRegistrationRequest", "## ");
-		this->onServerLog("TStorageServer", "processRegistrationRequest", "## user: " + u);
-		this->onServerLog("TStorageServer", "processRegistrationRequest", "## coded pass: " + p);
+		this->onServerLog("TStorageServer", "processRegistrationRequest", "##  UserRegistrReqMessage ");
+		this->onServerLog("TStorageServer", "processRegistrationRequest", "## ");
+		this->onServerLog("TStorageServer", "processRegistrationRequest", "##  user: " + u);
+		this->onServerLog("TStorageServer", "processRegistrationRequest", "##  coded pass: " + p);
 		this->onServerLog("TStorageServer", "processRegistrationRequest", "## ");
 		this->onServerLog("TStorageServer", "processRegistrationRequest", "####################################");
 		this->onServerLog("TStorageServer", "processRegistrationRequest", "####################################");
