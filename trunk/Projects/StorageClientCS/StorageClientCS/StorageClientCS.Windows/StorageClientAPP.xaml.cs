@@ -54,10 +54,15 @@ namespace StorageClientCS
             //apre se esiste, crea se non esiste
 
             this.InitializeComponent();
-            
+
             this.CreateDatabase();
-            this.Messages.Text = "Starting now...\n Press SynchNow to Start";
-            this.Initialize();
+            Debug.WriteLine("cerco il numero di versione salvato nel db");
+            this.UpdateVersionVariable();
+            this.DisplayDB();
+            this.Messages.Text = "Welcome, Press SynchNow to start";
+         
+            //this.Initialize();
+            
 
         }
 
@@ -73,9 +78,7 @@ namespace StorageClientCS
           //  StorageFolder fold = KnownFolders.PicturesLibrary;
 
             outputtext = "Files in " + fold.Name + "Version: " + this.Actual_Version + ": \n";
-            //outputText = new StringBuilder();
-            //outputText.AppendLine("Seach in " + KnownFolders.PicturesLibrary.Name);
-           // this.GetFiles(fold);
+
             try
             {
                 var task = Task.Run(async () => { await this.GetFiles(fold); });
@@ -88,6 +91,9 @@ namespace StorageClientCS
             //this.GetFiles(fold);
 
             Debug.WriteLine("numero di file in map: " + this.map_files.Count);
+
+            Debug.WriteLine("contenuto del db dopo il click a synch now: ");
+            this.DisplayDB();
 
             foreach (StorageFile f in this.map_files.Values)
             {
@@ -102,6 +108,33 @@ namespace StorageClientCS
         //funzione chiamata all' avvio della app
         private async void Initialize()
         {
+           //operazioni preliminari, devono essere eseguite in ordine
+
+            try
+            {
+                var task = Task.Run(async () => { await this.CreateDatabase(); });
+                task.Wait();
+            }
+            catch (Exception ecc)
+            {
+                Debug.WriteLine("Errore nella creazione del db allo start: " + ecc.Message);
+            }
+
+            try
+            {
+                Debug.WriteLine("contenuti del db allo start");
+                var task = Task.Run(async () => { await this.DisplayDB(); });
+                task.Wait();
+                Debug.WriteLine("trovo il numero  della versione allo START");
+                var task2 = Task.Run(async () => { await this.UpdateVersionVariable(); });
+                task2.Wait();
+                this.Messages.Text = "Starting now...\n";
+            }
+            catch (Exception ecc)
+            {
+                Debug.WriteLine("Errore nel disply del db allo start: " + ecc.Message);
+            }
+            
             //synch now
             SynchNow.IsEnabled = false;
             Versions.IsEnabled = false;
@@ -306,8 +339,10 @@ namespace StorageClientCS
                 this.Actual_Version++;
                 //rootPage.NotifyUser("The toast encountered an error", NotifyType.ErrorMessage);
                 this.OnChanges();
-                 Debug.WriteLine("aggiorno la versione a seguito del contenuto cambiato");
+                 Debug.WriteLine("contenuto del db dopo il contenuto cambiato");
            //     this.UpdateVersionVariable();
+
+                 this.DisplayDB();
                  foreach (StorageFile f in this.map_files.Values)
                  {
                      outputtext += f.Path + " \n";
@@ -321,31 +356,6 @@ namespace StorageClientCS
                  SynchNow.IsEnabled = true;
                  Versions.IsEnabled = true;
             });
-
-           ////aggiorno la versione corrente (la variabile)
-           // await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
-           // {
-           //     Debug.WriteLine("aggiorno la versione a seguito del contenuto cambiato");
-           //     this.UpdateVersionVariable();
-           // });
-
-           ////aggiorno la pagina
-           // await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
-           // {
-
-           //     foreach (StorageFile f in this.map_files.Values)
-           //     {
-           //         outputtext += f.Path + " \n";
-           //     }
-           //     this.Messages.Text = outputtext;
-           //     this.setListenerOnChanges();
-           //     this.DrawBottonsFiles();
-
-           //     //aggiorno la variabile con la versione corrente
-
-           //     SynchNow.IsEnabled = true;
-           //     Versions.IsEnabled = true;
-           // });
 
         }
         
@@ -371,27 +381,42 @@ namespace StorageClientCS
 
             _button.IsEnabled = true;
         }
-        public async void CreateDatabase()
+        public async Task CreateDatabase()
         {
             connection = new SQLiteAsyncConnection("Files.db");
             Debug.WriteLine("creo la tabella");
             await connection.CreateTableAsync<FileDB>();
-            Debug.WriteLine("trovo il numero  della versione più recente");
-
-            this.UpdateVersionVariable();
        
         }
 
-        public async void UpdateVersionVariable()
+        public async Task UpdateVersionVariable()
         {
-            var result = await connection.QueryAsync<int>("SELECT max(Versione) FROM Files");
+            var result = await connection.QueryAsync<FileDB>("SELECT * FROM Files");
+
+            int MaxVers=0;
+            foreach (var item in result)
+            {
+                if (item.Versione > MaxVers)
+                {
+                    Debug.WriteLine("aggiorno la versione, nuovo valore: " + item.Versione);
+                    this.Actual_Version = item.Versione;
+                    MaxVers = this.Actual_Version;
+                }
+            }
+            Debug.WriteLine("versione più recente: " + this.Actual_Version);
+        }
+
+        public async Task DisplayDB()
+        {
+            Debug.WriteLine("DISPLAY_DB:contenuti del db");
+            var result = await connection.QueryAsync<FileDB>("SELECT * FROM Files");
 
             foreach (var item in result)
             {
-                this.Actual_Version = item;
+                Debug.WriteLine(item.Path + " dateMod: "+ item.DateMod + " version: "+ item.Versione);
             }
-            if (this.Actual_Version == 0) this.Actual_Version = 1;
-            Debug.WriteLine("versione più recente: " + this.Actual_Version);
+
+            Debug.WriteLine("FINE contenuti del db");
         }
 
     }
