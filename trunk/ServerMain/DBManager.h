@@ -54,8 +54,8 @@ public:
 	TDBManager(const string& aHost, const string& aDBName, IServerDBController* aCallback);
 	~TDBManager();
 	
-	void insertNewUser(const string& aUser, const string& aPass); // throws EDBException
-	void InsertNewVersion(const string& aUser, TVersion_ptr& aVersion); // throws EDBException
+	const bool insertNewUser(const string& aUser, const string& aPass); 
+	const bool InsertNewVersion(const string& aUser, TVersion_ptr& aVersion);
 
 	const bool checkIfUserExists(const string& aUser);
 	const bool verifyUserCredentials(const string& aUser, const string& aPass);

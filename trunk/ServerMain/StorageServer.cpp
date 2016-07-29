@@ -21,10 +21,11 @@
 void TStorageServer::newUpdateSession(const string& aUser, const string& aToken){
 	TSession_ptr s = new_TSession_ptr(UPDATE_SESSION, aToken);
 	//load initial data abaout the session from DB
-	//if (this->fDBManager != nullptr){
-	//	TVersion_ptr v = this->fDBManager->getLastVersion(aUser);
-	//	s->setVersion(move_TVersion_ptr(v));
-	//}
+	if (this->fDBManager != nullptr){
+		TVersion_ptr v = this->fDBManager->getLastVersion(aUser);
+		if (v != nullptr)
+			s->setVersion(move_TVersion_ptr(v));
+	}
 
 	//access map in mutual exclusion to avoid 2 thread inserting the same session in the table
 	unique_lock<mutex> lock(this->fSessionsMutex);
@@ -34,10 +35,11 @@ void TStorageServer::newUpdateSession(const string& aUser, const string& aToken)
 void TStorageServer::newRestoreSession(const string& aUser, const string& aToken){
 	TSession_ptr s = new_TSession_ptr(RESTORE_SESSION, aToken);
 	//load initial data abaout the session from DB
-	//if (this->fDBManager != nullptr){
-	//	TVersion_ptr v = this->fDBManager->getLastVersion(aUser);
-	//	s->setVersion(move_TVersion_ptr(v));
-	//}
+	if (this->fDBManager != nullptr){
+		TVersion_ptr v = this->fDBManager->getLastVersion(aUser);
+		if (v != nullptr)
+			s->setVersion(move_TVersion_ptr(v));
+	}
 
 	//access map in mutual exclusion to avoid 2 thread inserting the same session in the table
 	unique_lock<mutex> lock(this->fSessionsMutex);
@@ -353,7 +355,7 @@ void TStorageServer::processRegistrationRequest(TConnectionHandle aConnection, T
 			if (!userExists(u)) {
 				//store user in DB
 				if (this->fDBManager != nullptr){
-					this->fDBManager->insertNewUser(u, p);
+					err = !this->fDBManager->insertNewUser(u, p);
 				}
 				else
 					err = true;
@@ -362,7 +364,7 @@ void TStorageServer::processRegistrationRequest(TConnectionHandle aConnection, T
 				err = true;
 		}
 		catch (EDBException& e){
-			this->onServerError("TStorageServer", "processRegistrationRequest", "Unable to insert user in the DB!");
+			this->onServerError("TStorageServer", "processRegistrationRequest", "Unable to insert user in the DB: " + e.getMessage());
 			err = true;
 		}
 
@@ -483,7 +485,6 @@ void TStorageServer::processAddNewFile(TConnectionHandle aConnection, TAddNewFil
 		catch (...){
 			checksumMatches = false;
 		}
-
 		myChecksum.reset();
 
 		if (!checksumMatches){
@@ -504,7 +505,7 @@ void TStorageServer::processAddNewFile(TConnectionHandle aConnection, TAddNewFil
 		p /= *coded_v;
 		coded_v.reset();
 		p /= file->getClientRelativePath();
-		//session->addFile(move_TFile_ptr(file));
+		session->addFile(move_TFile_ptr(file));
 
 		if (this->fFileSystemManager != nullptr){
 			this->fFileSystemManager->storeFile(p, move_string_ptr(f));
@@ -560,7 +561,6 @@ void TStorageServer::processUpdateFile(TConnectionHandle aConnection, TUpdateFil
 		catch (...){
 			checksumMatches = false;
 		}
-
 		myChecksum.reset();
 
 		if (!checksumMatches){
@@ -675,14 +675,23 @@ void TStorageServer::processUpdateStop(TConnectionHandle aConnection, TUpdateSto
 		TVersion_ptr v = session->terminateWithSucces();
 		int vID = v->getVersion();
 		time_t vDate = v->getDate();
+		bool ok = false;
 		if (this->fDBManager != nullptr){
-			this->fDBManager->InsertNewVersion(u, move_TVersion_ptr(v));
+			ok = this->fDBManager->InsertNewVersion(u, move_TVersion_ptr(v));
 		}
 
-		// send back info about the newly created version
-		TUpdateStopReplyMessage_ptr reply = new_TUpdateStopReplyMessage_ptr(true, vID, vDate);
-		TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(reply), aConnection); //reply is moved
-		this->enqueueMessageToSend(move_TMessageContainer_ptr(replyContainer)); //replyContainer is moved
+		if (ok){
+			// send back info about the newly created version
+			TUpdateStopReplyMessage_ptr reply = new_TUpdateStopReplyMessage_ptr(true, vID, vDate);
+			TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(reply), aConnection); //reply is moved
+			this->enqueueMessageToSend(move_TMessageContainer_ptr(replyContainer)); //replyContainer is moved
+		}
+		else{
+			//enqueue negative response
+			TUpdateStopReplyMessage_ptr reply = new_TUpdateStopReplyMessage_ptr(false, NO_VERSION, time(nullptr));
+			TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(reply), aConnection); //reply is moved
+			this->enqueueMessageToSend(move_TMessageContainer_ptr(replyContainer)); //replyContainer is moved
+		}
 	}
 	else{
 		this->onServerError("TStorageServer", "processUpdateStop", "received an empty message; skipped.");
