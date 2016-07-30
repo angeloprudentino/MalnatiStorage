@@ -146,6 +146,7 @@ void TServerSockController::onServerSockAccept(TConnectionHandle aConnection){
 
 void TServerSockController::onServerSockRead(TConnectionHandle aConnection, string_ptr& aMsg){
 	tcp::endpoint peer = aConnection->fPeer;
+	string s = aMsg->c_str();
 	TBaseMessage_ptr bmsg = new_TBaseMessage_ptr(aMsg);
 	int msgType = bmsg->getID();
 
@@ -155,7 +156,7 @@ void TServerSockController::onServerSockRead(TConnectionHandle aConnection, stri
 		return;
 	}
 
-	this->onServerLog("TServerSockController", "onServerSockRead", "received a " + getMessageName(msgType) + " message from " + peer.address().to_string() + ":" + std::to_string(peer.port()));
+	this->onServerLog("TServerSockController", "onServerSockRead", "received a " + getMessageName(msgType) + " message from " + peer.address().to_string() + ":" + std::to_string(peer.port()) + " -> " + s);
 
 	//check if the message is valid to be received server-side
 	bool valid = ((msgType == USER_REG_REQ_ID) || (msgType == UPDATE_START_REQ_ID) || (msgType == ADD_NEW_FILE_ID)
