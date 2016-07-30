@@ -183,7 +183,7 @@ void TBaseMessage::decodeMessage(){
 	}
 
 	int len = (int)this->fItems->size();
-	if (*(this->fItems->at(len - 1)) != END_MSG)
+	if (this->fItems->at(len - 1)->compare(END_MSG) != 0)
 		throw EMessageException("The given " + *(this->fItems->at(0)) + " message is not properly terminated");
 }
 #pragma endregion
