@@ -13,16 +13,31 @@
 
 using namespace std;
 
+string buildServerPathPrefix(const string& aUser, const int aVersion){
+	string_ptr coded_u = opensslB64Checksum(aUser);
+	string_ptr coded_v = opensslB64Checksum(to_string(aVersion));
+	string res = STORAGE_ROOT_PATH + *coded_u + "\\" + *coded_v;
+	coded_u.reset();
+	coded_v.reset();
+
+	return res;
+}
+
 //////////////////////////////////
 //           TFile	            //
 //////////////////////////////////
 #pragma region "TFile"
-	TFile::TFile(const string& aServerPathPrefix, const string& aClientRelativePath, const time_t aFileDate, string_ptr& aChecksum, const bool aProcessed){
+TFile::TFile(const string& aUser, const int aVersion, const string& aClientRelativePath, const time_t& aLastMod){
+	this->fVersion = aVersion;
+	this->fLastMod = aLastMod;
+	this->fServerPathPrefix = make_string_ptr(buildServerPathPrefix(aUser, aVersion));
+	this->fClientRelativePath = make_string_ptr(aClientRelativePath);
+}
+
+TFile::TFile(const string& aServerPathPrefix, const string& aClientRelativePath, const time_t& aLastMod){
+	this->fLastMod = aLastMod;
 	this->fServerPathPrefix = make_string_ptr(aServerPathPrefix);
 	this->fClientRelativePath = make_string_ptr(aClientRelativePath);
-	this->fFileDate = aFileDate;
-	this->fChecksum = move_string_ptr(aChecksum);
-	this->fProcessed = aProcessed;
 }
 
 TFile::~TFile(){
@@ -32,12 +47,8 @@ TFile::~TFile(){
 	if (this->fClientRelativePath != nullptr)
 		this->fClientRelativePath.reset();
 
-	if (this->fChecksum != nullptr)
-		this->fChecksum.reset();
-
 	this->fServerPathPrefix = nullptr;
 	this->fClientRelativePath = nullptr;
-	this->fChecksum = nullptr;
 }
 
 const bool TFile::isEqualTo(const TFile& aFile){
@@ -54,7 +65,7 @@ const bool TFile::isEqualTo(const TFile& aFile){
 TVersion::TVersion(const int aId, const time_t aVersionDate){
 	this->fId = aId;
 	this->fVersionDate = aVersionDate;
-	this->fNext = this->fFileList.begin();
+	//this->fNext = this->fFileList.begin();
 }
 
 TVersion::~TVersion(){
@@ -64,7 +75,10 @@ TVersion::~TVersion(){
 }
 
 void TVersion::addFile(TFile_ptr& aFile){
+	int size = (int)this->fFileList.size();
 	this->fFileList.push_back(move_TFile_ptr(aFile));
+	if (size == 0)
+		this->fNext = this->fFileList.begin();
 }
 
 void TVersion::updateFile(TFile_ptr& aFile){
@@ -79,11 +93,19 @@ void TVersion::removeFile(TFile_ptr& aFile){
 			it->reset();
 			this->fFileList.erase(it);
 		}
+
+	aFile.reset();
+}
+
+void TVersion::terminateWithSucces(){
+	this->fId++;
+	this->fVersionDate = time(NULL);
 }
 
 TFile_ptr TVersion::getNextFile(){
 	if (this->fNext != this->fFileList.end()){		
-		TFile_ptr f = new_TFile_ptr((*this->fNext)->getServerPathPrefix(), (*this->fNext)->getClientRelativePath(), (*this->fNext)->getFileDate(), make_string_ptr((*this->fNext)->getFileChecksum()), false);
+		TFile_ptr f = copy_TFile_ptr((*this->fNext)->getServerPathPrefix(), (*this->fNext)->getClientRelativePath(), (*this->fNext)->getLastMod());
+		f->setVersion((*this->fNext)->getVersion());
 		return move_TFile_ptr(f);
 	}
 	else
@@ -127,7 +149,24 @@ void TSession::removeFile(TFile_ptr& aFile){
 }
 
 TVersion_ptr TSession::terminateWithSucces(){
-
+	this->fVersion->terminateWithSucces();
 	return move_TVersion_ptr(this->fVersion);
+}
+
+const bool TSession::purge(){
+	string u = getUserFromToken(this->fToken->c_str());
+	int v = this->fVersion->getVersion();
+
+	path p(buildServerPathPrefix(u, v));
+	if (exists(p)){
+		boost::system::error_code ec;
+		remove_all(p, ec);
+		if (ec)
+			return false;
+		else
+			return true;
+	}
+
+	return true;
 }
 #pragma endregion

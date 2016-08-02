@@ -39,6 +39,7 @@ private:
 	boost::thread* fSender = nullptr;
 
 	void sendBaseMessage();
+	const bool checkMessageToSend(string aClassName, string aFuncName, TBaseMessage_ptr& aBMsg);
 
 public:
 	TServerSockController(int AServerPort, IServerSockController* aCallback);

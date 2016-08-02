@@ -10,13 +10,16 @@
 
 #include <string>
 #include <memory>
+#include <boost/filesystem.hpp>
 
 using namespace std;
+using namespace boost::filesystem;
 
 #define EMPTY ""
 #define TRUE_STR "true"
 #define FALSE_STR "false"
 #define DEFAULT_PORT 4700
+#define STORAGE_ROOT_PATH "StoragePoint\\"
 
 //typedef std::shared_ptr<string> string_ptr;
 //#define make_string_ptr(ptr) std::make_shared<string>(ptr)
@@ -31,6 +34,16 @@ typedef struct{
 	int size;
 	char* data;
 }B64result;
+
+////workaround for boost warning on windows
+//namespace boost {
+//	namespace detail {
+//		namespace win32 {
+//			struct _SECURITY_ATTRIBUTES : public ::_SECURITY_ATTRIBUTES {};
+//		};
+//	};
+//};
+
 
 //////////////////////////////////////
 //      IServerBaseController	    //
@@ -92,4 +105,14 @@ string_ptr opensslB64EncodeFile(const string& aFileName); //throws EOpensslExcep
 //string_ptr opensslChecksum(char* aContent, int aLen); //throws EOpensslException
 //string_ptr opensslFileChecksum(const string aFileName); //throws EOpensslException
 string_ptr opensslB64Checksum(const string& aString); //throws EOpensslException
-string_ptr opensslB64RandomToken();
+string_ptr opensslB64RandomToken(); //throws EOpensslException
+
+//Log to file
+void logToFile(string aClassName, string aFuncName, string aMsg);
+void warningToFile(string aClassName, string aFuncName, string aMsg);
+void errorToFile(string aClassName, string aFuncName, string aMsg);
+void criticalErrorToFile(string aClassName, string aFuncName, string aMsg);
+
+//Filesystem utilities
+void storeFile(const path& aPath, string_ptr& aFileContent);
+void removeDir(const path& aPath);

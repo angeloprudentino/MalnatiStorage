@@ -15,6 +15,7 @@
 #include <time.h>
 #include <fstream>
 #include <boost/algorithm/string/replace.hpp>
+#include <boost/filesystem/fstream.hpp>
 #include "openssl/rand.h"
 #include "openssl/evp.h"
 #include "openssl/sha.h"
@@ -27,8 +28,10 @@
 #define RAND_LEN 20
 #define SEP '$'
 #define SEP_ESC "&#36"
+#define LOG_PATH "Log"
 
 using namespace std;
+using namespace boost::filesystem;
 
 #pragma region "DateTime Utilities"
 // Get current date/time, format is [YYYY-MM-DD HH:mm:ss]
@@ -65,12 +68,22 @@ const time_t stringToTime(const string& s) {
 
 const string formatFileDate(const time_t& t){
 	struct tm tstruct;
-	char buf[23];
+	char buf[25];
 	tstruct = *localtime(&t);
 
 	strftime(buf, sizeof(buf), "%Y-%m-%d %X", &tstruct);
 	return buf;
 }
+
+const string formatLogFileDate(const time_t& t){
+	struct tm tstruct;
+	char buf[9];
+	tstruct = *localtime(&t);
+
+	strftime(buf, sizeof(buf), "%Y%m%d", &tstruct);
+	return buf;
+}
+
 #pragma endregion
 
 string escape(const string& aUser){
@@ -278,7 +291,7 @@ B64result opensslB64Decode(const string& aString){
 
 string_ptr opensslB64EncodeFile(const string& aFileName){
 	string* contents = new string();
-	ifstream file(aFileName, ios::in | ios::binary);
+	std::ifstream file(aFileName, ios::in | ios::binary);
 	if (file){
 		file.seekg(0, ios::end);
 		contents->resize(file.tellg());
@@ -448,5 +461,72 @@ string_ptr opensslB64RandomToken(){
 	delete[] buff;
 	return move_string_ptr(result);
 }
+#pragma endregion
 
+
+#pragma region "Log"
+void logToFile(string aClassName, string aFuncName, string aMsg){
+	path p = LOG_PATH;
+	boost::system::error_code ec;
+	if (!exists(p))
+		create_directory(p, ec);
+
+	if (!ec){
+		string log = formatLogFileDate(time(NULL)) + "_log.txt";
+		p /= log;
+		boost::filesystem::ofstream of(p, ios::app);
+		std::string toLog = currentDateTime();
+		toLog.append(" ").append(aClassName).append("::").append(aFuncName).append(": ").append(aMsg).append("\n");
+		of.write(toLog.c_str(), toLog.size());
+		of.close();
+	}
+}
+
+void warningToFile(string aClassName, string aFuncName, string aMsg){
+	logToFile(aClassName, aFuncName, "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww");
+	logToFile(aClassName, aFuncName, "w  " + aMsg);
+	logToFile(aClassName, aFuncName, "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww");
+}
+
+void errorToFile(string aClassName, string aFuncName, string aMsg){
+	logToFile(aClassName, aFuncName, "************************************************");
+	logToFile(aClassName, aFuncName, "************************************************");
+	logToFile(aClassName, aFuncName, "** ");
+	logToFile(aClassName, aFuncName, "**  " + aMsg);
+	logToFile(aClassName, aFuncName, "** ");
+	logToFile(aClassName, aFuncName, "************************************************");
+	logToFile(aClassName, aFuncName, "************************************************");
+}
+
+void criticalErrorToFile(string aClassName, string aFuncName, string aMsg){
+	errorToFile(aClassName, aFuncName, aMsg);
+}
+#pragma endregion
+
+
+#pragma region "Filesystem utilities"
+void storeFile(const path& aPath, string_ptr& aFileContent){
+	path p = aPath.parent_path();
+	boost::system::error_code ec;
+	if (!exists(p))
+		create_directories(p, ec);
+
+	if (!ec){
+		boost::filesystem::ofstream of(aPath, ios::out | ios::binary);
+		try{
+#ifdef _DEBUG
+			B64result ret = opensslB64Decode(*aFileContent);
+			of.write(ret.data, ret.size);
+#else
+			of.write(aFileContent->c_str(), aFileContent->size());
+#endif
+		}
+		catch (EOpensslException e){
+
+		}
+		of.close();
+	}
+
+	aFileContent.reset();
+}
 #pragma endregion

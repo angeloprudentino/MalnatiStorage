@@ -24,7 +24,7 @@ namespace Server_test {
 	/// <summary>
 	/// Summary for TServerForm
 	/// </summary>
-	public ref class TServerForm : public System::Windows::Forms::Form, IManagedServerSockController
+	public ref class TServerForm : public System::Windows::Forms::Form, IManagedServerController
 	{
 	public:
 		TServerForm(void)
@@ -308,7 +308,7 @@ namespace Server_test {
 	private: void Log(std::string className, std::string funcName, std::string msg){
 				 System::Threading::Monitor::Enter(rtbLog);
 				 std::string toLog = currentDateTime();
-				 toLog.append(" ").append(className).append("::").append(funcName).append(" => ").append(msg).append("\n");
+				 toLog.append(" ").append(className).append("::").append(funcName).append(": ").append(msg).append("\n");
 				 this->LogDelegateMethod(gcnew String(toLog.c_str()));
 				 System::Threading::Monitor::Exit(rtbLog);
 	}

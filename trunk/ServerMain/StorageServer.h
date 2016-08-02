@@ -17,7 +17,6 @@
 #include "Utility.h"
 #include "Session.h"
 #include "DBManager.h"
-#include "FileSystemManager.h"
 
 using namespace std;
 using namespace boost::filesystem;
@@ -26,34 +25,32 @@ using namespace boost::filesystem;
 ////////////////////////////////////
 //        TStorageServer	      //
 ////////////////////////////////////
-public class TStorageServer : public IServerSockController, public IServerExecutorController, public IServerDBController{
+public class TStorageServer : public IServerSockController, public IServerExecutorController{
 private:
 	int fServerPort = -1;
 
 	//this is the way to use managed obj inside unmanaged classes
-	gcroot<IManagedServerSockController^> fCallbackObj = nullptr;
+	gcroot<IManagedServerController^> fCallbackObj = nullptr;
 	
 	TSessions* fSessions = nullptr;
 	mutex fSessionsMutex;
 
 	TServerSockController* fSockController = nullptr;
-	TFileSystemManager* fFileSystemManager = nullptr;
 	IBaseExecutorController* fExeController = nullptr;
 	TMessageExecutor* fExecutor = nullptr;
 	TDBManager* fDBManager = nullptr;
 
-	void newUpdateSession(const string& aUser, const string& aToken);
-	void newRestoreSession(const string& aUser, const string& aToken);
+	const bool newSession(const string& aUser, const string& aToken, const int aSessionType);
 	TSession_ptr isThereASessionFor(const string& aUser);
 	TSession_ptr isThereAnUpdateSessionFor(const string& aUser);
 	TSession_ptr isThereARestoreSessionFor(const string& aUser);
-	void purgeSession(const string& aUser);
+	void removeSession(const string& aUser);
 
 	const bool userExists(const string& aUser);
 	const bool checkUserCredential(const string& aUser, const string& aPass);
 
 public:
-	TStorageServer(int AServerPort, IManagedServerSockController^ aCallbackObj);
+	TStorageServer(int AServerPort, IManagedServerController^ aCallbackObj);
 	~TStorageServer();
 
 	const bool startServer();

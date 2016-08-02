@@ -62,7 +62,7 @@ void TServerForm::onServerLog(string aClassName, string aFuncName, string aMsg){
 
 void TServerForm::onServerWarning(string aClassName, string aFuncName, string aMsg){
 	this->Log(aClassName, aFuncName, "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww");
-	this->Log(aClassName, aFuncName, "w " + aMsg);
+	this->Log(aClassName, aFuncName, "w  " + aMsg);
 	this->Log(aClassName, aFuncName, "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww");
 }
 
@@ -70,7 +70,7 @@ void TServerForm::onServerError(string aClassName, string aFuncName, string aMsg
 	this->Log(aClassName, aFuncName, "************************************************");
 	this->Log(aClassName, aFuncName, "************************************************");
 	this->Log(aClassName, aFuncName, "** ");
-	this->Log(aClassName, aFuncName, "** " + aMsg);
+	this->Log(aClassName, aFuncName, "**  " + aMsg);
 	this->Log(aClassName, aFuncName, "** ");
 	this->Log(aClassName, aFuncName, "************************************************");
 	this->Log(aClassName, aFuncName, "************************************************");

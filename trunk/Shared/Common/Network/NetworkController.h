@@ -7,6 +7,7 @@
  */
 
 #pragma once
+
 #include <boost/asio.hpp>
 #include "Utility.h"
 
@@ -28,10 +29,10 @@ typedef TConnectionList::iterator TConnectionHandle;
 
 
 //////////////////////////////////////
-//   IManagedServerSockController	//
+//		IManagedServerController	//
 //////////////////////////////////////
 // Server socket controller interface used in managed code
-public interface class IManagedServerSockController{
+public interface class IManagedServerController{
 public:
 	void onServerSockCreate();
 	void onServerLog(string aClassName, string aFuncName, string aMsg);

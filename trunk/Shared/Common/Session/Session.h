@@ -32,13 +32,12 @@ public class TFile{
 private:
 	string_ptr fServerPathPrefix = nullptr;
 	string_ptr fClientRelativePath = nullptr;
+	time_t fLastMod;
 	int fVersion = -1;
-	time_t fFileDate;
-	string_ptr fChecksum = nullptr;
-	bool fProcessed = false;
 
 public:
-	TFile(const string& aServerPathPrefix, const string& aClientRelativePath, const time_t aFileDate, string_ptr& aChecksum, const bool aProcessed);
+	TFile(const string& aUser, const int aVersion, const string& aClientRelativePath, const time_t& aLastMod);
+	TFile(const string& aServerPathPrefix, const string& aClientRelativePath, const time_t& aLastMod);
 	~TFile();
 
 	const bool isEqualTo(const TFile& aFile);
@@ -46,19 +45,17 @@ public:
 	//getters
 	const string getServerPathPrefix() { return *(this->fServerPathPrefix); }
 	const string getClientRelativePath() { return *(this->fClientRelativePath); }
-	const time_t getFileDate() { return this->fFileDate; }
-	const string getFileChecksum() { return *(this->fChecksum); }
-
 	const int getVersion() { return this->fVersion; }
+	const time_t getLastMod(){ return this->fLastMod; }
 
 	//setters
-	void setVersion(const int aVersion){ this->fVersion = aVersion; }
-	void setProcessed() { this->fProcessed = true; }
+	const void setVersion(const int aVersion){ this->fVersion = aVersion; }
 };
 typedef unique_ptr<TFile> TFile_ptr;
 typedef list<TFile_ptr> TFile_list;
 typedef TFile_list::iterator TFileHandle;
-#define new_TFile_ptr(aServerPathPrefix, aClientRelativePath, aFileDate, aChecksum, aProcessed) std::make_unique<TFile>(aServerPathPrefix, aClientRelativePath, aFileDate, aChecksum, aProcessed)
+#define new_TFile_ptr(aUser, aVersion, aClientRelativePath, aLastMod) std::make_unique<TFile>(aUser, aVersion, aClientRelativePath, aLastMod)
+#define copy_TFile_ptr(aServerPathPrefix, aClientRelativePath, aLastMod) std::make_unique<TFile>(aServerPathPrefix, aClientRelativePath, aLastMod)
 #define move_TFile_ptr(ptr) std::move(ptr)
 
 
@@ -80,8 +77,10 @@ public:
 	void updateFile(TFile_ptr& aFile);
 	void removeFile(TFile_ptr& aFile);
 
-	void updateNext() { (*this->fNext)->setProcessed(); this->fNext++; }
-
+	void updateNext() { this->fNext++; }
+	void terminateWithSucces();
+	void purge();
+	
 	//getters
 	const int getVersion() { return this->fId; }
 	const time_t getDate() { return this->fVersionDate; }
@@ -115,6 +114,7 @@ public:
 	void updateFile(TFile_ptr& aFile);
 	void removeFile(TFile_ptr& aFile);
 	TVersion_ptr terminateWithSucces();
+	const bool purge();
 
 	//getters
 	const int getKind() { return this->fKind; }
