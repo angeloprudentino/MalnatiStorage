@@ -10,6 +10,9 @@
 
 #include "ServerSocket.h"
 
+#define DISCONNECTED 2
+
+
 //////////////////////////////////////
 //      TServerSockController	    //
 //////////////////////////////////////
@@ -80,11 +83,129 @@ void TServerSockController::sendBaseMessage(){
 				TBaseMessage_ptr bmsg = msg->getMessage();
 				tcp::endpoint peer = conn->fPeer;
 				this->onServerLog("TServerSockController", "sendBaseMessage", "preparing to send a " + bmsg->getName() + " message to " + peer.address().to_string() + ":" + std::to_string(peer.port()));
-				this->fSock->doSend(conn, move_TMessageContainer_ptr(bmsg));
+				if (this->checkMessageToSend("TServerSockController", "sendBaseMessage", bmsg))
+					this->fSock->doSend(conn, move_TMessageContainer_ptr(bmsg));
+				else
+					bmsg.reset();
+
+				msg.reset();
 			}
 
 			this->sendBaseMessage();
 		}
+	}
+}
+
+const bool TServerSockController::checkMessageToSend(string aClassName, string aFuncName, TBaseMessage_ptr& aBMsg){
+	int msgType = aBMsg->getID();
+
+	bool valid = ((msgType == USER_REG_REPLY_ID) || (msgType == UPDATE_START_REPLY_ID)
+		|| (msgType == FILE_ACK_ID) || (msgType == UPDATE_STOP_REPLY_ID) || (msgType == GET_VERSIONS_REPLY_ID) 
+		|| (msgType == RESTORE_VER_REPLY_ID) || (msgType == RESTORE_FILE_ID) || (msgType == RESTORE_STOP_ID) || (msgType == PING_REPLY_ID));
+
+	if (valid){
+		this->onServerLog(aClassName, aFuncName, "=> => => => => => => => => => => => => ");
+		this->onServerLog(aClassName, aFuncName, "=> => => => => => => => => => => => => ");
+		this->onServerLog(aClassName, aFuncName, "=>  ");
+
+		switch (msgType){
+		case USER_REG_REPLY_ID:{
+			this->onServerLog(aClassName, aFuncName, "=>  UserRegistrReplyMessage");
+			this->onServerLog(aClassName, aFuncName, "=>  ");
+			bool resp = ((TUserRegistrReplyMessage_ptr&)aBMsg)->getResp();
+			if (resp)
+				this->onServerLog(aClassName, aFuncName, "=>  result: ok");
+			else
+				this->onServerLog(aClassName, aFuncName, "=>  result: error");
+			break;
+		}
+		case UPDATE_START_REPLY_ID:{
+			this->onServerLog(aClassName, aFuncName, "=>  UpdateStartReplyMessage");
+			this->onServerLog(aClassName, aFuncName, "=>  ");
+
+			bool resp = ((TUpdateStartReplyMessage_ptr&)aBMsg)->getResp();
+			if (resp)
+				this->onServerLog(aClassName, aFuncName, "=>  result: ok");
+			else
+				this->onServerLog(aClassName, aFuncName, "=>  result: error");
+			this->onServerLog(aClassName, aFuncName, "=>  token: " + ((TUpdateStartReplyMessage_ptr&)aBMsg)->getToken());
+			break;
+		}
+		case FILE_ACK_ID:{
+			this->onServerLog(aClassName, aFuncName, "=>  FileAckMessage");
+			this->onServerLog(aClassName, aFuncName, "=>  ");
+			bool resp = ((TFileAckMessage_ptr&)aBMsg)->getResp();
+			if (resp)
+				this->onServerLog(aClassName, aFuncName, "=>  result: ok");
+			else
+				this->onServerLog(aClassName, aFuncName, "=>  result: error");
+			this->onServerLog(aClassName, aFuncName, "=>  file path: " + ((TFileAckMessage_ptr&)aBMsg)->getFilePath());
+			break;
+		}
+		case UPDATE_STOP_REPLY_ID:{
+			this->onServerLog(aClassName, aFuncName, "=>  UpdateStopReplyMessage");
+			this->onServerLog(aClassName, aFuncName, "=>  ");
+			bool resp = ((TUpdateStopReplyMessage_ptr&)aBMsg)->getResp();
+			if (resp)
+				this->onServerLog(aClassName, aFuncName, "=>  result: ok");
+			else
+				this->onServerLog(aClassName, aFuncName, "=>  result: error");
+			this->onServerLog(aClassName, aFuncName, "=>  version: " + to_string(((TUpdateStopReplyMessage_ptr&)aBMsg)->getVersion()));
+			this->onServerLog(aClassName, aFuncName, "=>  version date: " + formatFileDate(((TUpdateStopReplyMessage_ptr&)aBMsg)->getTime()));
+			break;
+		}
+		case GET_VERSIONS_REPLY_ID:{
+			this->onServerLog(aClassName, aFuncName, "=>  GetVersionsReplyMessage");
+			this->onServerLog(aClassName, aFuncName, "=>  tot versions: " + to_string(((TGetVersionsReplyMessage_ptr&)aBMsg)->getTotVersions()));
+			this->onServerLog(aClassName, aFuncName, "=>  oldest version: " + to_string(((TGetVersionsReplyMessage_ptr&)aBMsg)->getOldestVersion()));
+			this->onServerLog(aClassName, aFuncName, "=>  last version: " + to_string(((TGetVersionsReplyMessage_ptr&)aBMsg)->getLastVersion()));
+			break;
+		}
+		case RESTORE_VER_REPLY_ID:{
+			this->onServerLog(aClassName, aFuncName, "=>  RestoreVerReplyMessage");
+			this->onServerLog(aClassName, aFuncName, "=>  ");
+			bool resp = ((TRestoreVerReplyMessage_ptr&)aBMsg)->getResp();
+			if (resp)
+				this->onServerLog(aClassName, aFuncName, "=>  result: ok");
+			else
+				this->onServerLog(aClassName, aFuncName, "=>  result: error");
+			this->onServerLog(aClassName, aFuncName, "=>  token: " + ((TRestoreVerReplyMessage_ptr&)aBMsg)->getToken());
+			break;
+		}
+		case RESTORE_FILE_ID:{
+			this->onServerLog(aClassName, aFuncName, "=>  RestoreFileMessage");
+			this->onServerLog(aClassName, aFuncName, "=>  ");
+			this->onServerLog(aClassName, aFuncName, "=>  file path: " + ((TRestoreFileMessage_ptr&)aBMsg)->getFilePath());
+			this->onServerLog(aClassName, aFuncName, "=>  file checksum: " + ((TRestoreFileMessage_ptr&)aBMsg)->getChecksum());
+			this->onServerLog(aClassName, aFuncName, "=>  file date: " + formatFileDate(((TRestoreFileMessage_ptr&)aBMsg)->getFileDate()));
+			break;
+		}
+		case RESTORE_STOP_ID:{
+			this->onServerLog(aClassName, aFuncName, "=>  RestoreSotpMessage");
+			this->onServerLog(aClassName, aFuncName, "=>  ");
+			this->onServerLog(aClassName, aFuncName, "=>  version: " + to_string(((TRestoreStopMessage_ptr&)aBMsg)->getVersion()));
+			this->onServerLog(aClassName, aFuncName, "=>  version date: " + formatFileDate(((TRestoreStopMessage_ptr&)aBMsg)->getTime()));
+			break;
+		}
+		case PING_REPLY_ID:{
+			this->onServerLog(aClassName, aFuncName, "=>  PingReplyMessage");
+			this->onServerLog(aClassName, aFuncName, "=>  ");
+			this->onServerLog(aClassName, aFuncName, "=>  time: " + formatFileDate(((TPingReplyMessage_ptr&)aBMsg)->getTime()));
+			this->onServerLog(aClassName, aFuncName, "=>  token: " + ((TPingReplyMessage_ptr&)aBMsg)->getToken());
+			break;
+		}
+		default:
+			break;
+		}
+
+		this->onServerLog(aClassName, aFuncName, "=>  ");
+		this->onServerLog(aClassName, aFuncName, "=> => => => => => => => => => => => => ");
+		this->onServerLog(aClassName, aFuncName, "=> => => => => => => => => => => => => ");
+		return true;
+	}
+	else{
+		this->onServerWarning(aClassName, aFuncName, getMessageName(msgType) + "is not a valid message to be sent!");
+		return false;
 	}
 }
 
@@ -146,7 +267,7 @@ void TServerSockController::onServerSockAccept(TConnectionHandle aConnection){
 
 void TServerSockController::onServerSockRead(TConnectionHandle aConnection, string_ptr& aMsg){
 	tcp::endpoint peer = aConnection->fPeer;
-	string s = aMsg->c_str();
+	//string s = aMsg->c_str();
 	TBaseMessage_ptr bmsg = new_TBaseMessage_ptr(aMsg);
 	int msgType = bmsg->getID();
 
@@ -156,7 +277,7 @@ void TServerSockController::onServerSockRead(TConnectionHandle aConnection, stri
 		return;
 	}
 
-	this->onServerLog("TServerSockController", "onServerSockRead", "received a " + getMessageName(msgType) + " message from " + peer.address().to_string() + ":" + std::to_string(peer.port()) + " -> " + s);
+	this->onServerLog("TServerSockController", "onServerSockRead", "received a " + getMessageName(msgType) + " message from " + peer.address().to_string() + ":" + std::to_string(peer.port())/* + " -> " + s*/);
 
 	//check if the message is valid to be received server-side
 	bool valid = ((msgType == USER_REG_REQ_ID) || (msgType == UPDATE_START_REQ_ID) || (msgType == ADD_NEW_FILE_ID)
@@ -309,7 +430,7 @@ void TServerSocket::handleRead(TConnectionHandle aConnection, const boost::syste
 	}
 	else {
 		this->fConnections.erase(aConnection);
-		if (aErr.value() == 2)
+		if (aErr.value() == DISCONNECTED)
 			doServerLog(this->fCallbackObj, "TServerSocket", "handleRead", "Received disconnection from " + peer.address().to_string() + ":" + std::to_string(peer.port()))
 		else
 			doServerError(this->fCallbackObj, "TServerSocket", "handleRead", "Error \"" + aErr.message() + "\" from " + peer.address().to_string() + ":" + std::to_string(peer.port()))

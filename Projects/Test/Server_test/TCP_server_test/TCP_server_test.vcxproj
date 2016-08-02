@@ -116,7 +116,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;HAVE_FORM;BOOST_ALL_DYN_LINK;BOOST_THREAD_USE_DLL;BOOST_LIB_DIAGNOSTIC;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;HAVE_FORM;BOOST_ALL_DYN_LINK;BOOST_THREAD_USE_DLL;BOOST_LIB_DIAGNOSTIC;_DEBUG;_WIN32_WINNT=0x0501;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <CompileAsManaged>true</CompileAsManaged>
     </ClCompile>
@@ -169,7 +169,6 @@
     <ClCompile Include="..\..\..\..\Shared\Common\Executor\MessageQueue.cpp" />
     <ClCompile Include="..\..\..\..\Shared\Common\Network\Message.cpp" />
     <ClCompile Include="..\..\..\..\Shared\Common\Network\ServerSocket.cpp" />
-    <ClCompile Include="..\..\..\..\Shared\Common\Session\FileSystemManager.cpp" />
     <ClCompile Include="..\..\..\..\Shared\Common\Session\Session.cpp" />
     <ClCompile Include="..\..\..\..\Shared\Common\Utils\Utility.cpp" />
     <ClCompile Include="ServerForm.cpp" />
@@ -182,7 +181,6 @@
     <ClInclude Include="..\..\..\..\Shared\Common\Network\Message.h" />
     <ClInclude Include="..\..\..\..\Shared\Common\Network\NetworkController.h" />
     <ClInclude Include="..\..\..\..\Shared\Common\Network\ServerSocket.h" />
-    <ClInclude Include="..\..\..\..\Shared\Common\Session\FileSystemManager.h" />
     <ClInclude Include="..\..\..\..\Shared\Common\Session\Session.h" />
     <ClInclude Include="..\..\..\..\Shared\Common\Utils\Utility.h" />
     <ClInclude Include="ServerForm.h">

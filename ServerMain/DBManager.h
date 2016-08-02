@@ -31,14 +31,6 @@ public:
 };
 
 
-/////////////////////////////////////
-//		IServerDBController		   //
-/////////////////////////////////////
-public class IServerDBController : public IServerBaseController {
-
-};
-
-
 ////////////////////////////////////
 //          TDBManager	          //
 ////////////////////////////////////
@@ -48,18 +40,28 @@ private:
 	string_ptr fHost = nullptr;
 	string_ptr fDBName = nullptr;
 
-	IServerDBController* fCallbackObj = nullptr;
+	gcroot<SqlCommand^> fInsertUserCmd = nullptr;
+	gcroot<SqlCommand^> fInsertVersionCmd = nullptr;
+	gcroot<SqlCommand^> fInsertFilesCmd = nullptr;
+	gcroot<SqlCommand^> fSelectUserIdCmd = nullptr;
+	gcroot<SqlCommand^> fSelectUserSaltCmd = nullptr;
+	gcroot<SqlCommand^> fVerifyCredentialCmd = nullptr;
+	gcroot<SqlCommand^> fSelectVersionCmd = nullptr;
+	gcroot<SqlCommand^> fSelectLastVersionCmd = nullptr;
+	gcroot<SqlCommand^> fSelectAllVersionsCmd = nullptr;
+
+	const int getUserID(const string& aUser, SqlTransaction^ aTransaction);
 
 public:
-	TDBManager(const string& aHost, const string& aDBName, IServerDBController* aCallback);
+	TDBManager(const string& aHost, const string& aDBName); // throws EDBException
 	~TDBManager();
 	
-	const bool insertNewUser(const string& aUser, const string& aPass); 
-	const bool InsertNewVersion(const string& aUser, TVersion_ptr& aVersion);
+	void insertNewUser(const string& aUser, const string& aPass); // throws EDBException
+	void InsertNewVersion(const string& aUser, TVersion_ptr& aVersion); // throws EDBException
 
-	const bool checkIfUserExists(const string& aUser);
-	const bool verifyUserCredentials(const string& aUser, const string& aPass);
-	TVersion_ptr getVersion(const string& aUser, int aVersion);
-	TVersion_ptr getLastVersion(const string& aUser);
-	TVersionList_ptr getAllVersions(const string& aUser);
+	const bool checkIfUserExists(const string& aUser); // throws EDBException
+	const bool verifyUserCredentials(const string& aUser, const string& aPass); // throws EDBException
+	TVersion_ptr getVersion(const string& aUser, int aVersion); // throws EDBException
+	TVersion_ptr getLastVersion(const string& aUser); // throws EDBException
+	TVersionList_ptr getAllVersions(const string& aUser); // throws EDBException
 };

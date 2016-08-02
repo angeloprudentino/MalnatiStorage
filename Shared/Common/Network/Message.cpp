@@ -183,7 +183,7 @@ void TBaseMessage::decodeMessage(){
 	}
 
 	int len = (int)this->fItems->size();
-	if (this->fItems->at(len - 1)->compare(END_MSG) != 0)
+	if (*(this->fItems->at(len - 1)) != END_MSG)
 		throw EMessageException("The given " + *(this->fItems->at(0)) + " message is not properly terminated");
 }
 #pragma endregion
@@ -1342,8 +1342,9 @@ TRestoreFileMessage::TRestoreFileMessage(TBaseMessage_ptr& aBase){
 TRestoreFileMessage::TRestoreFileMessage(const string& aFilePath){
 	this->fID = RESTORE_FILE_ID;
 	this->fFilePath = make_string_ptr(aFilePath);
-	this->fFileContent = nullptr;
-	this->fChecksum = nullptr;
+	//read file, encode it and calculate checksum
+	this->fFileContent = opensslB64EncodeFile(*(this->fFilePath));
+	this->fChecksum = opensslB64Checksum(*(this->fFileContent));
 	this->fFileDate = time(nullptr);
 }
 
@@ -1363,10 +1364,11 @@ TRestoreFileMessage::~TRestoreFileMessage(){
 }
 
 string_ptr TRestoreFileMessage::encodeMessage(){
-	//read file, encode it and calculate checksum
-	this->fFileContent = opensslB64EncodeFile(*(this->fFilePath));
-	this->fChecksum = opensslB64Checksum(*(this->fFileContent));
-
+	if (this->fFileContent == nullptr || this->fChecksum == nullptr){
+		//read file, encode it and calculate checksum
+		this->fFileContent = opensslB64EncodeFile(*(this->fFilePath));
+		this->fChecksum = opensslB64Checksum(*(this->fFileContent));
+	}
 	this->fItems->push_back(make_string_ptr(getMessageName(this->fID)));
 	this->fItems->push_back(move_string_ptr(this->fFilePath));
 	this->fItems->push_back(move_string_ptr(this->fChecksum));
