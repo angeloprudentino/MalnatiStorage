@@ -48,6 +48,7 @@ private:
 	gcroot<SqlCommand^> fVerifyCredentialCmd = nullptr;
 	gcroot<SqlCommand^> fSelectVersionCmd = nullptr;
 	gcroot<SqlCommand^> fSelectLastVersionCmd = nullptr;
+	gcroot<SqlCommand^> fSelectLastVersionFilesCmd = nullptr;
 	gcroot<SqlCommand^> fSelectAllVersionsCmd = nullptr;
 
 	const int getUserID(const string& aUser, SqlTransaction^ aTransaction);
@@ -62,6 +63,6 @@ public:
 	const bool checkIfUserExists(const string& aUser); // throws EDBException
 	const bool verifyUserCredentials(const string& aUser, const string& aPass); // throws EDBException
 	TVersion_ptr getVersion(const string& aUser, int aVersion); // throws EDBException
-	TVersion_ptr getLastVersion(const string& aUser); // throws EDBException
+	TVersion_ptr getLastVersion(const string& aUser, bool aLoadFiles); // throws EDBException
 	TVersionList_ptr getAllVersions(const string& aUser); // throws EDBException
 };

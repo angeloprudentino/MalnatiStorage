@@ -40,13 +40,15 @@ typedef std::unique_ptr<string_vector> string_vector_ptr;
 #define UPDATE_STOP_REPLY_ID 9
 #define GET_VERSIONS_REQ_ID 10
 #define GET_VERSIONS_REPLY_ID 11
-#define RESTORE_VER_REQ_ID 12
-#define RESTORE_VER_REPLY_ID 13
-#define RESTORE_FILE_ID 14
-#define RESTORE_FILE_ACK_ID 15
-#define RESTORE_STOP_ID 16
-#define PING_REQ_ID 17
-#define PING_REPLY_ID 18
+#define GET_LAST_VERSION_REQ_ID 12
+#define GET_LAST_VERSION_REPLY_ID 13
+#define RESTORE_VER_REQ_ID 14
+#define RESTORE_VER_REPLY_ID 15
+#define RESTORE_FILE_ID 16
+#define RESTORE_FILE_ACK_ID 17
+#define RESTORE_STOP_ID 18
+#define PING_REQ_ID 19
+#define PING_REPLY_ID 20
 
 //Message utilities
 const bool isValidMessage(const string aName);
@@ -91,6 +93,7 @@ public:
 typedef std::unique_ptr<TBaseMessage> TBaseMessage_ptr;
 #define new_TBaseMessage_ptr(str) std::make_unique<TBaseMessage>(str)
 #define move_TBaseMessage_ptr(ptr) std::move(ptr)
+
 
 ////////////////////////////////////////
 //      TUserRegistrReqMessage        //
@@ -206,12 +209,12 @@ public:
 
 	string_ptr encodeMessage();
 	void decodeMessage();
+	bool verifyChecksum();
 
 	//getters
 	const string getToken(){ return *(this->fToken); }
 	const string getFilePath(){ return *(this->fFilePath); }
 	const time_t getFileDate(){ return this->fFileDate; }
-	string_ptr getChecksum(){ return move_string_ptr(this->fChecksum); }
 	string_ptr getFileContent(){ return move_string_ptr(this->fFileContent); }
 };
 typedef std::unique_ptr<TAddNewFileMessage> TAddNewFileMessage_ptr;
@@ -236,12 +239,12 @@ public:
 
 	string_ptr encodeMessage();
 	void decodeMessage();
+	bool verifyChecksum();
 
 	//getters
 	const string getToken(){ return *(this->fToken); }
 	const string getFilePath(){ return *(this->fFilePath); }
 	const time_t getFileDate(){ return this->fFileDate; }
-	string_ptr getChecksum(){ return move_string_ptr(this->fChecksum); }
 	string_ptr getFileContent(){ return move_string_ptr(this->fFileContent); }
 };
 typedef std::unique_ptr<TUpdateFileMessage> TUpdateFileMessage_ptr;
@@ -375,9 +378,9 @@ typedef std::unique_ptr<TGetVersionsReqMessage> TGetVersionsReqMessage_ptr;
 ////////////////////////////////////////
 public class TGetVersionsReplyMessage : public TBaseMessage {
 private:
-	unsigned int fTotVersions = -1;
-	unsigned int fOldestVersion = -1;
-	unsigned int fLastVersion = -1;
+	unsigned int fTotVersions = 0;
+	unsigned int fOldestVersion = 0;
+	unsigned int fLastVersion = 0;
 	TVersionList_ptr fVersions = nullptr;
 
 public:
@@ -392,11 +395,60 @@ public:
 	const unsigned int getTotVersions(){ return this->fTotVersions; }
 	const unsigned int getOldestVersion(){ return this->fOldestVersion; }
 	const unsigned int getLastVersion(){ return this->fLastVersion; }
-	const time_t getVersion(const unsigned int aVersion){ return this->fVersions->at(aVersion)->getDate(); }
+	const time_t getVersionDate(const unsigned int aVersion){ return this->fVersions->at(aVersion)->getDate(); }
 };
 typedef std::unique_ptr<TGetVersionsReplyMessage> TGetVersionsReplyMessage_ptr;
 #define new_TGetVersionsReplyMessage_ptr(aTotVersions, aOldestVersion, aLastVersion, aVersions) std::make_unique<TGetVersionsReplyMessage>(aTotVersions, aOldestVersion, aLastVersion, aVersions)
 #define make_TGetVersionsReplyMessage_ptr(ptr) std::make_unique<TGetVersionsReplyMessage>(ptr)
+
+
+////////////////////////////////////////
+//       TGetLastVerReqMessage        //
+////////////////////////////////////////
+public class TGetLastVerReqMessage : public TBaseMessage {
+private:
+	string_ptr fUser = nullptr;
+	string_ptr fPass = nullptr;
+
+public:
+	TGetLastVerReqMessage(TBaseMessage_ptr& aBase);
+	TGetLastVerReqMessage(const string& aUser, const string& aPass);
+	~TGetLastVerReqMessage();
+
+	string_ptr encodeMessage();
+	void decodeMessage();
+
+	//getters
+	const string getUser(){ return *(this->fUser); }
+	const string getPass(){ return *(this->fPass); }
+};
+typedef std::unique_ptr<TGetLastVerReqMessage> TGetLastVerReqMessage_ptr;
+#define make_TGetLastVerReqMessage_ptr(ptr) std::make_unique<TGetLastVerReqMessage>(ptr)
+
+
+////////////////////////////////////////
+//      TGetLastVerReplyMessage       //
+////////////////////////////////////////
+public class TGetLastVerReplyMessage : public TBaseMessage {
+private:
+	int fVersion = -1;
+	time_t fVersionDate;
+
+public:
+	TGetLastVerReplyMessage(TBaseMessage_ptr& aBase);
+	TGetLastVerReplyMessage(const int aVersion, const time_t aVersionDate);
+	~TGetLastVerReplyMessage() {};
+
+	string_ptr encodeMessage();
+	void decodeMessage();
+
+	//getters
+	const int getVersion(){ return this->fVersion; }
+	const time_t getVersionDate(){ return this->fVersionDate; }
+};
+typedef std::unique_ptr<TGetLastVerReplyMessage> TGetLastVerReplyMessage_ptr;
+#define new_TGetLastVerReplyMessage_ptr(aVersion, aVersionDate) std::make_unique<TGetLastVerReplyMessage>(aVersion, aVersionDate)
+#define make_TGetLastVerReplyMessage_ptr(ptr) std::make_unique<TGetLastVerReplyMessage>(ptr)
 
 
 ////////////////////////////////////////
@@ -467,12 +519,12 @@ public:
 
 	string_ptr encodeMessage();
 	void decodeMessage();
+	bool verifyChecksum();
 
 	//getters
 	const string getFilePath(){ return *(this->fFilePath); }
-	const string getChecksum(){ return *(this->fChecksum); }
-	const string getFileContent(){ return *(this->fFileContent); }
 	const time_t getFileDate(){ return this->fFileDate; }
+	string_ptr getFileContent(){ return move_string_ptr(this->fFileContent); }
 };
 typedef std::unique_ptr<TRestoreFileMessage> TRestoreFileMessage_ptr;
 #define new_TRestoreFileMessage_ptr(aFilePath) std::make_unique<TRestoreFileMessage>(aFilePath)
@@ -511,20 +563,20 @@ typedef std::unique_ptr<TRestoreFileAckMessage> TRestoreFileAckMessage_ptr;
 ////////////////////////////////////
 public class TRestoreStopMessage : public TBaseMessage {
 private:
-	unsigned int fVersion = -1;
-	time_t fTime;
+	int fVersion = -1;
+	time_t fVersionDate;
 
 public:
 	TRestoreStopMessage(TBaseMessage_ptr& aBase);
-	TRestoreStopMessage(unsigned int aVersion, time_t aTime);
+	TRestoreStopMessage(int aVersion, time_t aVersionDate);
 	~TRestoreStopMessage() {};
 
 	string_ptr encodeMessage();
 	void decodeMessage();
 
 	//getters
-	const unsigned int getVersion(){ return this->fVersion; }
-	const time_t getTime(){ return this->fTime; }
+	const int getVersion(){ return this->fVersion; }
+	const time_t getVersionDate(){ return this->fVersionDate; }
 };
 typedef std::unique_ptr<TRestoreStopMessage> TRestoreStopMessage_ptr;
 #define make_TRestoreStopMessage_ptr(ptr) std::make_unique<TRestoreStopMessage>(ptr)

@@ -33,6 +33,8 @@ using namespace std;
 #define UPDATE_STOP_REPLY_TOK_NUM 5
 #define GET_VERSIONS_REQ_TOK_NUM 4
 #define GET_VERSIONS_REPLY_MIN_TOK_NUM 5
+#define GET_LAST_VERSION_REQ_TOK_NUM 4
+#define GET_LAST_VERSION_REPLY_TOK_NUM 4
 #define RESTORE_VER_REQ_TOK_NUM 5
 #define RESTORE_VER_REPLY_TOK_NUM 4
 #define RESTORE_FILE_TOK_NUM 6
@@ -55,13 +57,15 @@ std::string messageNames[] = {
 	/*  9*/ "UPDATE_STOP_REPLY",
 	/* 10*/ "GET_VERSIONS_REQ",
 	/* 11*/ "GET_VERSIONS_REPLY",
-	/* 12*/ "RESTORE_VER_REQ",
-	/* 13*/ "RESTORE_VER_REPLY",
-	/* 14*/ "RESTORE_FILE",
-	/* 15*/ "RESTORE_FILE_ACK",
-	/* 16*/ "RESTORE_STOP",
-	/* 17*/ "PING_REQ",
-	/* 18*/ "PING_REPLY"
+	/* 12*/ "GET_LAST_VERSION_REQ",
+	/* 13*/ "GET_LAST_VERSION_REPLY",
+	/* 14*/ "RESTORE_VER_REQ",
+	/* 15*/ "RESTORE_VER_REPLY",
+	/* 16*/ "RESTORE_FILE",
+	/* 17*/ "RESTORE_FILE_ACK",
+	/* 18*/ "RESTORE_STOP",
+	/* 19*/ "PING_REQ",
+	/* 20*/ "PING_REPLY"
 };
 
 #pragma region "Message Utility"
@@ -575,6 +579,21 @@ void TAddNewFileMessage::decodeMessage(){
 		throw EMessageException("The file content field cannot be empty");
 	this->fFileContent = move_string_ptr(this->fItems->at(5));
 }
+
+bool TAddNewFileMessage::verifyChecksum(){
+	bool checksumMatches = false;
+	string_ptr myChecksum = nullptr;
+	try{
+		myChecksum = opensslB64Checksum(*(this->fFileContent));
+		checksumMatches = (*(myChecksum) == *(this->fChecksum));
+	}
+	catch (EOpensslException e){
+		throw EMessageException("verifyChecksum failed: " + e.getMessage());
+	}
+	myChecksum.reset();
+
+	return checksumMatches;
+}
 #pragma endregion
 
 
@@ -685,6 +704,21 @@ void TUpdateFileMessage::decodeMessage(){
 	if (*(this->fItems->at(5)) == EMPTY)
 		throw EMessageException("The file content field cannot be empty");
 	this->fFileContent = move_string_ptr(this->fItems->at(5));
+}
+
+bool TUpdateFileMessage::verifyChecksum(){
+	bool checksumMatches = false;
+	string_ptr myChecksum = nullptr;
+	try{
+		myChecksum = opensslB64Checksum(*(this->fFileContent));
+		checksumMatches = (*(myChecksum) == *(this->fChecksum));
+	}
+	catch (EOpensslException e){
+		throw EMessageException("verifyChecksum failed: " + e.getMessage());
+	}
+	myChecksum.reset();
+
+	return checksumMatches;
 }
 #pragma endregion
 
@@ -1167,6 +1201,139 @@ void TGetVersionsReplyMessage::decodeMessage(){
 
 
 ////////////////////////////////////////
+//       TGetLastVerReqMessage        //
+////////////////////////////////////////
+#pragma region "TGetLastVerReqMessage"
+TGetLastVerReqMessage::TGetLastVerReqMessage(TBaseMessage_ptr& aBase){
+	this->fID = aBase->getID();
+	this->fItems = aBase->getTokens();
+	this->fEncodedMsg = aBase->getMsg();
+
+	this->decodeMessage();
+}
+
+TGetLastVerReqMessage::TGetLastVerReqMessage(const string& aUser, const string& aPass){
+	this->fID = GET_VERSIONS_REQ_ID;
+	this->fUser = make_string_ptr(aUser);
+	this->fPass = make_string_ptr(aPass);
+}
+
+TGetLastVerReqMessage::~TGetLastVerReqMessage(){
+	if (this->fUser != nullptr)
+		this->fUser.reset();
+
+	if (this->fPass != nullptr)
+		this->fPass.reset();
+
+	this->fUser = nullptr;
+	this->fPass = nullptr;
+}
+
+string_ptr TGetLastVerReqMessage::encodeMessage(){
+	this->fItems->push_back(make_string_ptr(getMessageName(this->fID)));
+	this->fItems->push_back(move_string_ptr(this->fUser));
+	this->fItems->push_back(move_string_ptr(this->fPass));
+
+	return TBaseMessage::encodeMessage();
+}
+
+void TGetLastVerReqMessage::decodeMessage(){
+	/*
+	* item[0] -> msg name
+	* item[1] -> username
+	* item[2] -> password
+	*/
+	TBaseMessage::decodeMessage();
+
+	int size = (int)this->fItems->size();
+	if (size != GET_LAST_VERSION_REQ_TOK_NUM)
+		throw EMessageException("GET_LAST_VERSION_REQ message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(GET_LAST_VERSION_REQ_TOK_NUM) + ")");
+
+	for (int i = 0; i < size; i++)
+		if (this->fItems->at(i) == nullptr)
+			throw EMessageException("item " + to_string(i) + " is nullptr");
+
+	if (this->fID != GET_LAST_VERSION_REQ_ID)
+		throw EMessageException("The given message is not a GET_LAST_VERSION_REQ message");
+
+	//username
+	if (*(this->fItems->at(1)) == EMPTY)
+		throw EMessageException("The user name field cannot be empty");
+	this->fUser = move_string_ptr(this->fItems->at(1));
+
+	//password
+	if (*(this->fItems->at(2)) == EMPTY)
+		throw EMessageException("The password field cannot be empty");
+	this->fPass = move_string_ptr(this->fItems->at(2));
+}
+#pragma endregion
+
+
+////////////////////////////////////////
+//      TGetLastVerReplyMessage       //
+////////////////////////////////////////
+#pragma region "TGetLastVerReplyMessage"
+TGetLastVerReplyMessage::TGetLastVerReplyMessage(TBaseMessage_ptr& aBase){
+	this->fID = aBase->getID();
+	this->fItems = aBase->getTokens();
+	this->fEncodedMsg = aBase->getMsg();
+
+	this->decodeMessage();
+}
+
+TGetLastVerReplyMessage::TGetLastVerReplyMessage(int aVersion, time_t aVersionDate){
+	this->fID = RESTORE_STOP_ID;
+	this->fVersion = aVersion;
+	this->fVersionDate = aVersionDate;
+}
+
+string_ptr TGetLastVerReplyMessage::encodeMessage(){
+	this->fItems->push_back(make_string_ptr(getMessageName(this->fID)));
+	this->fItems->push_back(make_string_ptr(to_string(this->fVersion)));
+	this->fItems->push_back(make_string_ptr(timeToString(this->fVersionDate)));
+
+	return TBaseMessage::encodeMessage();
+}
+
+void TGetLastVerReplyMessage::decodeMessage(){
+	/*
+	* item[0] -> msg name
+	* item[1] -> version number
+	* item[2] -> version timestamp
+	*/
+	TBaseMessage::decodeMessage();
+
+	int size = (int)this->fItems->size();
+	if (size != GET_LAST_VERSION_REPLY_TOK_NUM)
+		throw EMessageException("GET_LAST_VERSION_REPLY message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(GET_LAST_VERSION_REPLY_TOK_NUM) + ")");
+
+	for (int i = 0; i < size; i++)
+		if (this->fItems->at(i) == nullptr)
+			throw EMessageException("item " + to_string(i) + " is nullptr");
+
+	if (this->fID != GET_LAST_VERSION_REPLY_ID)
+		throw EMessageException("The given message is not a GET_LAST_VERSION_REPLY message");
+
+	//version number
+	if (*(this->fItems->at(1)) == EMPTY)
+		throw EMessageException("The version field cannot be empty");
+
+	try{
+		this->fVersion = stoi(*(this->fItems->at(1)));
+	}
+	catch (...){
+		throw EMessageException("The version number field cannot be converted into an int value");
+	}
+
+	//version timestamp
+	if (*(this->fItems->at(2)) == EMPTY)
+		throw EMessageException("The version timestamp field cannot be empty");
+	this->fVersionDate = stringToTime(*(this->fItems->at(2)));
+}
+#pragma endregion
+
+
+////////////////////////////////////////
 //       TRestoreVerReqMessage        //
 ////////////////////////////////////////
 #pragma region "TRestoreVerReqMessage"
@@ -1425,6 +1592,21 @@ void TRestoreFileMessage::decodeMessage(){
 		throw EMessageException("The file content field cannot be empty");
 	this->fFileContent = move_string_ptr(this->fItems->at(4));
 }
+
+bool TRestoreFileMessage::verifyChecksum(){
+	bool checksumMatches = false;
+	string_ptr myChecksum = nullptr;
+	try{
+		myChecksum = opensslB64Checksum(*(this->fFileContent));
+		checksumMatches = (*(myChecksum) == *(this->fChecksum));
+	}
+	catch (EOpensslException e){
+		throw EMessageException("verifyChecksum failed: " + e.getMessage());
+	}
+	myChecksum.reset();
+
+	return checksumMatches;
+}
 #pragma endregion
 
 
@@ -1532,16 +1714,16 @@ TRestoreStopMessage::TRestoreStopMessage(TBaseMessage_ptr& aBase){
 	this->decodeMessage();
 }
 
-TRestoreStopMessage::TRestoreStopMessage(unsigned int aVersion, time_t aTime){
+TRestoreStopMessage::TRestoreStopMessage(int aVersion, time_t aVersionDate){
 	this->fID = RESTORE_STOP_ID;
 	this->fVersion = aVersion;
-	this->fTime = aTime;
+	this->fVersionDate = aVersionDate;
 }
 
 string_ptr TRestoreStopMessage::encodeMessage(){
 	this->fItems->push_back(make_string_ptr(getMessageName(this->fID)));
 	this->fItems->push_back(make_string_ptr(to_string(this->fVersion)));
-	this->fItems->push_back(make_string_ptr(timeToString(this->fTime)));
+	this->fItems->push_back(make_string_ptr(timeToString(this->fVersionDate)));
 
 	return TBaseMessage::encodeMessage();
 }
@@ -1579,7 +1761,7 @@ void TRestoreStopMessage::decodeMessage(){
 	//version timestamp
 	if (*(this->fItems->at(2)) == EMPTY)
 		throw EMessageException("The version timestamp field cannot be empty");
-	this->fTime = stringToTime(*(this->fItems->at(2)));
+	this->fVersionDate = stringToTime(*(this->fItems->at(2)));
 }
 #pragma endregion
 

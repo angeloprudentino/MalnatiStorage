@@ -75,6 +75,7 @@ public:
 	void processRemoveFile(TConnectionHandle aConnection, TRemoveFileMessage_ptr& aMsg) override;
 	void processUpdateStop(TConnectionHandle aConnection, TUpdateStopReqMessage_ptr& aMsg) override;
 	void processGetVersions(TConnectionHandle aConnection, TGetVersionsReqMessage_ptr& aMsg) override;
+	void processGetLastVersion(TConnectionHandle aConnection, TGetLastVerReqMessage_ptr& aMsg) override;
 	void processRestoreVersion(TConnectionHandle aConnection, TRestoreVerReqMessage_ptr& aMsg) override;
 	void processRestoreFileAck(TConnectionHandle aConnection, TRestoreFileAckMessage_ptr& aMsg) override;
 	void processPingRequest(TConnectionHandle aConnection, TPingReqMessage_ptr& aMsg) override;

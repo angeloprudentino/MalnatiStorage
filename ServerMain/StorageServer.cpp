@@ -32,7 +32,7 @@ const bool TStorageServer::newSession(const string& aUser, const string& aToken,
 	//load initial data abaout the session from DB
 	if (this->fDBManager != nullptr){
 		try{
-			TVersion_ptr v = this->fDBManager->getLastVersion(aUser);
+			TVersion_ptr v = this->fDBManager->getLastVersion(aUser, true);
 			if (v != nullptr)
 				s->setVersion(move_TVersion_ptr(v));
 		}
@@ -391,6 +391,7 @@ void TStorageServer::processUpdateStart(TConnectionHandle aConnection, TUpdateSt
 		}
 		catch (EOpensslException e){
 			this->onServerError("TStorageServer", "processUpdateStart", "EOpensslException creating a new token: " + e.getMessage() + " ; skipped.");
+			token_ptr.reset();
 			return;
 		}
 
@@ -417,8 +418,6 @@ void TStorageServer::processAddNewFile(TConnectionHandle aConnection, TAddNewFil
 		string t = aMsg->getToken();
 		string fp = aMsg->getFilePath();
 		time_t fd = aMsg->getFileDate(); 
-		string_ptr f = aMsg->getFileContent();
-		string_ptr c = aMsg->getChecksum();
 
 		//Log the message
 		this->onServerLog("TStorageServer", "processAddNewFile", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
@@ -428,7 +427,6 @@ void TStorageServer::processAddNewFile(TConnectionHandle aConnection, TAddNewFil
 		this->onServerLog("TStorageServer", "processAddNewFile", "<=  ");
 		this->onServerLog("TStorageServer", "processAddNewFile", "<=   token: " + t);
 		this->onServerLog("TStorageServer", "processAddNewFile", "<=   file path: " + fp);
-		this->onServerLog("TStorageServer", "processAddNewFile", "<=   file checksum: " + *c);
 		this->onServerLog("TStorageServer", "processAddNewFile", "<=   file date: " + formatFileDate(fd));
 		this->onServerLog("TStorageServer", "processAddNewFile", "<=  ");
 		this->onServerLog("TStorageServer", "processAddNewFile", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
@@ -452,16 +450,13 @@ void TStorageServer::processAddNewFile(TConnectionHandle aConnection, TAddNewFil
 
 		//check if checksum is correct
 		bool checksumMatches = false;
-		string_ptr myChecksum = nullptr;
 		try{
-			myChecksum = opensslB64Checksum(*f);
-			checksumMatches = (*(myChecksum) == *(c));
+			checksumMatches = aMsg->verifyChecksum();
 		}
-		catch (EOpensslException e){
+		catch (EMessageException e){
 			this->onServerError("TStorageServer", "processAddNewFile", "Checksum validation failed: " + e.getMessage());
 			checksumMatches = false;
 		}
-		myChecksum.reset();
 
 		if (!checksumMatches){
 			//enqueue negative response
@@ -469,21 +464,22 @@ void TStorageServer::processAddNewFile(TConnectionHandle aConnection, TAddNewFil
 			TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(reply), aConnection); //reply is moved
 			this->enqueueMessageToSend(move_TMessageContainer_ptr(replyContainer)); //replyContainer is moved
 		}
+		else{
+			//update session object
+			int v = session->getVersion() + 1; //to get the new version index
+			TFile_ptr file = new_TFile_ptr(u, v, fp, fd);
+			path p = file->getServerPathPrefix();
+			p /= file->getClientRelativePath();
+			session->addFile(move_TFile_ptr(file));
 
-		//update session object
-		int v = session->getVersion() + 1; //to get the new version index
-		TFile_ptr file = new_TFile_ptr(u, v, fp, fd);
-		path p = file->getServerPathPrefix();
-		p /= file->getClientRelativePath();
-		session->addFile(move_TFile_ptr(file));
-		
-		//store file in proper location
-		storeFile(p, move_string_ptr(f));
+			//store file in proper location
+			storeFile(p, move_string_ptr(aMsg->getFileContent()));
 
-		//send a positive response
-		TFileAckMessage_ptr reply = new_TFileAckMessage_ptr(true, fp);
-		TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(reply), aConnection); //reply is moved
-		this->enqueueMessageToSend(move_TMessageContainer_ptr(replyContainer)); //replyContainer is moved
+			//send a positive response
+			TFileAckMessage_ptr reply = new_TFileAckMessage_ptr(true, fp);
+			TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(reply), aConnection); //reply is moved
+			this->enqueueMessageToSend(move_TMessageContainer_ptr(replyContainer)); //replyContainer is moved
+		}
 	}
 	else{
 		this->onServerError("TStorageServer", "processAddNewFile", "received an empty message; skipped.");
@@ -495,8 +491,6 @@ void TStorageServer::processUpdateFile(TConnectionHandle aConnection, TUpdateFil
 		string t = aMsg->getToken();
 		string fp = aMsg->getFilePath();
 		time_t fd = aMsg->getFileDate();
-		string_ptr f = aMsg->getFileContent();
-		string_ptr c = aMsg->getChecksum();
 
 		//Log the message
 		this->onServerLog("TStorageServer", "processUpdateFile", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
@@ -506,7 +500,6 @@ void TStorageServer::processUpdateFile(TConnectionHandle aConnection, TUpdateFil
 		this->onServerLog("TStorageServer", "processUpdateFile", "<=  ");
 		this->onServerLog("TStorageServer", "processUpdateFile", "<=   token: " + t);
 		this->onServerLog("TStorageServer", "processUpdateFile", "<=   file path: " + fp);
-		this->onServerLog("TStorageServer", "processUpdateFile", "<=   file checksum: " + *c);
 		this->onServerLog("TStorageServer", "processUpdateFile", "<=   file date: " + formatFileDate(fd));
 		this->onServerLog("TStorageServer", "processUpdateFile", "<=  ");
 		this->onServerLog("TStorageServer", "processUpdateFile", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
@@ -530,16 +523,13 @@ void TStorageServer::processUpdateFile(TConnectionHandle aConnection, TUpdateFil
 
 		//check if checksum is correct
 		bool checksumMatches = false;
-		string_ptr myChecksum = nullptr;
 		try{
-			myChecksum = opensslB64Checksum(*f);
-			checksumMatches = (*(myChecksum) == *(c));
+			checksumMatches = aMsg->verifyChecksum();
 		}
-		catch (EOpensslException e){
+		catch (EMessageException e){
 			this->onServerError("TStorageServer", "processUpdateFile", "Checksum validation failed: " + e.getMessage());
 			checksumMatches = false;
 		}
-		myChecksum.reset();
 
 		if (!checksumMatches){
 			//enqueue negative response
@@ -547,21 +537,22 @@ void TStorageServer::processUpdateFile(TConnectionHandle aConnection, TUpdateFil
 			TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(reply), aConnection); //reply is moved
 			this->enqueueMessageToSend(move_TMessageContainer_ptr(replyContainer)); //replyContainer is moved
 		}
+		else{
+			//update session object
+			int v = session->getVersion() + 1; //to get the new version index
+			TFile_ptr file = new_TFile_ptr(u, v, fp, fd);
+			path p = file->getServerPathPrefix();
+			p /= file->getClientRelativePath();
+			session->updateFile(move_TFile_ptr(file));
 
-		//update session object
-		int v = session->getVersion() + 1; //to get the new version index
-		TFile_ptr file = new_TFile_ptr(u, v, fp, fd);
-		path p = file->getServerPathPrefix();
-		p /= file->getClientRelativePath();
-		session->updateFile(move_TFile_ptr(file));
+			//store file in proper location
+			storeFile(p, move_string_ptr(aMsg->getFileContent()));
 
-		//store file in proper location
-		storeFile(p, move_string_ptr(f));
-
-		//send a positive response
-		TFileAckMessage_ptr reply = new_TFileAckMessage_ptr(true, fp);
-		TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(reply), aConnection); //reply is moved
-		this->enqueueMessageToSend(move_TMessageContainer_ptr(replyContainer)); //replyContainer is moved
+			//send a positive response
+			TFileAckMessage_ptr reply = new_TFileAckMessage_ptr(true, fp);
+			TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(reply), aConnection); //reply is moved
+			this->enqueueMessageToSend(move_TMessageContainer_ptr(replyContainer)); //replyContainer is moved
+		}
 	}
 	else{
 		this->onServerError("TStorageServer", "processUpdateFile", "received an empty message; skipped.");
@@ -757,6 +748,70 @@ void TStorageServer::processGetVersions(TConnectionHandle aConnection, TGetVersi
 	}
 	else{
 		this->onServerError("TStorageServer", "processGetVersions", "received an empty message; skipped.");
+	}
+}
+
+void TStorageServer::processGetLastVersion(TConnectionHandle aConnection, TGetLastVerReqMessage_ptr& aMsg){
+	if (aMsg != nullptr){
+		string u = aMsg->getUser();
+		string p = aMsg->getPass();
+
+		//Log the message
+		this->onServerLog("TStorageServer", "processGetLastVersion", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+		this->onServerLog("TStorageServer", "processGetLastVersion", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+		this->onServerLog("TStorageServer", "processGetLastVersion", "<=  ");
+		this->onServerLog("TStorageServer", "processGetLastVersion", "<=   GetLastVersionReqMessage ");
+		this->onServerLog("TStorageServer", "processGetLastVersion", "<=  ");
+		this->onServerLog("TStorageServer", "processGetLastVersion", "<=   user: " + u);
+		this->onServerLog("TStorageServer", "processGetLastVersion", "<=   coded pass: " + p);
+		this->onServerLog("TStorageServer", "processGetLastVersion", "<=  ");
+		this->onServerLog("TStorageServer", "processGetLastVersion", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+		this->onServerLog("TStorageServer", "processGetLastVersion", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+
+		//check if username and password are valid
+		try{
+			if (!checkUserCredential(u, p)){
+				this->onServerError("TStorageServer", "processGetLastVersion", "Request from an anauthorized user!");
+				return;
+			}
+		}
+		catch (EDBException e){
+			this->onServerError("TStorageServer", "processGetLastVersion", "Unable to verify credentials: " + e.getMessage());
+			return;
+		}
+
+		//get last version for this user and send back the response
+		bool err = false;
+		TVersion_ptr ver;
+		try{
+			if (this->fDBManager != nullptr)
+				ver = move_TVersion_ptr(this->fDBManager->getLastVersion(u, false));
+			else{
+				err = true;
+				this->onServerError("TStorageServer", "processGetLastVersion", "DBManager is null!");
+			}
+		}
+		catch (EDBException& e){
+			this->onServerError("TStorageServer", "processGetLastVersion", "Unable to get versions for this user: " + e.getMessage());
+			err = true;
+		}
+
+		TGetLastVerReplyMessage_ptr reply = nullptr;
+		if (!err && ver != nullptr){
+			//positive response
+			reply = new_TGetLastVerReplyMessage_ptr(ver->getVersion(), ver->getDate());
+			ver.reset();
+		}
+		else{
+			//negative response
+			reply = new_TGetLastVerReplyMessage_ptr(-1, time(NULL));
+		}
+
+		TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(reply), aConnection); //reply is moved
+		this->enqueueMessageToSend(move_TMessageContainer_ptr(replyContainer)); //replyContainer is moved
+	}
+	else{
+		this->onServerError("TStorageServer", "processGetLastVersion", "received an empty message; skipped.");
 	}
 }
 
