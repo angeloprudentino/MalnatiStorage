@@ -40,6 +40,7 @@ public:
 	virtual void processRemoveFile(TConnectionHandle aConnection, TRemoveFileMessage_ptr& aMsg) = 0;
 	virtual void processUpdateStop(TConnectionHandle aConnection, TUpdateStopReqMessage_ptr& aMsg) = 0;
 	virtual void processGetVersions(TConnectionHandle aConnection, TGetVersionsReqMessage_ptr& aMsg) = 0;
+	virtual void processGetLastVersion(TConnectionHandle aConnection, TGetLastVerReqMessage_ptr& aMsg) = 0;
 	virtual void processRestoreVersion(TConnectionHandle aConnection, TRestoreVerReqMessage_ptr& aMsg) = 0;
 	virtual void processRestoreFileAck(TConnectionHandle aConnection, TRestoreFileAckMessage_ptr& aMsg) = 0;
 	virtual void processPingRequest(TConnectionHandle aConnection, TPingReqMessage_ptr& aMsg) = 0;

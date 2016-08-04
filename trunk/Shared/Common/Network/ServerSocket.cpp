@@ -100,7 +100,7 @@ const bool TServerSockController::checkMessageToSend(string aClassName, string a
 	int msgType = aBMsg->getID();
 
 	bool valid = ((msgType == USER_REG_REPLY_ID) || (msgType == UPDATE_START_REPLY_ID)
-		|| (msgType == FILE_ACK_ID) || (msgType == UPDATE_STOP_REPLY_ID) || (msgType == GET_VERSIONS_REPLY_ID) 
+		|| (msgType == FILE_ACK_ID) || (msgType == UPDATE_STOP_REPLY_ID) || (msgType == GET_VERSIONS_REPLY_ID) || (msgType == GET_LAST_VERSION_REPLY_ID)
 		|| (msgType == RESTORE_VER_REPLY_ID) || (msgType == RESTORE_FILE_ID) || (msgType == RESTORE_STOP_ID) || (msgType == PING_REPLY_ID));
 
 	if (valid){
@@ -161,6 +161,12 @@ const bool TServerSockController::checkMessageToSend(string aClassName, string a
 			this->onServerLog(aClassName, aFuncName, "=>  last version: " + to_string(((TGetVersionsReplyMessage_ptr&)aBMsg)->getLastVersion()));
 			break;
 		}
+		case GET_LAST_VERSION_REPLY_ID:{
+			this->onServerLog(aClassName, aFuncName, "=>  GetLastVersionReplyMessage");
+			this->onServerLog(aClassName, aFuncName, "=>  version: " + to_string(((TGetLastVerReplyMessage_ptr&)aBMsg)->getVersion()));
+			this->onServerLog(aClassName, aFuncName, "=>  version date: " + formatFileDate(((TGetLastVerReplyMessage_ptr&)aBMsg)->getVersionDate()));
+			break;
+		}
 		case RESTORE_VER_REPLY_ID:{
 			this->onServerLog(aClassName, aFuncName, "=>  RestoreVerReplyMessage");
 			this->onServerLog(aClassName, aFuncName, "=>  ");
@@ -176,7 +182,6 @@ const bool TServerSockController::checkMessageToSend(string aClassName, string a
 			this->onServerLog(aClassName, aFuncName, "=>  RestoreFileMessage");
 			this->onServerLog(aClassName, aFuncName, "=>  ");
 			this->onServerLog(aClassName, aFuncName, "=>  file path: " + ((TRestoreFileMessage_ptr&)aBMsg)->getFilePath());
-			this->onServerLog(aClassName, aFuncName, "=>  file checksum: " + ((TRestoreFileMessage_ptr&)aBMsg)->getChecksum());
 			this->onServerLog(aClassName, aFuncName, "=>  file date: " + formatFileDate(((TRestoreFileMessage_ptr&)aBMsg)->getFileDate()));
 			break;
 		}
@@ -184,7 +189,7 @@ const bool TServerSockController::checkMessageToSend(string aClassName, string a
 			this->onServerLog(aClassName, aFuncName, "=>  RestoreSotpMessage");
 			this->onServerLog(aClassName, aFuncName, "=>  ");
 			this->onServerLog(aClassName, aFuncName, "=>  version: " + to_string(((TRestoreStopMessage_ptr&)aBMsg)->getVersion()));
-			this->onServerLog(aClassName, aFuncName, "=>  version date: " + formatFileDate(((TRestoreStopMessage_ptr&)aBMsg)->getTime()));
+			this->onServerLog(aClassName, aFuncName, "=>  version date: " + formatFileDate(((TRestoreStopMessage_ptr&)aBMsg)->getVersionDate()));
 			break;
 		}
 		case PING_REPLY_ID:{
@@ -281,8 +286,8 @@ void TServerSockController::onServerSockRead(TConnectionHandle aConnection, stri
 
 	//check if the message is valid to be received server-side
 	bool valid = ((msgType == USER_REG_REQ_ID) || (msgType == UPDATE_START_REQ_ID) || (msgType == ADD_NEW_FILE_ID)
-		|| (msgType == UPDATE_FILE_ID) || (msgType == REMOVE_FILE_ID) || (msgType == UPDATE_STOP_REQ_ID)
-		|| (msgType == GET_VERSIONS_REQ_ID) || (msgType == RESTORE_VER_REQ_ID) || (msgType == RESTORE_FILE_ACK_ID) || (msgType == PING_REQ_ID));
+		|| (msgType == UPDATE_FILE_ID) || (msgType == REMOVE_FILE_ID) || (msgType == UPDATE_STOP_REQ_ID) || (msgType == GET_VERSIONS_REQ_ID)
+		|| (msgType == GET_LAST_VERSION_REQ_ID) || (msgType == RESTORE_VER_REQ_ID) || (msgType == RESTORE_FILE_ACK_ID) || (msgType == PING_REQ_ID));
 
 	if (!valid){
 		//ignore message

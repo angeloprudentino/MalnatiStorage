@@ -109,9 +109,13 @@ TDBManager::TDBManager(const string& aHost, const string& aDBName){
 		this->fSelectVersionCmd->CommandType = CommandType::Text;
 		this->fSelectVersionCmd->Connection = this->fConnection;
 
-		this->fSelectLastVersionCmd = gcnew SqlCommand("SELECT Versions.VerID, VerDate, ServerPath, ClientRelativePath, LastModDate FROM Users, Versions, Files WHERE Users.UserID = Versions.UserID AND Users.UserID = Files.UserID AND Versions.VerID = Files.VerID AND Username = @username AND Versions.VerID = (SELECT MAX(VerID) FROM Versions, Users WHERE Users.UserID = Versions.UserID AND Username = @username);");
+		this->fSelectLastVersionCmd = gcnew SqlCommand("SELECT VerID, VerDate FROM Users, Versions WHERE Users.UserID = Versions.UserID AND Username = @username AND Versions.VerID = (SELECT MAX(VerID) FROM Versions, Users WHERE Users.UserID = Versions.UserID AND Username = @username);");
 		this->fSelectLastVersionCmd->CommandType = CommandType::Text;
 		this->fSelectLastVersionCmd->Connection = this->fConnection;
+
+		this->fSelectLastVersionFilesCmd = gcnew SqlCommand("SELECT Versions.VerID, VerDate, ServerPath, ClientRelativePath, LastModDate FROM Users, Versions, Files WHERE Users.UserID = Versions.UserID AND Users.UserID = Files.UserID AND Versions.VerID = Files.VerID AND Username = @username AND Versions.VerID = (SELECT MAX(VerID) FROM Versions, Users WHERE Users.UserID = Versions.UserID AND Username = @username);");
+		this->fSelectLastVersionFilesCmd->CommandType = CommandType::Text;
+		this->fSelectLastVersionFilesCmd->Connection = this->fConnection;
 
 		this->fSelectAllVersionsCmd = gcnew SqlCommand("SELECT VerID, VerDate FROM Users, Versions WHERE Users.UserID = Versions.UserID AND Username = @username;");
 		this->fSelectAllVersionsCmd->CommandType = CommandType::Text;
@@ -128,6 +132,7 @@ TDBManager::~TDBManager(){
 	delete this->fVerifyCredentialCmd;
 	delete this->fSelectVersionCmd;
 	delete this->fSelectLastVersionCmd;
+	delete this->fSelectLastVersionFilesCmd;
 	delete this->fSelectAllVersionsCmd;
 
 	if (this->fConnection->State == ConnectionState::Open){
@@ -404,15 +409,26 @@ TVersion_ptr TDBManager::getVersion(const string& aUser, int aVersion){
 	}
 }
 
-TVersion_ptr TDBManager::getLastVersion(const string& aUser){
+TVersion_ptr TDBManager::getLastVersion(const string& aUser, bool aLoadFiles){
 	if (this->fConnection->State == ConnectionState::Open){
 		TVersion_ptr version = nullptr;
 
+		SqlCommand^ cmd = nullptr;
+		string f;
+		if (aLoadFiles){
+			cmd = this->fSelectLastVersionFilesCmd;
+			f = "SelectLastVersionFiles";
+		}
+		else{
+			cmd = this->fSelectLastVersionCmd;
+			f = "SelectLastVersion";
+		}
+		
 		//Select user version
-		this->fSelectLastVersionCmd->Parameters->Add("@username", SqlDbType::NVarChar, 50)->Value = gcnew String(aUser.c_str());
+		cmd->Parameters->Add("@username", SqlDbType::NVarChar, 50)->Value = gcnew String(aUser.c_str());
 		SqlDataReader^ reader;
 		try{
-			reader = fSelectLastVersionCmd->ExecuteReader();
+			reader = cmd->ExecuteReader();
 
 			if (reader->HasRows){
 				int v = -1;
@@ -422,24 +438,26 @@ TVersion_ptr TDBManager::getLastVersion(const string& aUser){
 						v = reader->GetInt32(0);
 						version = new_TVersion_ptr(v, reader->GetInt64(1));
 					}
-					string serverPath = marshalString(reader->GetString(2));
-					string clientPath = marshalString(reader->GetString(3));
-					long long lastMod = reader->GetInt64(4);
-					TFile_ptr file = copy_TFile_ptr(serverPath, clientPath, lastMod);
-					file->setVersion(v);
-					version->addFile(move_TFile_ptr(file));
+					if (aLoadFiles){
+						string serverPath = marshalString(reader->GetString(2));
+						string clientPath = marshalString(reader->GetString(3));
+						long long lastMod = reader->GetInt64(4);
+						TFile_ptr file = copy_TFile_ptr(serverPath, clientPath, lastMod);
+						file->setVersion(v);
+						version->addFile(move_TFile_ptr(file));
+					}
 				}
 			}
 
-			this->fSelectLastVersionCmd->Parameters->Clear();
+			cmd->Parameters->Clear();
 			reader->Close();
 
 			return version;
 		}
 		catch (Exception^ e) {
-			this->fSelectLastVersionCmd->Parameters->Clear();
+			cmd->Parameters->Clear();
 			reader->Close();
-			throw EDBException("Error during SelectLastVersionCmd: " + marshalString(e->Message));
+			throw EDBException("Error during " + f + ": " + marshalString(e->Message));
 		}
 	}
 	else{

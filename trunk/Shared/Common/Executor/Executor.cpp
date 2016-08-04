@@ -56,126 +56,171 @@ void TMessageExecutor::serverExecutor(){
 			int kind = bm->getID();
 
 			switch (kind){
-			case USER_REG_REQ_ID:
+			case USER_REG_REQ_ID:{
 				doServerLog(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "calling processRegistrationRequest method of the controller");
+				TUserRegistrReqMessage_ptr mptr = nullptr;
 				try{
-					TUserRegistrReqMessage_ptr mptr = make_TUserRegistrReqMessage_ptr(bm);
+					mptr = make_TUserRegistrReqMessage_ptr(bm);
 					this->fCallbackObj->processRegistrationRequest(msg->getConnection(), mptr);
-					mptr.reset();
 				}
 				catch (EMessageException& e){
 					doServerError(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "error creating TUserRegistrReqMessage: " + e.getMessage());
 				}
-				break;
-
-			case UPDATE_START_REQ_ID:
-				doServerLog(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "calling processUpdateStartRequest method of the controller");
-				try{
-					TUpdateStartReqMessage_ptr mptr = make_TUpdateStartReqMessage_ptr(bm);
-					this->fCallbackObj->processUpdateStart(msg->getConnection(), mptr);
+				if (mptr != nullptr)
 					mptr.reset();
+
+				break;
+			}
+			case UPDATE_START_REQ_ID:{
+				doServerLog(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "calling processUpdateStartRequest method of the controller");
+				TUpdateStartReqMessage_ptr mptr = nullptr;
+				try{
+					mptr = make_TUpdateStartReqMessage_ptr(bm);
+					this->fCallbackObj->processUpdateStart(msg->getConnection(), mptr);
 				}
 				catch (EMessageException& e){
 					doServerError(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "error creating TUpdateStartReqMessage: " + e.getMessage());
 				}
-				break;
-
-			case ADD_NEW_FILE_ID:
-				doServerLog(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "calling processAddNewFile method of the controller");
-				try{
-					TAddNewFileMessage_ptr mptr = make_TAddNewFileMessage_ptr(bm);
-					this->fCallbackObj->processAddNewFile(msg->getConnection(), mptr);
+				if (mptr != nullptr)
 					mptr.reset();
+
+				break;
+			}
+			case ADD_NEW_FILE_ID:{
+				doServerLog(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "calling processAddNewFile method of the controller");
+				TAddNewFileMessage_ptr mptr = nullptr;
+				try{
+					mptr = make_TAddNewFileMessage_ptr(bm);
+					this->fCallbackObj->processAddNewFile(msg->getConnection(), mptr);
 				}
 				catch (EMessageException& e){
 					doServerError(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "error creating TAddNewFileMessage: " + e.getMessage());
 				}
-				break;
-
-			case UPDATE_FILE_ID:
-				doServerLog(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "calling processUpdateFile method of the controller");
-				try{
-					TUpdateFileMessage_ptr mptr = make_TUpdateFileMessage_ptr(bm);
-					this->fCallbackObj->processUpdateFile(msg->getConnection(), mptr);
+				if (mptr != nullptr)
 					mptr.reset();
+
+				break;
+			}
+			case UPDATE_FILE_ID:{
+				doServerLog(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "calling processUpdateFile method of the controller");
+				TUpdateFileMessage_ptr mptr = nullptr;
+				try{
+					mptr = make_TUpdateFileMessage_ptr(bm);
+					this->fCallbackObj->processUpdateFile(msg->getConnection(), mptr);
 				}
 				catch (EMessageException& e){
 					doServerError(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "error creating TUpdateFileMessage: " + e.getMessage());
 				}
-				break;
-
-			case REMOVE_FILE_ID:
-				doServerLog(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "calling processRemoveFile method of the controller");
-				try{
-					TRemoveFileMessage_ptr mptr = make_TRemoveFileMessage_ptr(bm);
-					this->fCallbackObj->processRemoveFile(msg->getConnection(), mptr);
+				if (mptr != nullptr)
 					mptr.reset();
+
+				break;
+			}
+			case REMOVE_FILE_ID:{
+				doServerLog(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "calling processRemoveFile method of the controller");
+				TRemoveFileMessage_ptr mptr = nullptr;
+				try{
+					mptr = make_TRemoveFileMessage_ptr(bm);
+					this->fCallbackObj->processRemoveFile(msg->getConnection(), mptr);
 				}
 				catch (EMessageException& e){
 					doServerError(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "error creating TRemoveFileMessage: " + e.getMessage());
 				}
-				break;
-
-			case UPDATE_STOP_REQ_ID:
-				doServerLog(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "calling processUpdateStopRequest method of the controller");
-				try{
-					TUpdateStopReqMessage_ptr mptr = make_TUpdateStopReqMessage_ptr(bm);
-					this->fCallbackObj->processUpdateStop(msg->getConnection(), mptr);
+				if (mptr != nullptr)
 					mptr.reset();
+
+				break;
+			}
+			case UPDATE_STOP_REQ_ID:{
+				doServerLog(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "calling processUpdateStopRequest method of the controller");
+				TUpdateStopReqMessage_ptr mptr = nullptr;
+				try{
+					mptr = make_TUpdateStopReqMessage_ptr(bm);
+					this->fCallbackObj->processUpdateStop(msg->getConnection(), mptr);
 				}
 				catch (EMessageException& e){
 					doServerError(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "error creating TUpdateStopReqMessage: " + e.getMessage());
 				}
-				break;
-
-			case GET_VERSIONS_REQ_ID:
-				doServerLog(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "calling processGetVersions method of the controller");
-				try{
-					TGetVersionsReqMessage_ptr mptr = make_TGetVersionsReqMessage_ptr(bm);
-					this->fCallbackObj->processGetVersions(msg->getConnection(), mptr);
+				if (mptr != nullptr)
 					mptr.reset();
+
+				break;
+			}
+			case GET_VERSIONS_REQ_ID:{
+				doServerLog(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "calling processGetVersions method of the controller");
+				TGetVersionsReqMessage_ptr mptr = nullptr;
+				try{
+					mptr = make_TGetVersionsReqMessage_ptr(bm);
+					this->fCallbackObj->processGetVersions(msg->getConnection(), mptr);
 				}
 				catch (EMessageException& e){
 					doServerError(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "error creating TGetVersionsReqMessage: " + e.getMessage());
 				}
-				break;
-
-			case RESTORE_VER_REQ_ID:
-				doServerLog(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "calling processRestoreVersion method of the controller");
-				try{
-					TRestoreVerReqMessage_ptr mptr = make_TRestoreVerReqMessage_ptr(bm);
-					this->fCallbackObj->processRestoreVersion(msg->getConnection(), mptr);
+				if (mptr != nullptr)
 					mptr.reset();
+
+				break;
+			}
+			case GET_LAST_VERSION_REQ_ID:{
+				doServerLog(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "calling processGetLastVersion method of the controller");
+				TGetLastVerReqMessage_ptr mptr = nullptr;
+				try{
+					mptr = make_TGetLastVerReqMessage_ptr(bm);
+					this->fCallbackObj->processGetLastVersion(msg->getConnection(), mptr);
+				}
+				catch (EMessageException& e){
+					doServerError(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "error creating TGetLastVerReqMessage: " + e.getMessage());
+				}
+				if (mptr != nullptr)
+					mptr.reset();
+
+				break;
+			}
+			case RESTORE_VER_REQ_ID:{
+				doServerLog(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "calling processRestoreVersion method of the controller");
+				TRestoreVerReqMessage_ptr mptr = nullptr;
+				try{
+					mptr = make_TRestoreVerReqMessage_ptr(bm);
+					this->fCallbackObj->processRestoreVersion(msg->getConnection(), mptr);
 				}
 				catch (EMessageException& e){
 					doServerError(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "error creating TRestoreVerReqMessage: " + e.getMessage());
 				}
-				break;
-
-			case RESTORE_FILE_ACK_ID:
-				doServerLog(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "calling processRestoreFileAck method of the controller");
-				try{
-					TRestoreFileAckMessage_ptr mptr = make_TRestoreFileAckMessage_ptr(bm);
-					this->fCallbackObj->processRestoreFileAck(msg->getConnection(), mptr);
+				if (mptr != nullptr)
 					mptr.reset();
+
+				break;
+			}
+			case RESTORE_FILE_ACK_ID:{
+				doServerLog(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "calling processRestoreFileAck method of the controller");
+				TRestoreFileAckMessage_ptr mptr = nullptr;
+				try{
+					mptr = make_TRestoreFileAckMessage_ptr(bm);
+					this->fCallbackObj->processRestoreFileAck(msg->getConnection(), mptr);
 				}
 				catch (EMessageException& e){
 					doServerError(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "error creating TRestoreFileAckMessage: " + e.getMessage());
 				}
-				break;
-
-			case PING_REQ_ID:
-				doServerLog(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "calling processPingRequest method of the controller");
-				try{
-					TPingReqMessage_ptr mptr = make_TPingReqMessage_ptr(bm);
-					this->fCallbackObj->processPingRequest(msg->getConnection(), mptr);
+				if (mptr != nullptr)
 					mptr.reset();
+
+				break;
+			}
+			case PING_REQ_ID:{
+				doServerLog(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "calling processPingRequest method of the controller");
+				TPingReqMessage_ptr mptr = nullptr;
+				try{
+					mptr = make_TPingReqMessage_ptr(bm);
+					this->fCallbackObj->processPingRequest(msg->getConnection(), mptr);
 				}
 				catch (EMessageException& e){
 					doServerError(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "error creating TPingReqMessage: " + e.getMessage());
 				}
+				if (mptr != nullptr)
+					mptr.reset();
+
 				break;
-			
+			}
 			default:
 				//should never get here
 				break;
