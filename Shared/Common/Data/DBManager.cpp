@@ -30,7 +30,12 @@ string marshalString(String ^ aStr) {
 const int TDBManager::getUserID(const string& aUser, SqlTransaction^ aTransaction){
 	int uID = -1;
 
-	if (this->fConnection->State == ConnectionState::Open){
+	if (!System::Object::ReferenceEquals(this->fConnection, nullptr) && (this->fConnection->State == ConnectionState::Open)){
+		if (System::Object::ReferenceEquals(this->fSelectUserIdCmd, nullptr)){
+			this->fSelectUserIdCmd = gcnew SqlCommand("SELECT UserID FROM Users WHERE Username = @username;");
+			this->fSelectUserIdCmd->CommandType = CommandType::Text;
+			this->fSelectUserIdCmd->Connection = this->fConnection;
+		}
 		this->fSelectUserIdCmd->Transaction = aTransaction;
 		this->fSelectUserIdCmd->Parameters->Add("@username", SqlDbType::NVarChar, 50)->Value = gcnew String(aUser.c_str());
 
@@ -77,49 +82,9 @@ TDBManager::TDBManager(const string& aHost, const string& aDBName){
 	//	throw EDBException("Impossible to connect to DB due to a ConfigurationErrorsException: " + marshalString(e->Message));
 	//}
 
-	if (this->fConnection->State == ConnectionState::Open){
+	if (!System::Object::ReferenceEquals(this->fConnection, nullptr) && (this->fConnection->State == ConnectionState::Open)){
 		this->fHost = make_string_ptr(aHost);
 		this->fDBName = make_string_ptr(aDBName);
-
-		this->fInsertUserCmd = gcnew SqlCommand("INSERT INTO Users (Username, Password, Salt) VALUES (@username, @password, @salt);");
-		this->fInsertUserCmd->CommandType = CommandType::Text;
-		this->fInsertUserCmd->Connection = this->fConnection;
-
-		this->fSelectUserIdCmd = gcnew SqlCommand("SELECT UserID FROM Users WHERE Username = @username;");
-		this->fSelectUserIdCmd->CommandType = CommandType::Text;
-		this->fSelectUserIdCmd->Connection = this->fConnection;
-
-		this->fInsertVersionCmd = gcnew SqlCommand("INSERT INTO Versions (VerID, UserID, VerDate) VALUES (@verID, @userID, @verDate);");
-		this->fInsertVersionCmd->CommandType = CommandType::Text;
-		this->fInsertVersionCmd->Connection = this->fConnection;
-
-		this->fInsertFilesCmd = gcnew SqlCommand("INSERT INTO Files (VerID, UserID, ServerPath, ClientRelativePath, LastModDate) VALUES (@verID, @userID, @serverPath, @clientRelativePath, @lastModDate);");
-		this->fInsertFilesCmd->CommandType = CommandType::Text;
-		this->fInsertFilesCmd->Connection = this->fConnection;
-		
-		this->fSelectUserSaltCmd = gcnew SqlCommand("SELECT Salt FROM Users WHERE Username = @username;");
-		this->fSelectUserSaltCmd->CommandType = CommandType::Text;
-		this->fSelectUserSaltCmd->Connection = this->fConnection;
-
-		this->fVerifyCredentialCmd = gcnew SqlCommand("SELECT COUNT(*) FROM Users WHERE Username = @username AND Password = @password;");
-		this->fVerifyCredentialCmd->CommandType = CommandType::Text;
-		this->fVerifyCredentialCmd->Connection = this->fConnection;
-
-		this->fSelectVersionCmd = gcnew SqlCommand("SELECT VerDate, ServerPath, ClientRelativePath, LastModDate FROM Users, Versions, Files WHERE Users.UserID = Versions.UserID AND Users.UserID = Files.UserID AND Versions.VerID = Files.VerID AND Versions.VerID = @verID AND Username = @username;");
-		this->fSelectVersionCmd->CommandType = CommandType::Text;
-		this->fSelectVersionCmd->Connection = this->fConnection;
-
-		this->fSelectLastVersionCmd = gcnew SqlCommand("SELECT VerID, VerDate FROM Users, Versions WHERE Users.UserID = Versions.UserID AND Username = @username AND Versions.VerID = (SELECT MAX(VerID) FROM Versions, Users WHERE Users.UserID = Versions.UserID AND Username = @username);");
-		this->fSelectLastVersionCmd->CommandType = CommandType::Text;
-		this->fSelectLastVersionCmd->Connection = this->fConnection;
-
-		this->fSelectLastVersionFilesCmd = gcnew SqlCommand("SELECT Versions.VerID, VerDate, ServerPath, ClientRelativePath, LastModDate FROM Users, Versions, Files WHERE Users.UserID = Versions.UserID AND Users.UserID = Files.UserID AND Versions.VerID = Files.VerID AND Username = @username AND Versions.VerID = (SELECT MAX(VerID) FROM Versions, Users WHERE Users.UserID = Versions.UserID AND Username = @username);");
-		this->fSelectLastVersionFilesCmd->CommandType = CommandType::Text;
-		this->fSelectLastVersionFilesCmd->Connection = this->fConnection;
-
-		this->fSelectAllVersionsCmd = gcnew SqlCommand("SELECT VerID, VerDate FROM Users, Versions WHERE Users.UserID = Versions.UserID AND Username = @username;");
-		this->fSelectAllVersionsCmd->CommandType = CommandType::Text;
-		this->fSelectAllVersionsCmd->Connection = this->fConnection;
 	}
 }
 
@@ -135,7 +100,7 @@ TDBManager::~TDBManager(){
 	delete this->fSelectLastVersionFilesCmd;
 	delete this->fSelectAllVersionsCmd;
 
-	if (this->fConnection->State == ConnectionState::Open){
+	if (!System::Object::ReferenceEquals(this->fConnection, nullptr) && (this->fConnection->State == ConnectionState::Open)){
 		this->fConnection->Close();
 		delete this->fConnection;
 		this->fConnection = nullptr;
@@ -153,7 +118,13 @@ TDBManager::~TDBManager(){
 }
 
 void TDBManager::insertNewUser(const string& aUser, const string& aPass){
-	if (this->fConnection->State == ConnectionState::Open){
+	if (!System::Object::ReferenceEquals(this->fConnection, nullptr) && (this->fConnection->State == ConnectionState::Open)){
+
+		if (System::Object::ReferenceEquals(this->fInsertUserCmd, nullptr)){
+			this->fInsertUserCmd = gcnew SqlCommand("INSERT INTO Users (Username, Password, Salt) VALUES (@username, @password, @salt);");
+			this->fInsertUserCmd->CommandType = CommandType::Text;
+			this->fInsertUserCmd->Connection = this->fConnection;
+		}
 		this->fInsertUserCmd->Parameters->Add("@username", SqlDbType::NVarChar, 50)->Value = gcnew String(aUser.c_str());
 		string_ptr salt = nullptr;
 		string_ptr saltedPass = nullptr;
@@ -191,7 +162,7 @@ void TDBManager::insertNewUser(const string& aUser, const string& aPass){
 }
 
 void TDBManager::InsertNewVersion(const string& aUser, TVersion_ptr& aVersion){
-	if (this->fConnection->State == ConnectionState::Open){
+	if (!System::Object::ReferenceEquals(this->fConnection, nullptr) && (this->fConnection->State == ConnectionState::Open)){
 		int uID = -1;
 		SqlTransaction^ transaction;
 
@@ -213,6 +184,11 @@ void TDBManager::InsertNewVersion(const string& aUser, TVersion_ptr& aVersion){
 		}
 
 		//Insert new version for user
+		if (System::Object::ReferenceEquals(this->fInsertVersionCmd, nullptr)){
+			this->fInsertVersionCmd = gcnew SqlCommand("INSERT INTO Versions (VerID, UserID, VerDate) VALUES (@verID, @userID, @verDate);");
+			this->fInsertVersionCmd->CommandType = CommandType::Text;
+			this->fInsertVersionCmd->Connection = this->fConnection;
+		}
 		this->fInsertVersionCmd->Transaction = transaction;
 		this->fInsertVersionCmd->Parameters->Add("@verID", SqlDbType::Int)->Value = aVersion->getVersion();
 		this->fInsertVersionCmd->Parameters->Add("@userID", SqlDbType::Int)->Value = uID;
@@ -235,6 +211,11 @@ void TDBManager::InsertNewVersion(const string& aUser, TVersion_ptr& aVersion){
 		//Insert files for this version
 		TFile_ptr f = aVersion->getNextFile();
 		while (f != nullptr){
+			if (System::Object::ReferenceEquals(this->fInsertFilesCmd, nullptr)){
+				this->fInsertFilesCmd = gcnew SqlCommand("INSERT INTO Files (VerID, UserID, ServerPath, ClientRelativePath, LastModDate) VALUES (@verID, @userID, @serverPath, @clientRelativePath, @lastModDate);");
+				this->fInsertFilesCmd->CommandType = CommandType::Text;
+				this->fInsertFilesCmd->Connection = this->fConnection;
+			}
 			this->fInsertFilesCmd->Transaction = transaction;
 			this->fInsertFilesCmd->Parameters->Add("@verID", SqlDbType::Int)->Value = aVersion->getVersion();
 			this->fInsertFilesCmd->Parameters->Add("@userID", SqlDbType::Int)->Value = uID;
@@ -286,12 +267,17 @@ const bool TDBManager::checkIfUserExists(const string& aUser){
 }
 
 const bool TDBManager::verifyUserCredentials(const string& aUser, const string& aPass){
-	if (this->fConnection->State == ConnectionState::Open){
+	if (!System::Object::ReferenceEquals(this->fConnection, nullptr) && (this->fConnection->State == ConnectionState::Open)){
 		string salt = "";
 		SqlDataReader^ reader;
 		SqlTransaction^ transaction = this->fConnection->BeginTransaction();
 
 		//Select user salt
+		if (System::Object::ReferenceEquals(this->fSelectUserSaltCmd, nullptr)){
+			this->fSelectUserSaltCmd = gcnew SqlCommand("SELECT Salt FROM Users WHERE Username = @username;");
+			this->fSelectUserSaltCmd->CommandType = CommandType::Text;
+			this->fSelectUserSaltCmd->Connection = this->fConnection;
+		}
 		this->fSelectUserSaltCmd->Transaction = transaction;
 		this->fSelectUserSaltCmd->Parameters->Add("@username", SqlDbType::NVarChar, 50)->Value = gcnew String(aUser.c_str());
 		try{
@@ -316,6 +302,11 @@ const bool TDBManager::verifyUserCredentials(const string& aUser, const string& 
 		}
 
 		//verify user credentials
+		if (System::Object::ReferenceEquals(this->fVerifyCredentialCmd, nullptr)){
+			this->fVerifyCredentialCmd = gcnew SqlCommand("SELECT COUNT(*) FROM Users WHERE Username = @username AND Password = @password;");
+			this->fVerifyCredentialCmd->CommandType = CommandType::Text;
+			this->fVerifyCredentialCmd->Connection = this->fConnection;
+		}
 		this->fVerifyCredentialCmd->Transaction = transaction;
 		string_ptr saltedPass = make_string_ptr(salt.c_str());
 		saltedPass->append(aPass.c_str());
@@ -368,10 +359,15 @@ const bool TDBManager::verifyUserCredentials(const string& aUser, const string& 
 }
 
 TVersion_ptr TDBManager::getVersion(const string& aUser, int aVersion){
-	if (this->fConnection->State == ConnectionState::Open){
+	if (!System::Object::ReferenceEquals(this->fConnection, nullptr) && (this->fConnection->State == ConnectionState::Open)){
 		TVersion_ptr version = nullptr;
 
 		//Select user version
+		if (System::Object::ReferenceEquals(this->fSelectVersionCmd, nullptr)){
+			this->fSelectVersionCmd = gcnew SqlCommand("SELECT VerDate, ServerPath, ClientRelativePath, LastModDate FROM Users, Versions, Files WHERE Users.UserID = Versions.UserID AND Users.UserID = Files.UserID AND Versions.VerID = Files.VerID AND Versions.VerID = @verID AND Username = @username;");
+			this->fSelectVersionCmd->CommandType = CommandType::Text;
+			this->fSelectVersionCmd->Connection = this->fConnection;
+		}
 		this->fSelectVersionCmd->Parameters->Add("@verID", SqlDbType::Int)->Value = aVersion;
 		this->fSelectVersionCmd->Parameters->Add("@username", SqlDbType::NVarChar, 50)->Value = gcnew String(aUser.c_str());
 		SqlDataReader^ reader;
@@ -410,16 +406,26 @@ TVersion_ptr TDBManager::getVersion(const string& aUser, int aVersion){
 }
 
 TVersion_ptr TDBManager::getLastVersion(const string& aUser, bool aLoadFiles){
-	if (this->fConnection->State == ConnectionState::Open){
+	if (!System::Object::ReferenceEquals(this->fConnection, nullptr) && (this->fConnection->State == ConnectionState::Open)){
 		TVersion_ptr version = nullptr;
 
 		SqlCommand^ cmd = nullptr;
 		string f;
 		if (aLoadFiles){
+			if (System::Object::ReferenceEquals(this->fSelectLastVersionFilesCmd, nullptr)){
+				this->fSelectLastVersionFilesCmd = gcnew SqlCommand("SELECT Versions.VerID, VerDate, ServerPath, ClientRelativePath, LastModDate FROM Users, Versions, Files WHERE Users.UserID = Versions.UserID AND Users.UserID = Files.UserID AND Versions.VerID = Files.VerID AND Username = @username AND Versions.VerID = (SELECT MAX(VerID) FROM Versions, Users WHERE Users.UserID = Versions.UserID AND Username = @username);");
+				this->fSelectLastVersionFilesCmd->CommandType = CommandType::Text;
+				this->fSelectLastVersionFilesCmd->Connection = this->fConnection;
+			}
 			cmd = this->fSelectLastVersionFilesCmd;
 			f = "SelectLastVersionFiles";
 		}
 		else{
+			if (System::Object::ReferenceEquals(this->fSelectLastVersionCmd, nullptr)){
+				this->fSelectLastVersionCmd = gcnew SqlCommand("SELECT VerID, VerDate FROM Users, Versions WHERE Users.UserID = Versions.UserID AND Username = @username AND Versions.VerID = (SELECT MAX(VerID) FROM Versions, Users WHERE Users.UserID = Versions.UserID AND Username = @username);");
+				this->fSelectLastVersionCmd->CommandType = CommandType::Text;
+				this->fSelectLastVersionCmd->Connection = this->fConnection;
+			}
 			cmd = this->fSelectLastVersionCmd;
 			f = "SelectLastVersion";
 		}
@@ -466,14 +472,15 @@ TVersion_ptr TDBManager::getLastVersion(const string& aUser, bool aLoadFiles){
 }
 
 TVersionList_ptr TDBManager::getAllVersions(const string& aUser){
-	//SELECT VerID, VerDate 
-	//FROM Users, Versions 
-	//WHERE Users.UserID = Versions.UserID AND Username = @username;
-
-	if (this->fConnection->State == ConnectionState::Open){
+	if (!System::Object::ReferenceEquals(this->fConnection, nullptr) && (this->fConnection->State == ConnectionState::Open)){
 		TVersionList_ptr versionList = nullptr;
 
 		//Select user version
+		if (System::Object::ReferenceEquals(this->fSelectAllVersionsCmd, nullptr)){
+			this->fSelectAllVersionsCmd = gcnew SqlCommand("SELECT VerID, VerDate FROM Users, Versions WHERE Users.UserID = Versions.UserID AND Username = @username;");
+			this->fSelectAllVersionsCmd->CommandType = CommandType::Text;
+			this->fSelectAllVersionsCmd->Connection = this->fConnection;
+		}
 		this->fSelectAllVersionsCmd->Parameters->Add("@username", SqlDbType::NVarChar, 50)->Value = gcnew String(aUser.c_str());
 		SqlDataReader^ reader;
 		try{
@@ -505,5 +512,4 @@ TVersionList_ptr TDBManager::getAllVersions(const string& aUser){
 		throw EDBException("No connection to DB!");
 	}
 }
-
 #pragma endregion

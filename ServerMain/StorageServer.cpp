@@ -217,7 +217,7 @@ const bool TStorageServer::startServer(){
 //}
 
 #pragma region "IServerBaseController implementation"
-void TStorageServer::onServerLog(string aClassName, string aFuncName, string aMsg){
+void TStorageServer::onServerLog(const string& aClassName, const string& aFuncName, const string& aMsg){
 #ifdef _DEBUG
 	if (!System::Object::ReferenceEquals(this->fCallbackObj, nullptr))
 		this->fCallbackObj->onServerLog(aClassName, aFuncName, aMsg);
@@ -226,41 +226,26 @@ void TStorageServer::onServerLog(string aClassName, string aFuncName, string aMs
 #endif
 }
 
-void TStorageServer::onServerWarning(string aClassName, string aFuncName, string aMsg){
+void TStorageServer::onServerWarning(const string& aClassName, const string& aFuncName, const string& aMsg){
 	if (!System::Object::ReferenceEquals(this->fCallbackObj, nullptr))
 		this->fCallbackObj->onServerWarning(aClassName, aFuncName, aMsg);
 
 	warningToFile(aClassName, aFuncName, aMsg);
 }
 
-void TStorageServer::onServerError(string aClassName, string aFuncName, string aMsg){
+void TStorageServer::onServerError(const string& aClassName, const string& aFuncName, const string& aMsg){
 	if (!System::Object::ReferenceEquals(this->fCallbackObj, nullptr))
 		this->fCallbackObj->onServerError(aClassName, aFuncName, aMsg);
 
 	errorToFile(aClassName, aFuncName, aMsg);
 }
 
-void TStorageServer::onServerCriticalError(string aClassName, string aFuncName, string aMsg){
+void TStorageServer::onServerCriticalError(const string& aClassName, const string& aFuncName, const string& aMsg){
 	if (!System::Object::ReferenceEquals(this->fCallbackObj, nullptr))
 		this->fCallbackObj->onServerCriticalError(aClassName, aFuncName, aMsg);
 
 	criticalErrorToFile(aClassName, aFuncName, aMsg);
 }
-#pragma endregion
-
-
-#pragma region "IServerSockController implementation"
-void TStorageServer::onServerSockCreate(){
-	this->onServerLog("TStorageServer", "onServerSockCreate", "internal server socket correctly started");
-	if (!System::Object::ReferenceEquals(this->fCallbackObj, nullptr))
-		this->fCallbackObj->onServerSockCreate();
-}
-
-void TStorageServer::onServerSockAccept(TConnectionHandle aConnection){}
-
-void TStorageServer::onServerSockRead(TConnectionHandle aConnection, string_ptr& aMsg){}
-
-void TStorageServer::onServerSockWrite(){}
 #pragma endregion
 
 
@@ -458,11 +443,10 @@ void TStorageServer::processAddNewFile(TConnectionHandle aConnection, TAddNewFil
 			checksumMatches = false;
 		}
 
+		TFileAckMessage_ptr reply = nullptr;
 		if (!checksumMatches){
 			//enqueue negative response
-			TFileAckMessage_ptr reply = new_TFileAckMessage_ptr(false, fp);
-			TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(reply), aConnection); //reply is moved
-			this->enqueueMessageToSend(move_TMessageContainer_ptr(replyContainer)); //replyContainer is moved
+			reply = new_TFileAckMessage_ptr(false, fp);
 		}
 		else{
 			//update session object
@@ -473,13 +457,18 @@ void TStorageServer::processAddNewFile(TConnectionHandle aConnection, TAddNewFil
 			session->addFile(move_TFile_ptr(file));
 
 			//store file in proper location
-			storeFile(p, move_string_ptr(aMsg->getFileContent()));
-
-			//send a positive response
-			TFileAckMessage_ptr reply = new_TFileAckMessage_ptr(true, fp);
-			TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(reply), aConnection); //reply is moved
-			this->enqueueMessageToSend(move_TMessageContainer_ptr(replyContainer)); //replyContainer is moved
+			try{
+				storeFile(p, move_string_ptr(aMsg->getFileContent()));
+				reply = new_TFileAckMessage_ptr(true, fp);
+			}
+			catch (EFilesystemException e){
+				this->onServerError("TStorageServer", "processAddNewFile", "Storage error: " + e.getMessage());
+				reply = new_TFileAckMessage_ptr(false, fp);
+			}
 		}
+
+		TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(reply), aConnection); //reply is moved
+		this->enqueueMessageToSend(move_TMessageContainer_ptr(replyContainer)); //replyContainer is moved
 	}
 	else{
 		this->onServerError("TStorageServer", "processAddNewFile", "received an empty message; skipped.");
@@ -531,11 +520,10 @@ void TStorageServer::processUpdateFile(TConnectionHandle aConnection, TUpdateFil
 			checksumMatches = false;
 		}
 
+		TFileAckMessage_ptr reply = nullptr;
 		if (!checksumMatches){
 			//enqueue negative response
-			TFileAckMessage_ptr reply = new_TFileAckMessage_ptr(false, fp);
-			TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(reply), aConnection); //reply is moved
-			this->enqueueMessageToSend(move_TMessageContainer_ptr(replyContainer)); //replyContainer is moved
+			reply = new_TFileAckMessage_ptr(false, fp);
 		}
 		else{
 			//update session object
@@ -543,16 +531,21 @@ void TStorageServer::processUpdateFile(TConnectionHandle aConnection, TUpdateFil
 			TFile_ptr file = new_TFile_ptr(u, v, fp, fd);
 			path p = file->getServerPathPrefix();
 			p /= file->getClientRelativePath();
-			session->updateFile(move_TFile_ptr(file));
+			session->addFile(move_TFile_ptr(file));
 
 			//store file in proper location
-			storeFile(p, move_string_ptr(aMsg->getFileContent()));
-
-			//send a positive response
-			TFileAckMessage_ptr reply = new_TFileAckMessage_ptr(true, fp);
-			TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(reply), aConnection); //reply is moved
-			this->enqueueMessageToSend(move_TMessageContainer_ptr(replyContainer)); //replyContainer is moved
+			try{
+				storeFile(p, move_string_ptr(aMsg->getFileContent()));
+				reply = new_TFileAckMessage_ptr(true, fp);
+			}
+			catch (EFilesystemException e){
+				this->onServerError("TStorageServer", "processAddNewFile", "Storage error: " + e.getMessage());
+				reply = new_TFileAckMessage_ptr(false, fp);
+			}
 		}
+
+		TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(reply), aConnection); //reply is moved
+		this->enqueueMessageToSend(move_TMessageContainer_ptr(replyContainer)); //replyContainer is moved
 	}
 	else{
 		this->onServerError("TStorageServer", "processUpdateFile", "received an empty message; skipped.");
@@ -948,7 +941,15 @@ void TStorageServer::processRestoreFileAck(TConnectionHandle aConnection, TResto
 		this->onServerLog("TStorageServer", "processRestoreFileAck", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
 
 		//check if token is associated to a valid session
-		string u = getUserFromToken(t);
+		string u;
+		try{
+			u = getUserFromToken(t);
+		}
+		catch (EOpensslException e){
+			this->onServerError("TStorageServer", "processRestoreFileAck", "Error in getUserFromToken(): " + e.getMessage());
+			return;
+		}
+
 		TSession_ptr session = this->isThereARestoreSessionFor(u);
 		if (session == nullptr){
 			this->onServerError("TStorageServer", "processRestoreFileAck", "There is no restore session opened for user: " + u);

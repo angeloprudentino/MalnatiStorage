@@ -79,6 +79,8 @@ protected:
 public:
 	TBaseMessage();
 	TBaseMessage(string_ptr& aMsg);
+	TBaseMessage(const TBaseMessage&) = delete;            // disable copying
+	TBaseMessage& operator=(const TBaseMessage&) = delete; // disable assignment
 	virtual ~TBaseMessage();
 
 	virtual string_ptr encodeMessage();
@@ -106,6 +108,8 @@ private:
 public:
 	TUserRegistrReqMessage(TBaseMessage_ptr& aBase);
 	TUserRegistrReqMessage(const string& aUser, const string& aPass);
+	TUserRegistrReqMessage(const TUserRegistrReqMessage&) = delete;            // disable copying
+	TUserRegistrReqMessage& operator=(const TUserRegistrReqMessage&) = delete; // disable assignment
 	~TUserRegistrReqMessage();
 
 	string_ptr encodeMessage();
@@ -129,6 +133,8 @@ private:
 public:
 	TUserRegistrReplyMessage(TBaseMessage_ptr& aBase);
 	TUserRegistrReplyMessage(const bool aResp);
+	TUserRegistrReplyMessage(const TUserRegistrReplyMessage&) = delete;            // disable copying
+	TUserRegistrReplyMessage& operator=(const TUserRegistrReplyMessage&) = delete; // disable assignment
 	~TUserRegistrReplyMessage(){};
 
 	string_ptr encodeMessage();
@@ -153,6 +159,8 @@ private:
 public:
 	TUpdateStartReqMessage(TBaseMessage_ptr& aBase);
 	TUpdateStartReqMessage(const string& aUser, const string& aPass);
+	TUpdateStartReqMessage(const TUpdateStartReqMessage&) = delete;            // disable copying
+	TUpdateStartReqMessage& operator=(const TUpdateStartReqMessage&) = delete; // disable assignment
 	~TUpdateStartReqMessage();
 
 	string_ptr encodeMessage();
@@ -177,6 +185,8 @@ private:
 public:
 	TUpdateStartReplyMessage(TBaseMessage_ptr& aBase);
 	TUpdateStartReplyMessage(const bool aResp, const string& aToken);
+	TUpdateStartReplyMessage(const TUpdateStartReplyMessage&) = delete;            // disable copying
+	TUpdateStartReplyMessage& operator=(const TUpdateStartReplyMessage&) = delete; // disable assignment
 	~TUpdateStartReplyMessage();
 
 	string_ptr encodeMessage();
@@ -205,6 +215,8 @@ private:
 public:
 	TAddNewFileMessage(TBaseMessage_ptr& aBase);
 	TAddNewFileMessage(const string& aToken, const string& aFilePath);
+	TAddNewFileMessage(const TAddNewFileMessage&) = delete;            // disable copying
+	TAddNewFileMessage& operator=(const TAddNewFileMessage&) = delete; // disable assignment
 	~TAddNewFileMessage();
 
 	string_ptr encodeMessage();
@@ -235,6 +247,8 @@ private:
 public:
 	TUpdateFileMessage(TBaseMessage_ptr& aBase);
 	TUpdateFileMessage(const string& aToken, const string& aFilePath);
+	TUpdateFileMessage(const TUpdateFileMessage&) = delete;            // disable copying
+	TUpdateFileMessage& operator=(const TUpdateFileMessage&) = delete; // disable assignment
 	~TUpdateFileMessage();
 
 	string_ptr encodeMessage();
@@ -262,6 +276,8 @@ private:
 public:
 	TRemoveFileMessage(TBaseMessage_ptr& aBase);
 	TRemoveFileMessage(const string& aToken, const string& aFilePath);
+	TRemoveFileMessage(const TRemoveFileMessage&) = delete;            // disable copying
+	TRemoveFileMessage& operator=(const TRemoveFileMessage&) = delete; // disable assignment
 	~TRemoveFileMessage();
 
 	string_ptr encodeMessage();
@@ -286,6 +302,8 @@ private:
 public:
 	TFileAckMessage(TBaseMessage_ptr& aBase);
 	TFileAckMessage(const bool aResp, const string& aFilePath);
+	TFileAckMessage(const TFileAckMessage&) = delete;            // disable copying
+	TFileAckMessage& operator=(const TFileAckMessage&) = delete; // disable assignment
 	~TFileAckMessage();
 
 	string_ptr encodeMessage();
@@ -310,6 +328,8 @@ private:
 public:
 	TUpdateStopReqMessage(TBaseMessage_ptr& aBase);
 	TUpdateStopReqMessage(const string& aToken);
+	TUpdateStopReqMessage(const TUpdateStopReqMessage&) = delete;            // disable copying
+	TUpdateStopReqMessage& operator=(const TUpdateStopReqMessage&) = delete; // disable assignment
 	~TUpdateStopReqMessage();
 
 	string_ptr encodeMessage();
@@ -333,7 +353,9 @@ private:
 
 public:
 	TUpdateStopReplyMessage(TBaseMessage_ptr& aBase);
-	TUpdateStopReplyMessage(const bool aResp, int aVersion, time_t aTime);
+	TUpdateStopReplyMessage(const bool aResp, const int aVersion, const time_t aTime);
+	TUpdateStopReplyMessage(const TUpdateStopReplyMessage&) = delete;            // disable copying
+	TUpdateStopReplyMessage& operator=(const TUpdateStopReplyMessage&) = delete; // disable assignment
 	~TUpdateStopReplyMessage() {};
 
 	string_ptr encodeMessage();
@@ -360,6 +382,8 @@ private:
 public:
 	TGetVersionsReqMessage(TBaseMessage_ptr& aBase);
 	TGetVersionsReqMessage(const string& aUser, const string& aPass);
+	TGetVersionsReqMessage(const TGetVersionsReqMessage&) = delete;            // disable copying
+	TGetVersionsReqMessage& operator=(const TGetVersionsReqMessage&) = delete; // disable assignment
 	~TGetVersionsReqMessage();
 
 	string_ptr encodeMessage();
@@ -386,6 +410,8 @@ private:
 public:
 	TGetVersionsReplyMessage(TBaseMessage_ptr& aBase);
 	TGetVersionsReplyMessage(const unsigned int aTotVersions, const unsigned int aOldestVersion, const unsigned int aLastVersion, TVersionList_ptr& aVersions);
+	TGetVersionsReplyMessage(const TGetVersionsReplyMessage&) = delete;            // disable copying
+	TGetVersionsReplyMessage& operator=(const TGetVersionsReplyMessage&) = delete; // disable assignment
 	~TGetVersionsReplyMessage();
 
 	string_ptr encodeMessage();
@@ -413,6 +439,8 @@ private:
 public:
 	TGetLastVerReqMessage(TBaseMessage_ptr& aBase);
 	TGetLastVerReqMessage(const string& aUser, const string& aPass);
+	TGetLastVerReqMessage(const TGetLastVerReqMessage&) = delete;            // disable copying
+	TGetLastVerReqMessage& operator=(const TGetLastVerReqMessage&) = delete; // disable assignment
 	~TGetLastVerReqMessage();
 
 	string_ptr encodeMessage();
@@ -437,6 +465,8 @@ private:
 public:
 	TGetLastVerReplyMessage(TBaseMessage_ptr& aBase);
 	TGetLastVerReplyMessage(const int aVersion, const time_t aVersionDate);
+	TGetLastVerReplyMessage(const TGetLastVerReplyMessage&) = delete;            // disable copying
+	TGetLastVerReplyMessage& operator=(const TGetLastVerReplyMessage&) = delete; // disable assignment
 	~TGetLastVerReplyMessage() {};
 
 	string_ptr encodeMessage();
@@ -463,6 +493,8 @@ private:
 public:
 	TRestoreVerReqMessage(TBaseMessage_ptr& aBase);
 	TRestoreVerReqMessage(const string& aUser, const string& aPass, const unsigned int aVersion);
+	TRestoreVerReqMessage(const TRestoreVerReqMessage&) = delete;            // disable copying
+	TRestoreVerReqMessage& operator=(const TRestoreVerReqMessage&) = delete; // disable assignment
 	~TRestoreVerReqMessage();
 
 	string_ptr encodeMessage();
@@ -488,6 +520,8 @@ private:
 public:
 	TRestoreVerReplyMessage(TBaseMessage_ptr& aBase);
 	TRestoreVerReplyMessage(const bool aResp, const string& aToken);
+	TRestoreVerReplyMessage(const TRestoreVerReplyMessage&) = delete;            // disable copying
+	TRestoreVerReplyMessage& operator=(const TRestoreVerReplyMessage&) = delete; // disable assignment
 	~TRestoreVerReplyMessage();
 
 	string_ptr encodeMessage();
@@ -515,6 +549,8 @@ private:
 public:
 	TRestoreFileMessage(TBaseMessage_ptr& aBase);
 	TRestoreFileMessage(const string& aFilePath);
+	TRestoreFileMessage(const TRestoreFileMessage&) = delete;            // disable copying
+	TRestoreFileMessage& operator=(const TRestoreFileMessage&) = delete; // disable assignment
 	~TRestoreFileMessage();
 
 	string_ptr encodeMessage();
@@ -543,6 +579,8 @@ private:
 public:
 	TRestoreFileAckMessage(TBaseMessage_ptr& aBase);
 	TRestoreFileAckMessage(const bool aResp, const string& aToken, const string& aFilePath);
+	TRestoreFileAckMessage(const TRestoreFileAckMessage&) = delete;            // disable copying
+	TRestoreFileAckMessage& operator=(const TRestoreFileAckMessage&) = delete; // disable assignment
 	~TRestoreFileAckMessage();
 
 	string_ptr encodeMessage();
@@ -568,7 +606,9 @@ private:
 
 public:
 	TRestoreStopMessage(TBaseMessage_ptr& aBase);
-	TRestoreStopMessage(int aVersion, time_t aVersionDate);
+	TRestoreStopMessage(const int aVersion, const time_t aVersionDate);
+	TRestoreStopMessage(const TRestoreStopMessage&) = delete;            // disable copying
+	TRestoreStopMessage& operator=(const TRestoreStopMessage&) = delete; // disable assignment
 	~TRestoreStopMessage() {};
 
 	string_ptr encodeMessage();
@@ -593,6 +633,8 @@ private:
 public:
 	TPingReqMessage(TBaseMessage_ptr& aBase);
 	TPingReqMessage(const string& aToken);
+	TPingReqMessage(const TPingReqMessage&) = delete;            // disable copying
+	TPingReqMessage& operator=(const TPingReqMessage&) = delete; // disable assignment
 	~TPingReqMessage() {};
 
 	string_ptr encodeMessage();
@@ -617,6 +659,8 @@ private:
 public:
 	TPingReplyMessage(TBaseMessage_ptr& aBase);
 	TPingReplyMessage(const string& aToken);
+	TPingReplyMessage(const TPingReplyMessage&) = delete;            // disable copying
+	TPingReplyMessage& operator=(const TPingReplyMessage&) = delete; // disable assignment
 	~TPingReplyMessage() {};
 
 	string_ptr encodeMessage();

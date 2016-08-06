@@ -51,22 +51,17 @@ void TServerForm::dismissTCPserver(){
 	ServerThread->Join();
 }
 
-void TServerForm::onServerSockCreate(){
-	this->Log("TServerForm", "onServerSockCreate", "Main TCP Server has been succesfully created");
-	this->afterStartServer();
-}
-
-void TServerForm::onServerLog(string aClassName, string aFuncName, string aMsg){
+void TServerForm::onServerLog(const string& aClassName, const string& aFuncName, const string& aMsg){
 	this->Log(aClassName, aFuncName, aMsg);
 }
 
-void TServerForm::onServerWarning(string aClassName, string aFuncName, string aMsg){
+void TServerForm::onServerWarning(const string& aClassName, const string& aFuncName, const string& aMsg){
 	this->Log(aClassName, aFuncName, "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww");
 	this->Log(aClassName, aFuncName, "w  " + aMsg);
 	this->Log(aClassName, aFuncName, "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww");
 }
 
-void TServerForm::onServerError(string aClassName, string aFuncName, string aMsg){
+void TServerForm::onServerError(const string& aClassName, const string& aFuncName, const string& aMsg){
 	this->Log(aClassName, aFuncName, "************************************************");
 	this->Log(aClassName, aFuncName, "************************************************");
 	this->Log(aClassName, aFuncName, "** ");
@@ -76,7 +71,7 @@ void TServerForm::onServerError(string aClassName, string aFuncName, string aMsg
 	this->Log(aClassName, aFuncName, "************************************************");
 }
 
-void TServerForm::onServerCriticalError(string aClassName, string aFuncName, string aMsg){
+void TServerForm::onServerCriticalError(const string& aClassName, const string& aFuncName, const string& aMsg){
 	this->onServerError(aClassName, aFuncName, aMsg);
 	this->dismissTCPserver();
 	this->afterStopServer();

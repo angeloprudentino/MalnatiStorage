@@ -38,6 +38,8 @@ private:
 public:
 	TFile(const string& aUser, const int aVersion, const string& aClientRelativePath, const time_t& aLastMod);
 	TFile(const string& aServerPathPrefix, const string& aClientRelativePath, const time_t& aLastMod);
+	TFile(const TFile&) = delete;            // disable copying
+	TFile& operator=(const TFile&) = delete; // disable assignment
 	~TFile();
 
 	const bool isEqualTo(const TFile& aFile);
@@ -71,6 +73,8 @@ private:
 
 public:
 	TVersion(const int aId, const time_t aVersionDate);
+	TVersion(const TVersion&) = delete;            // disable copying
+	TVersion& operator=(const TVersion&) = delete; // disable assignment
 	~TVersion();
 	
 	void addFile(TFile_ptr& aFile);
@@ -108,13 +112,15 @@ private:
 
 public:
 	TSession(const int aKind, const string& aToken);
+	TSession(const TSession&) = delete;            // disable copying
+	TSession& operator=(const TSession&) = delete; // disable assignment
 	~TSession();
 
 	void addFile(TFile_ptr& aFile);
 	void updateFile(TFile_ptr& aFile);
 	void removeFile(TFile_ptr& aFile);
 	TVersion_ptr terminateWithSucces();
-	const bool purge();
+	const bool purge(); //throws EOpensslException
 
 	//getters
 	const int getKind() { return this->fKind; }

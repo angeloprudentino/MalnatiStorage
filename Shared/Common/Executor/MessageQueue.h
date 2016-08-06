@@ -28,6 +28,8 @@ private:
 public:
 	TMessageContainer() : fConnection(){};
 	TMessageContainer(TBaseMessage_ptr& aMsg, TConnectionHandle aConnection);
+	TMessageContainer(const TMessageContainer&) = delete;            // disable copying
+	TMessageContainer& operator=(const TMessageContainer&) = delete; // disable assignment
 	~TMessageContainer();
 	
 	//getters
