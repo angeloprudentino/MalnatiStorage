@@ -1,4 +1,3 @@
-
 /*
  * Author: Angelo Prudentino
  * Date: 30/09/2015
@@ -35,31 +34,6 @@ typedef struct{
 	char* data;
 }B64result;
 
-////workaround for boost warning on windows
-//namespace boost {
-//	namespace detail {
-//		namespace win32 {
-//			struct _SECURITY_ATTRIBUTES : public ::_SECURITY_ATTRIBUTES {};
-//		};
-//	};
-//};
-
-
-//////////////////////////////////////
-//      IServerBaseController	    //
-//////////////////////////////////////
-public class IServerBaseController{
-public:
-	virtual void onServerLog(string aClassName, string aFuncName, string aMsg) = 0;
-	virtual void onServerWarning(string aClassName, string aFuncName, string aMsg) = 0;
-	virtual void onServerError(string aClassName, string aFuncName, string aMsg) = 0;
-	virtual void onServerCriticalError(string aClassName, string aFuncName, string aMsg) = 0;
-};
-#define doServerLog(ptr, aClassName, aFuncName, aMsg) if(ptr!=nullptr) ptr->onServerLog(aClassName, aFuncName, aMsg);
-#define doServerWarning(ptr, aClassName, aFuncName, aMsg) if(ptr!=nullptr) ptr->onServerWarning(aClassName, aFuncName, aMsg);
-#define doServerError(ptr, aClassName, aFuncName, aMsg) if(ptr!=nullptr) ptr->onServerError(aClassName, aFuncName, aMsg);
-#define doServerCriticalError(ptr, aClassName, aFuncName, aMsg) if(ptr!=nullptr) ptr->onServerCriticalError(aClassName, aFuncName, aMsg);
-
 
 //////////////////////////////////////
 //        EBaseException	        //
@@ -68,7 +42,7 @@ public class EBaseException : public std::exception {
 private:
 	string fMessage;
 public:
-	EBaseException(const string aMsg){ this->fMessage = aMsg; }
+	EBaseException(const string& aMsg){ this->fMessage = aMsg; }
 	virtual const string getMessage(){ return this->fMessage; }
 };
 
@@ -77,7 +51,15 @@ public:
 //////////////////////////////////////
 public class EOpensslException : public EBaseException{
 public:
-	EOpensslException(const string aMsg) : EBaseException(aMsg){}
+	EOpensslException(const string& aMsg) : EBaseException(aMsg){}
+};
+
+//////////////////////////////////////
+//      EFilesystemException	    //
+//////////////////////////////////////
+public class EFilesystemException : public EBaseException{
+public:
+	EFilesystemException(const string& aMsg) : EBaseException(aMsg){}
 };
 
 
@@ -96,23 +78,17 @@ const string getUserFromToken(const string& aToken); //throws EOpensslException
 // openssl crypto system init
 void initCrypto();
 
-// Base64 encode/decode functions
-string_ptr opensslB64Encode(char* aContent, int aLen); //throws EOpensslException
-B64result opensslB64Decode(const string& aString); //throws EOpensslException
-string_ptr opensslB64EncodeFile(const string& aFileName); //throws EOpensslException
-
 // Evaluate a file and make its checksum
-//string_ptr opensslChecksum(char* aContent, int aLen); //throws EOpensslException
-//string_ptr opensslFileChecksum(const string aFileName); //throws EOpensslException
+string_ptr opensslB64EncodeFile(const string& aFileName); //throws EOpensslException
 string_ptr opensslB64Checksum(const string& aString); //throws EOpensslException
 string_ptr opensslB64RandomToken(); //throws EOpensslException
 
 //Log to file
-void logToFile(string aClassName, string aFuncName, string aMsg);
-void warningToFile(string aClassName, string aFuncName, string aMsg);
-void errorToFile(string aClassName, string aFuncName, string aMsg);
-void criticalErrorToFile(string aClassName, string aFuncName, string aMsg);
+void logToFile(const string& aClassName, const string& aFuncName, const string& aMsg);
+void warningToFile(const string& aClassName, const string& aFuncName, const string& aMsg);
+void errorToFile(const string& aClassName, const string& aFuncName, const string& aMsg);
+void criticalErrorToFile(const string& aClassName, const string& aFuncName, const string& aMsg);
 
 //Filesystem utilities
-void storeFile(const path& aPath, string_ptr& aFileContent);
-void removeDir(const path& aPath);
+void storeFile(const path& aPath, string_ptr& aFileContent); //throws EFilesystemException
+void removeDir(const path& aPath); //throws EFilesystemException

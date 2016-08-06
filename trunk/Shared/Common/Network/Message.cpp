@@ -8,6 +8,7 @@
  */
 
 #include <boost/algorithm/string/replace.hpp>
+#include <boost/filesystem.hpp>
 #include <sstream>
 #include <vector>
 #include <time.h>
@@ -140,7 +141,6 @@ TBaseMessage::~TBaseMessage() {
 void TBaseMessage::decodeMessageID(){
 	if (this->fEncodedMsg == nullptr)
 		return;
-		//throw EMessageException("fEncodedMsg field is nullptr");
 
 	// Turn the string into a stream.
 	stringstream ss(*(this->fEncodedMsg));
@@ -487,9 +487,23 @@ TAddNewFileMessage::TAddNewFileMessage(const string& aToken, const string& aFile
 	this->fID = ADD_NEW_FILE_ID;
 	this->fToken = make_string_ptr(aToken);
 	this->fFilePath = make_string_ptr(aFilePath);
-	this->fFileContent = nullptr;
-	this->fChecksum = nullptr;
-	this->fFileDate = time(nullptr);
+	//this->fFileContent = nullptr;
+	//this->fChecksum = nullptr;
+	//this->fFileDate = time(nullptr);
+
+	//read file, encode it and calculate checksum
+	try{
+		this->fFileContent = opensslB64EncodeFile(*(this->fFilePath));
+		this->fChecksum = opensslB64Checksum(*(this->fFileContent));
+	}
+	catch (EOpensslException e){
+		throw EMessageException("TAddNewFileMessage: " + e.getMessage());
+	}
+	path p(*(this->fFilePath));
+	boost::system::error_code ec;
+	this->fFileDate = last_write_time(p, ec);
+	if (ec)
+		this->fFileDate = time(nullptr);
 }
 
 TAddNewFileMessage::~TAddNewFileMessage(){
@@ -512,9 +526,19 @@ TAddNewFileMessage::~TAddNewFileMessage(){
 }
 
 string_ptr TAddNewFileMessage::encodeMessage(){
-	//read file, encode it and calculate checksum
-	this->fFileContent = opensslB64EncodeFile(*(this->fFilePath));
-	this->fChecksum = opensslB64Checksum(*(this->fFileContent));
+	////read file, encode it and calculate checksum
+	//try{
+	//	this->fFileContent = opensslB64EncodeFile(*(this->fFilePath));
+	//	this->fChecksum = opensslB64Checksum(*(this->fFileContent));
+	//}
+	//catch (EOpensslException e){
+	//	throw EMessageException("TAddNewFileMessage: " + e.getMessage());
+	//}
+	//path p(*(this->fFilePath));
+	//boost::system::error_code ec;
+	//this->fFileDate = last_write_time(p, ec);
+	//if (ec)
+	//	this->fFileDate = time(nullptr);
 
 	this->fItems->push_back(make_string_ptr(getMessageName(this->fID)));
 	this->fItems->push_back(move_string_ptr(this->fToken));
@@ -556,12 +580,7 @@ void TAddNewFileMessage::decodeMessage(){
 
 	//file path
 	if (*(this->fItems->at(2)) == EMPTY)
-		throw EMessageException("The token field cannot be empty");
-	if (*(this->fItems->at(2)) == EMPTY)
 		throw EMessageException("The file path field cannot be empty");
-	//TODO: check se il path è valido
-	//if (!isValidPath(this->fFilePath))
-	//	throw EMessageException("The file path field must contain a valid path");
 	this->fFilePath = move_string_ptr(this->fItems->at(2));
 
 	//file checksum
@@ -613,9 +632,23 @@ TUpdateFileMessage::TUpdateFileMessage(const string& aToken, const string& aFile
 	this->fID = UPDATE_FILE_ID;
 	this->fToken = make_string_ptr(aToken);
 	this->fFilePath = make_string_ptr(aFilePath);
-	this->fFileContent = nullptr;
-	this->fChecksum = nullptr;
-	this->fFileDate = time(nullptr);
+	//this->fFileContent = nullptr;
+	//this->fChecksum = nullptr;
+	//this->fFileDate = time(nullptr);
+
+	//read file, encode it and calculate checksum
+	try{
+		this->fFileContent = opensslB64EncodeFile(*(this->fFilePath));
+		this->fChecksum = opensslB64Checksum(*(this->fFileContent));
+	}
+	catch (EOpensslException e){
+		throw EMessageException("TUpdateFileMessage: " + e.getMessage());
+	}
+	path p(*(this->fFilePath));
+	boost::system::error_code ec;
+	this->fFileDate = last_write_time(p, ec);
+	if (ec)
+		this->fFileDate = time(nullptr);
 }
 
 TUpdateFileMessage::~TUpdateFileMessage(){
@@ -638,9 +671,19 @@ TUpdateFileMessage::~TUpdateFileMessage(){
 }
 
 string_ptr TUpdateFileMessage::encodeMessage(){
-	//read file, encode it and calculate checksum
-	this->fFileContent = opensslB64EncodeFile(*(this->fFilePath));
-	this->fChecksum = opensslB64Checksum(*(this->fFileContent));
+	////read file, encode it and calculate checksum
+	//try{
+	//	this->fFileContent = opensslB64EncodeFile(*(this->fFilePath));
+	//	this->fChecksum = opensslB64Checksum(*(this->fFileContent));
+	//}
+	//catch (EOpensslException e){
+	//	throw EMessageException("TUpdateFileMessage: " + e.getMessage());
+	//}
+	//path p(*(this->fFilePath));
+	//boost::system::error_code ec;
+	//this->fFileDate = last_write_time(p, ec);
+	//if (ec)
+	//	this->fFileDate = time(nullptr);
 
 	this->fItems->push_back(make_string_ptr(getMessageName(this->fID)));
 	this->fItems->push_back(move_string_ptr(this->fToken));
@@ -682,12 +725,7 @@ void TUpdateFileMessage::decodeMessage(){
 
 	//file path
 	if (*(this->fItems->at(2)) == EMPTY)
-		throw EMessageException("The token field cannot be empty");
-	if (*(this->fItems->at(2)) == EMPTY)
 		throw EMessageException("The file path field cannot be empty");
-	//TODO: check se il path è valido
-	//if (!isValidPath(this->fFilePath))
-	//	throw EMessageException("The file path field must contain a valid path");
 	this->fFilePath = move_string_ptr(this->fItems->at(2));
 
 	//file checksum
@@ -787,12 +825,7 @@ void TRemoveFileMessage::decodeMessage(){
 
 	//file path
 	if (*(this->fItems->at(2)) == EMPTY)
-		throw EMessageException("The token field cannot be empty");
-	if (*(this->fItems->at(2)) == EMPTY)
 		throw EMessageException("The file path field cannot be empty");
-	//TODO: check se il path è valido
-	//if (!isValidPath(this->fFilePath))
-	//	throw EMessageException("The file path field must contain a valid path");
 	this->fFilePath = move_string_ptr(this->fItems->at(2));
 }
 #pragma endregion
@@ -869,10 +902,7 @@ void TFileAckMessage::decodeMessage(){
 
 	//file path
 	if (*(this->fItems->at(2)) == EMPTY)
-		throw EMessageException("The token field cannot be empty");
-	//TODO: check se il path è valido
-	//if (!isValidPath(this->fFilePath))
-	//	throw EMessageException("The file path field must contain a valid path");
+		throw EMessageException("The file path field cannot be empty");
 	this->fFilePath = move_string_ptr(this->fItems->at(2));
 }
 #pragma endregion
@@ -947,7 +977,7 @@ TUpdateStopReplyMessage::TUpdateStopReplyMessage(TBaseMessage_ptr& aBase){
 	this->decodeMessage();
 }
 
-TUpdateStopReplyMessage::TUpdateStopReplyMessage(const bool aResp, int aVersion, time_t aTime){
+TUpdateStopReplyMessage::TUpdateStopReplyMessage(const bool aResp, const int aVersion, const time_t aTime){
 	this->fID = UPDATE_STOP_REPLY_ID;
 	this->fResp = aResp;
 	this->fVersion = aVersion;
@@ -1510,9 +1540,18 @@ TRestoreFileMessage::TRestoreFileMessage(const string& aFilePath){
 	this->fID = RESTORE_FILE_ID;
 	this->fFilePath = make_string_ptr(aFilePath);
 	//read file, encode it and calculate checksum
-	this->fFileContent = opensslB64EncodeFile(*(this->fFilePath));
-	this->fChecksum = opensslB64Checksum(*(this->fFileContent));
-	this->fFileDate = time(nullptr);
+	try{
+		this->fFileContent = opensslB64EncodeFile(*(this->fFilePath));
+		this->fChecksum = opensslB64Checksum(*(this->fFileContent));
+	}
+	catch (EOpensslException e){
+		throw EMessageException("TRestoreFileMessage: " + e.getMessage());
+	}
+	path p(*(this->fFilePath));
+	boost::system::error_code ec;
+	this->fFileDate = last_write_time(p, ec);
+	if (ec)
+		this->fFileDate = time(nullptr);
 }
 
 TRestoreFileMessage::~TRestoreFileMessage(){
@@ -1531,11 +1570,6 @@ TRestoreFileMessage::~TRestoreFileMessage(){
 }
 
 string_ptr TRestoreFileMessage::encodeMessage(){
-	if (this->fFileContent == nullptr || this->fChecksum == nullptr){
-		//read file, encode it and calculate checksum
-		this->fFileContent = opensslB64EncodeFile(*(this->fFilePath));
-		this->fChecksum = opensslB64Checksum(*(this->fFileContent));
-	}
 	this->fItems->push_back(make_string_ptr(getMessageName(this->fID)));
 	this->fItems->push_back(move_string_ptr(this->fFilePath));
 	this->fItems->push_back(move_string_ptr(this->fChecksum));
@@ -1569,12 +1603,7 @@ void TRestoreFileMessage::decodeMessage(){
 
 	//file path
 	if (*(this->fItems->at(1)) == EMPTY)
-		throw EMessageException("The token field cannot be empty");
-	if (*(this->fItems->at(1)) == EMPTY)
 		throw EMessageException("The file path field cannot be empty");
-	//TODO: check se il path è valido
-	//if (!isValidPath(this->fFilePath))
-	//	throw EMessageException("The file path field must contain a valid path");
 	this->fFilePath = move_string_ptr(this->fItems->at(1));
 
 	//file checksum
@@ -1693,10 +1722,7 @@ void TRestoreFileAckMessage::decodeMessage(){
 
 	//file path
 	if (*(this->fItems->at(3)) == EMPTY)
-		throw EMessageException("The token field cannot be empty");
-	//TODO: check se il path è valido
-	//if (!isValidPath(this->fFilePath))
-	//	throw EMessageException("The file path field must contain a valid path");
+		throw EMessageException("The file path field cannot be empty");
 	this->fFilePath = move_string_ptr(this->fItems->at(3));
 }
 #pragma endregion

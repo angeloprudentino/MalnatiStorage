@@ -10,6 +10,7 @@
 
 #include <boost/asio.hpp>
 #include "Utility.h"
+#include "ServerController.h"
 
 using namespace std;
 using namespace boost;
@@ -29,25 +30,11 @@ typedef TConnectionList::iterator TConnectionHandle;
 
 
 //////////////////////////////////////
-//		IManagedServerController	//
-//////////////////////////////////////
-// Server socket controller interface used in managed code
-public interface class IManagedServerController{
-public:
-	void onServerSockCreate();
-	void onServerLog(string aClassName, string aFuncName, string aMsg);
-	void onServerWarning(string aClassName, string aFuncName, string aMsg);
-	void onServerError(string aClassName, string aFuncName, string aMsg);
-	void onServerCriticalError(string aClassName, string aFuncName, string aMsg);
-};
-
-//////////////////////////////////////
 //      IServerSockController	    //
 //////////////////////////////////////
 // Standard server socket controller interface
 public class IServerSockController : public IServerBaseController{
 public:
-	virtual void onServerSockCreate() = 0;
 	virtual void onServerSockAccept(TConnectionHandle aConnection) = 0;
 	virtual void onServerSockRead(TConnectionHandle aConnection, string_ptr& aMsg) = 0;
 	virtual void onServerSockWrite() = 0;

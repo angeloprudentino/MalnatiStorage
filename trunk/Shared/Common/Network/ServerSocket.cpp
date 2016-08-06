@@ -17,7 +17,7 @@
 //      TServerSockController	    //
 //////////////////////////////////////
 #pragma region "TServerSockController"
-TServerSockController::TServerSockController(int aServerPort, IServerSockController* aCallback){
+TServerSockController::TServerSockController(int aServerPort, IServerBaseController* aCallback){
 	this->fServerPort = aServerPort;
 
 	this->fCallbackObj = aCallback;
@@ -96,7 +96,7 @@ void TServerSockController::sendBaseMessage(){
 	}
 }
 
-const bool TServerSockController::checkMessageToSend(string aClassName, string aFuncName, TBaseMessage_ptr& aBMsg){
+const bool TServerSockController::checkMessageToSend(const string& aClassName, const string& aFuncName, TBaseMessage_ptr& aBMsg){
 	int msgType = aBMsg->getID();
 
 	bool valid = ((msgType == USER_REG_REPLY_ID) || (msgType == UPDATE_START_REPLY_ID)
@@ -239,33 +239,28 @@ const bool TServerSockController::startSocket(){
 
 
 #pragma region "IServerBaseController implementation"
-void TServerSockController::onServerLog(string aClassName, string aFuncName, string aMsg){
+void TServerSockController::onServerLog(const string& aClassName, const string& aFuncName, const string& aMsg){
 	if (this->fCallbackObj != nullptr)
 		this->fCallbackObj->onServerLog(aClassName, aFuncName, aMsg);
 }
 
-void TServerSockController::onServerWarning(string aClassName, string aFuncName, string aMsg){
+void TServerSockController::onServerWarning(const string& aClassName, const string& aFuncName, const string& aMsg){
 	if (this->fCallbackObj != nullptr)
 		this->fCallbackObj->onServerWarning(aClassName, aFuncName, aMsg);
 }
 
-void TServerSockController::onServerError(string aClassName, string aFuncName, string aMsg){
+void TServerSockController::onServerError(const string& aClassName, const string& aFuncName, const string& aMsg){
 	if (this->fCallbackObj != nullptr)
 		this->fCallbackObj->onServerError(aClassName, aFuncName, aMsg);
 }
 
-void TServerSockController::onServerCriticalError(string aClassName, string aFuncName, string aMsg){
+void TServerSockController::onServerCriticalError(const string& aClassName, const string& aFuncName, const string& aMsg){
 	if (this->fCallbackObj != nullptr)
 		this->fCallbackObj->onServerCriticalError(aClassName, aFuncName, aMsg);
 }
 #pragma endregion
 
 #pragma region "IServerSockController implementation"
-void TServerSockController::onServerSockCreate(){
-	if (this->fCallbackObj != nullptr)
-		this->fCallbackObj->onServerSockCreate();
-}
-
 void TServerSockController::onServerSockAccept(TConnectionHandle aConnection){
 
 }
@@ -427,7 +422,8 @@ void TServerSocket::handleRead(TConnectionHandle aConnection, const boost::syste
 			string_ptr line = new_string_ptr();
 			getline(is, *line);
 			doServerLog(this->fCallbackObj, "TServerSocket", "handleRead", "Message Received from " + peer.address().to_string() + ":" + std::to_string(peer.port()));
-			this->fCallbackObj->onServerSockRead(aConnection, move_string_ptr(line));
+			if (this->fCallbackObj != nullptr)
+				this->fCallbackObj->onServerSockRead(aConnection, move_string_ptr(line));
 			line.reset();
 		}
 
@@ -472,7 +468,8 @@ void TServerSocket::handle_write(TConnectionHandle aConnection, const boost::sys
 		doServerError(this->fCallbackObj, "TServerSocket", "handle_write", "Error \"" + aErr.message() + "\" while sending a message to " + peer.address().to_string() + ":" + std::to_string(peer.port()));
 	}
 
-	this->fCallbackObj->onServerSockWrite();
+	if (this->fCallbackObj != nullptr)
+		this->fCallbackObj->onServerSockWrite();
 }
 
 //void TServerSocket::stopIncoming(){

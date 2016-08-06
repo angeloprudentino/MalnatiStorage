@@ -78,7 +78,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)\TCP_server_test;$(SolutionDir)\..\..\..\Shared\Libraries\include;$(SolutionDir)\..\..\..\Shared\Common\Executor;$(SolutionDir)\..\..\..\Shared\Common\Session;$(SolutionDir)\..\..\..\Shared\Common\Utils;$(SolutionDir)\..\..\..\Shared\Common\Network;$(SolutionDir)\..\..\..\ServerMain;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)\TCP_server_test;$(SolutionDir)\..\..\..\Shared\Libraries\include;$(SolutionDir)\..\..\..\Shared\Common\Data;$(SolutionDir)\..\..\..\Shared\Common\Executor;$(SolutionDir)\..\..\..\Shared\Common\Session;$(SolutionDir)\..\..\..\Shared\Common\Utils;$(SolutionDir)\..\..\..\Shared\Common\Network;$(SolutionDir)\..\..\..\ServerMain;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\debug\openssl\static;$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\debug\openssl;$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\debug\boost;$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\debug\boost\static;$(LibraryPath)</LibraryPath>
     <ReferencePath>$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\debug\openssl\static;$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\debug\openssl;$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\debug\boost\static;$(SolutionDir)\..\..\..\Shared\Libraries\x86_64\debug\boost;$(ReferencePath)</ReferencePath>
     <ExecutablePath>$(ExecutablePath)</ExecutablePath>
@@ -163,8 +163,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\ServerMain\DBManager.cpp" />
     <ClCompile Include="..\..\..\..\ServerMain\StorageServer.cpp" />
+    <ClCompile Include="..\..\..\..\Shared\Common\Data\DBManager.cpp" />
     <ClCompile Include="..\..\..\..\Shared\Common\Executor\Executor.cpp" />
     <ClCompile Include="..\..\..\..\Shared\Common\Executor\MessageQueue.cpp" />
     <ClCompile Include="..\..\..\..\Shared\Common\Network\Message.cpp" />
@@ -174,8 +174,9 @@
     <ClCompile Include="ServerForm.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\ServerMain\DBManager.h" />
+    <ClInclude Include="..\..\..\..\ServerMain\ServerController.h" />
     <ClInclude Include="..\..\..\..\ServerMain\StorageServer.h" />
+    <ClInclude Include="..\..\..\..\Shared\Common\Data\DBManager.h" />
     <ClInclude Include="..\..\..\..\Shared\Common\Executor\Executor.h" />
     <ClInclude Include="..\..\..\..\Shared\Common\Executor\MessageQueue.h" />
     <ClInclude Include="..\..\..\..\Shared\Common\Network\Message.h" />

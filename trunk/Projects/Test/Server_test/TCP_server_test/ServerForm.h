@@ -305,12 +305,12 @@ namespace Server_test {
 		}
 	}
 
-	private: void Log(std::string className, std::string funcName, std::string msg){
-				 System::Threading::Monitor::Enter(rtbLog);
-				 std::string toLog = currentDateTime();
-				 toLog.append(" ").append(className).append("::").append(funcName).append(": ").append(msg).append("\n");
-				 this->LogDelegateMethod(gcnew String(toLog.c_str()));
-				 System::Threading::Monitor::Exit(rtbLog);
+	private: void Log(const string& className, const string& funcName, const string& msg){
+		System::Threading::Monitor::Enter(rtbLog);
+		std::string toLog = currentDateTime();
+		toLog.append(" ").append(className).append("::").append(funcName).append(": ").append(msg).append("\n");
+		this->LogDelegateMethod(gcnew String(toLog.c_str()));
+		System::Threading::Monitor::Exit(rtbLog);
 	}
 	
 	private: System::Void clearLog_Click(System::Object^  sender, System::EventArgs^  e) {
@@ -325,11 +325,10 @@ namespace Server_test {
 	private: void dismissTCPserver();
 
 	//Server socket Callbacks 
-	public: virtual void onServerSockCreate();
-	public: virtual void onServerLog(string aClassName, string aFuncName, string aMsg);
-	public: virtual void onServerWarning(string aClassName, string aFuncName, string aMsg);
-	public: virtual void onServerError(string aClassName, string aFuncName, string aMsg);
-	public: virtual void onServerCriticalError(string aClassName, string aFuncName, string aMsg);
+	public: virtual void onServerLog(const string& aClassName, const string& aFuncName, const string& aMsg);
+	public: virtual void onServerWarning(const string& aClassName, const string& aFuncName, const string& aMsg);
+	public: virtual void onServerError(const string& aClassName, const string& aFuncName, const string& aMsg);
+	public: virtual void onServerCriticalError(const string& aClassName, const string& aFuncName, const string& aMsg);
 #pragma endregion
 };
 

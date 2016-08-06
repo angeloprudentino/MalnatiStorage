@@ -16,13 +16,13 @@
 #include "Message.h"
 #include "MessageQueue.h"
 #include "Executor.h"
+#include "ServerController.h"
 
 using namespace boost;
 using namespace boost::asio;
 using namespace boost::asio::ip;
 
 class TServerSocket;
-
 
 //////////////////////////////////////
 //      TServerSockController	    //
@@ -35,24 +35,25 @@ private:
 	TServerSocket* fSock = nullptr;
 	TMessageQueue* fInQueue = nullptr;
 	TMessageQueue* fOutQueue = nullptr;
-	IServerSockController* fCallbackObj = nullptr;
+	IServerBaseController* fCallbackObj = nullptr;
 	boost::thread* fSender = nullptr;
 
 	void sendBaseMessage();
-	const bool checkMessageToSend(string aClassName, string aFuncName, TBaseMessage_ptr& aBMsg);
+	const bool checkMessageToSend(const string& aClassName, const string& aFuncName, TBaseMessage_ptr& aBMsg);
 
 public:
-	TServerSockController(int AServerPort, IServerSockController* aCallback);
+	TServerSockController(int AServerPort, IServerBaseController* aCallback);
+	TServerSockController(const TServerSockController&) = delete;            // disable copying
+	TServerSockController& operator=(const TServerSockController&) = delete; // disable assignment
 	virtual ~TServerSockController();
 
 	const bool startSocket();
 	//void stopSocketIn();
 	
-	void onServerLog(string aClassName, string aFuncName, string aMsg) override;
-	void onServerWarning(string aClassName, string aFuncName, string aMsg) override;
-	void onServerError(string aClassName, string aFuncName, string aMsg) override;
-	void onServerCriticalError(string aClassName, string aFuncName, string aMsg) override;
-	void onServerSockCreate() override;
+	void onServerLog(const string& aClassName, const string& aFuncName, const string& aMsg) override;
+	void onServerWarning(const string& aClassName, const string& aFuncName, const string& aMsg) override;
+	void onServerError(const string& aClassName, const string& aFuncName, const string& aMsg) override;
+	void onServerCriticalError(const string& aClassName, const string& aFuncName, const string& aMsg) override;
 	void onServerSockAccept(TConnectionHandle aConnection) override;
 	void onServerSockRead(TConnectionHandle aConnection, string_ptr& aMsg) override;
 	void onServerSockWrite() override;
@@ -84,7 +85,9 @@ private:
 	void handle_write(TConnectionHandle aConnection, const boost::system::error_code& aErr);
 public:
 	TServerSocket(IServerSockController* aCallbackObj);
-	virtual ~TServerSocket();
+	TServerSocket(const TServerSockController&) = delete;            // disable copying
+	TServerSocket& operator=(const TServerSockController&) = delete; // disable assignment
+	~TServerSocket();
 
 	bool setAcceptState(int aAcceptPort);
 	void doAccept();

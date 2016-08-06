@@ -17,6 +17,7 @@
 #include "Utility.h"
 #include "Session.h"
 #include "DBManager.h"
+#include "ServerController.h"
 
 using namespace std;
 using namespace boost::filesystem;
@@ -25,7 +26,7 @@ using namespace boost::filesystem;
 ////////////////////////////////////
 //        TStorageServer	      //
 ////////////////////////////////////
-public class TStorageServer : public IServerSockController, public IServerExecutorController{
+public class TStorageServer : public IServerExecutorController{
 private:
 	int fServerPort = -1;
 
@@ -51,19 +52,17 @@ private:
 
 public:
 	TStorageServer(int AServerPort, IManagedServerController^ aCallbackObj);
+	TStorageServer(const TStorageServer&) = delete;            // disable copying
+	TStorageServer& operator=(const TStorageServer&) = delete; // disable assignment
 	~TStorageServer();
 
 	const bool startServer();
 	//void stopServer();
 
-	void onServerLog(string aClassName, string aFuncName, string aMsg) override;
-	void onServerWarning(string aClassName, string aFuncName, string aMsg) override;
-	void onServerError(string aClassName, string aFuncName, string aMsg) override;
-	void onServerCriticalError(string aClassName, string aFuncName, string aMsg) override; 
-	void onServerSockCreate() override;
-	void onServerSockAccept(TConnectionHandle aConnection) override;
-	void onServerSockRead(TConnectionHandle aConnection, string_ptr& aMsg) override;
-	void onServerSockWrite() override;
+	void onServerLog(const string& aClassName, const string& aFuncName, const string& aMsg) override;
+	void onServerWarning(const string& aClassName, const string& aFuncName, const string& aMsg) override;
+	void onServerError(const string& aClassName, const string& aFuncName, const string& aMsg) override;
+	void onServerCriticalError(const string& aClassName, const string& aFuncName, const string& aMsg) override;
 
 	bool isInQueueEmpty() override;
 	TMessageContainer_ptr getMessageToProcess() override;

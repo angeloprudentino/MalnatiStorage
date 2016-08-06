@@ -1,5 +1,3 @@
-
-
 /*
  * Author: Angelo Prudentino
  * Date: 30/09/2015
@@ -33,6 +31,9 @@
 using namespace std;
 using namespace boost::filesystem;
 
+string_ptr opensslB64Encode(char* aContent, int aLen); //throws EOpensslException
+B64result opensslB64Decode(const string& aString); //throws EOpensslException
+
 #pragma region "DateTime Utilities"
 // Get current date/time, format is [YYYY-MM-DD HH:mm:ss]
 const string currentDateTime() {
@@ -47,41 +48,57 @@ const string currentDateTime() {
 
 //Convert time_t to std::string and vice versa
 const string timeToString(const time_t& t) {
-	std::ostringstream oss;
-	if (oss){
-		oss << t;
-		return oss.str();
+	try{
+		std::ostringstream oss;
+		if (oss){
+			oss << t;
+			return oss.str();
+		}
 	}
-
-	return "";
+	catch (...) {
+		return "";
+	}
 }
 
 const time_t stringToTime(const string& s) {
-	istringstream stream(s);
 	time_t t;
-	if (stream){
-		stream >> t;
+	try{
+		istringstream stream(s);
+		if (stream){
+			stream >> t;
+		}
 	}
+	catch (...){}
 
 	return t;
 }
 
 const string formatFileDate(const time_t& t){
-	struct tm tstruct;
-	char buf[25];
-	tstruct = *localtime(&t);
+	try{
+		struct tm tstruct;
+		char buf[25];
+		tstruct = *localtime(&t);
 
-	strftime(buf, sizeof(buf), "%Y-%m-%d %X", &tstruct);
-	return buf;
+		strftime(buf, sizeof(buf), "%Y-%m-%d %X", &tstruct);
+		return buf;
+	}
+	catch (...) {
+		return "";
+	}
 }
 
 const string formatLogFileDate(const time_t& t){
-	struct tm tstruct;
-	char buf[9];
-	tstruct = *localtime(&t);
+	try{
+		struct tm tstruct;
+		char buf[9];
+		tstruct = *localtime(&t);
 
-	strftime(buf, sizeof(buf), "%Y%m%d", &tstruct);
-	return buf;
+		strftime(buf, sizeof(buf), "%Y%m%d", &tstruct);
+		return buf;
+	}
+	catch (...) {
+		return "";
+	}
 }
 
 #pragma endregion
@@ -362,61 +379,6 @@ string_ptr opensslCoreChecksum(BIO* aInputBio){
 	return opensslB64Encode(mdbuf, mdlen);
 }
 
-//string_ptr opensslChecksum(char* aContent, int aLen){
-//	BIO *bio_in = nullptr;
-//	bool try_again = false;
-//
-//	if (aContent == nullptr) {
-//		return nullptr;
-//	}
-//
-//	try {
-//		/* setup input BIO chain */
-//		bio_in = BIO_new(BIO_s_mem());
-//		if (bio_in == nullptr){
-//			string err = "bio_in = BIO_new(BIO_s_mem()) returns nullptr: ";
-//			throw EOpensslException(err + ERR_error_string(ERR_get_error(), nullptr));
-//		}
-//
-//		bio_in = fillOpensslBIO(bio_in, aContent, aLen);
-//		BIO_set_close(bio_in, BIO_NOCLOSE);
-//
-//		string_ptr result = opensslCoreChecksum(bio_in);
-//		BIO_free_all(bio_in);
-//		return result;
-//	}
-//	catch (EOpensslException& e) {
-//		BIO_free_all(bio_in);
-//		throw e;
-//	}
-//}
-//
-//string_ptr opensslFileChecksum(const string aFileName){
-//	BIO *bio_in;
-//
-//	try {
-//		/* setup input BIO chain */
-//		bio_in = BIO_new(BIO_s_file());
-//		if (bio_in == nullptr){
-//			string err = "BIO_new(BIO_s_file()) returns nullptr: ";
-//			throw EOpensslException(err + ERR_error_string(ERR_get_error(), nullptr));
-//		}
-//
-//		if (BIO_read_filename(bio_in, aFileName.c_str()) == 0){
-//			string err = "BIO_read_filename() returns an error: ";
-//			throw EOpensslException(err + ERR_error_string(ERR_get_error(), nullptr));
-//		}
-//
-//		string_ptr result = opensslCoreChecksum(bio_in);
-//		BIO_free_all(bio_in);
-//		return result;
-//	}
-//	catch (EOpensslException& e) {
-//		BIO_free_all(bio_in);
-//		throw e;
-//	}
-//}
-
 string_ptr opensslB64Checksum(const string& aString){
 	BIO *bio_in = nullptr;
 	bool try_again = false;
@@ -465,7 +427,7 @@ string_ptr opensslB64RandomToken(){
 
 
 #pragma region "Log"
-void logToFile(string aClassName, string aFuncName, string aMsg){
+void logToFile(const string& aClassName, const string& aFuncName, const string& aMsg){
 	path p = LOG_PATH;
 	boost::system::error_code ec;
 	if (!exists(p))
@@ -482,13 +444,13 @@ void logToFile(string aClassName, string aFuncName, string aMsg){
 	}
 }
 
-void warningToFile(string aClassName, string aFuncName, string aMsg){
+void warningToFile(const string& aClassName, const string& aFuncName, const string& aMsg){
 	logToFile(aClassName, aFuncName, "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww");
 	logToFile(aClassName, aFuncName, "w  " + aMsg);
 	logToFile(aClassName, aFuncName, "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww");
 }
 
-void errorToFile(string aClassName, string aFuncName, string aMsg){
+void errorToFile(const string& aClassName, const string& aFuncName, const string& aMsg){
 	logToFile(aClassName, aFuncName, "************************************************");
 	logToFile(aClassName, aFuncName, "************************************************");
 	logToFile(aClassName, aFuncName, "** ");
@@ -498,7 +460,7 @@ void errorToFile(string aClassName, string aFuncName, string aMsg){
 	logToFile(aClassName, aFuncName, "************************************************");
 }
 
-void criticalErrorToFile(string aClassName, string aFuncName, string aMsg){
+void criticalErrorToFile(const string& aClassName, const string& aFuncName, const string& aMsg){
 	errorToFile(aClassName, aFuncName, aMsg);
 }
 #pragma endregion
@@ -516,17 +478,41 @@ void storeFile(const path& aPath, string_ptr& aFileContent){
 		try{
 #ifdef _DEBUG
 			B64result ret = opensslB64Decode(*aFileContent);
+			aFileContent.reset();
 			of.write(ret.data, ret.size);
-#else
-			of.write(aFileContent->c_str(), aFileContent->size());
-#endif
+			of.close();
 		}
 		catch (EOpensslException e){
-
+			aFileContent.reset();
+			of.close();
+			throw EFilesystemException("Error decoding file: " + aPath.string() + " -> " + e.getMessage());
 		}
-		of.close();
+#else
+			of.write(aFileContent->c_str(), aFileContent->size());
+			aFileContent.reset();
+			of.close();
+		}
+		catch (...){
+			aFileContent.reset();
+			of.close();
+			throw EFilesystemException("Error saving file: " + aPath.string());
+		}
+#endif
 	}
+	else{
+		aFileContent.reset();
+		throw EFilesystemException("Error creating directories: " + p.string() + " -> " + ec.message());
+	}
+}
 
-	aFileContent.reset();
+void removeDir(const path& aPath){
+	boost::system::error_code ec;
+
+	if (exists(aPath)){
+		remove_all(aPath, ec);
+
+		if (ec)
+			throw EFilesystemException("Error removing path: " + aPath.string() + " -> " + ec.message());
+	}
 }
 #pragma endregion

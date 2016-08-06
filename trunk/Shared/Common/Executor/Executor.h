@@ -13,6 +13,7 @@
 
 #include "Utility.h"
 #include "MessageQueue.h"
+#include "ServerController.h"
 
 using namespace boost;
 
@@ -60,7 +61,9 @@ private:
 
 public:
 	TMessageExecutor(IServerExecutorController* aCallbackObj);
+	TMessageExecutor(const TMessageExecutor&) = delete;            // disable copying
+	TMessageExecutor& operator=(const TMessageExecutor&) = delete; // disable assignment
+	~TMessageExecutor();
 
 	void stopExecutors();
-	~TMessageExecutor();
 };

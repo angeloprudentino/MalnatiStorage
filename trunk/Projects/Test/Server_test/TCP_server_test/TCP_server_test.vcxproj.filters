@@ -39,7 +39,7 @@
     <ClCompile Include="..\..\..\..\Shared\Common\Session\Session.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\ServerMain\DBManager.cpp">
+    <ClCompile Include="..\..\..\..\Shared\Common\Data\DBManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -71,7 +71,10 @@
     <ClInclude Include="..\..\..\..\Shared\Common\Session\Session.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\ServerMain\DBManager.h">
+    <ClInclude Include="..\..\..\..\ServerMain\ServerController.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Shared\Common\Data\DBManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

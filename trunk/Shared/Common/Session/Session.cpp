@@ -11,14 +11,23 @@
 #include <time.h>
 #include "Session.h"
 
-using namespace std;
-
 string buildServerPathPrefix(const string& aUser, const int aVersion){
-	string_ptr coded_u = opensslB64Checksum(aUser);
-	string_ptr coded_v = opensslB64Checksum(to_string(aVersion));
-	string res = STORAGE_ROOT_PATH + *coded_u + "\\" + *coded_v;
-	coded_u.reset();
-	coded_v.reset();
+	string res = STORAGE_ROOT_PATH;
+	string_ptr coded_u = nullptr;
+	string_ptr coded_v = nullptr;
+	try{
+		coded_u = opensslB64Checksum(aUser);
+		coded_v = opensslB64Checksum(to_string(aVersion));
+		res += *coded_u + "\\" + *coded_v;
+	}
+	catch (EOpensslException e){
+		res += aUser + "\\" + to_string(aVersion);
+	}
+
+	if (coded_u != nullptr)
+		coded_u.reset();
+	if (coded_v != nullptr)
+		coded_v.reset();
 
 	return res;
 }

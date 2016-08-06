@@ -55,6 +55,8 @@ private:
 
 public:
 	TDBManager(const string& aHost, const string& aDBName); // throws EDBException
+	TDBManager(const TDBManager&) = delete;            // disable copying
+	TDBManager& operator=(const TDBManager&) = delete; // disable assignment
 	~TDBManager();
 	
 	void insertNewUser(const string& aUser, const string& aPass); // throws EDBException
