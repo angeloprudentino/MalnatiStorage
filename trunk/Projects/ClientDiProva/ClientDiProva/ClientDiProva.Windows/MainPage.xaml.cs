@@ -34,24 +34,7 @@ namespace ClientDiProva
         public const string MSG_SEP="$";
         public const string MSG_SEP_ESC= "&#36";
         public const string MSG_INVALID = "invalid";
-        public const int USER_REG_REQ_TOK_NUM = 4;
-        public const int USER_REG_REPLY_TOK_NUM= 3;
-        public const int UPDATE_START_REQ_TOK_NUM= 4;
-        public const int UPDATE_START_REPLY_TOK_NUM= 4;
-        public const int ADD_NEW_FILE_TOK_NUM= 7;
-        public const int UPDATE_FILE_TOK_NUM= 7;
-        public const int REMOVE_FILE_TOK_NUM= 4;
-        public const int FILE_ACK_TOK_NUM =4;
-        public const int UPDATE_STOP_REQ_TOK_NUM = 3;
-        public const int UPDATE_STOP_REPLY_TOK_NUM = 5;
-        public const int GET_VERSIONS_REQ_TOK_NUM = 4;
-        public const int GET_VERSIONS_REPLY_MIN_TOK_NUM = 5;
-        public const int RESTORE_VER_REQ_TOK_NUM = 5;
-        public const int RESTORE_VER_REPLY_TOK_NUM = 4;
-        public const int RESTORE_FILE_TOK_NUM = 6;
-        public const int RESTORE_FILE_ACK_TOK_NUM = 5;
-        public const int RESTORE_STOP_TOK_NUM = 4;
-        public const int PING_TOK_NUM = 4;
+        public const string END_MSG = "END_MSG";
 
     }
     
@@ -70,6 +53,7 @@ namespace ClientDiProva
         {
             try
             {
+                
                 //Create the StreamSocket and establish a connection to the echo server.
                 Windows.Networking.Sockets.StreamSocket socket = new Windows.Networking.Sockets.StreamSocket();
 
@@ -80,23 +64,53 @@ namespace ClientDiProva
                 //Every protocol typically has a standard port number. For example HTTP is typically 80, FTP is 20 and 21, etc.
                 //For the echo server/client application we will use a random port 1337.
                 string serverPort = "4700";
+                                                              
                 //await socket.ConnectAsync(serverHost, serverPort);
-                await socket.ConnectAsync(serverHost,serverPort );
+               await socket.ConnectAsync(serverHost,serverPort );
 
                 Debug.WriteLine("dovrei essere connesso");
 
-                ////Write data to the echo server.
-                //Stream streamOut = socket.OutputStream.AsStreamForWrite();
-                //StreamWriter writer = new StreamWriter(streamOut);
-                //string request = "test";
-                //await writer.WriteLineAsync(request);
-                //await writer.FlushAsync();
+                //creo un messaggio
+                
+                //Write data to the echo server.
+                Stream streamOut = socket.OutputStream.AsStreamForWrite();
+                StreamWriter writer = new StreamWriter(streamOut);
+                string request = "USER_REG_REQ$Pippo$pippo$END_MSG\n";
+
+                //provo a comporre io il messaggio
+                Message send_mex = new Message();
+
+                ////USER_REG_REQ
+                //send_mex.setType(0); //user_reg_req
+                //send_mex.addItem("Pippo");
+                //send_mex.addItem("pippo");
+
+                //UPDATE_START_REQ
+                send_mex.setType(2); //user_reg_req
+                send_mex.addItem("Pippo");
+                send_mex.addItem("pippo");
+
+                Debug.WriteLine("creato messaggio, tipo = " + send_mex.ToSend());
+                string req = send_mex.ToSend();
+
+               await writer.WriteLineAsync(req);
+              //  await writer.WriteLineAsync(request);
+                await writer.FlushAsync();
+
+                Debug.WriteLine("ricezione risposta\n");
 
                 //Read data from the echo server.
                 Stream streamIn = socket.InputStream.AsStreamForRead();
                 StreamReader reader = new StreamReader(streamIn);
                 string response = await reader.ReadLineAsync();
                 Debug.WriteLine("stringa ricevuta: \n" + response);
+                Message resp_mex = new Message();
+                if (resp_mex.Parse(response) == false)
+                {
+                    Debug.WriteLine("risposta NON CORRETTA\n");
+                }
+                //string response = await reader.ReadToEndAsync();
+                
             }
             catch (Exception e)
             {
