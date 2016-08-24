@@ -45,7 +45,11 @@ namespace StorageClientCS
         StorageFolder fold = KnownFolders.PicturesLibrary;
         SQLiteAsyncConnection connection;
         int Actual_Version;
-        
+        string user,pass;
+        Windows.Networking.Sockets.StreamSocket socket;
+        Windows.Networking.HostName serverHost;
+        string serverPort = "4700";
+       
         
         public StorageClientAPP()
         {
@@ -55,15 +59,33 @@ namespace StorageClientCS
 
             this.InitializeComponent();
 
+            //connessione al server
+            socket = new Windows.Networking.Sockets.StreamSocket();
+            serverHost = new Windows.Networking.HostName("localhost");
+            this.ConnectWithServer();
+
             this.CreateDatabase();
             Debug.WriteLine("cerco il numero di versione salvato nel db");
             this.UpdateVersionVariable();
             this.DisplayDB();
-            this.Messages.Text = "Welcome, Press SynchNow to start";
          
             //this.Initialize();
             
 
+        }
+
+        //connessione al server
+        private async Task ConnectWithServer()
+        {
+            await socket.ConnectAsync(serverHost, serverPort);
+        }
+
+        protected override void OnNavigatedTo(NavigationEventArgs e)
+        {
+            var myList = e.Parameter as List<string>;
+            this.user = myList[0];
+            this.pass = myList[1];
+            this.Messages.Text = "Welcome " + user + "   , Press SynchNow to start";
         }
 
         private async void Button_Click(object sender, RoutedEventArgs e)
@@ -333,7 +355,10 @@ namespace StorageClientCS
         //evento invocato quando avviene un cambiamento nella cartella Pictures
        async void query_ContentsChanged(Windows.Storage.Search.IStorageQueryResultBase sender, object args)
         {
-            Debug.WriteLine("contenuto cambiato: " + sender.Folder);
+            
+            // se sta sincronizzando , fallo attendere (usare una variabile globale)
+           //oppure una condition variable
+           Debug.WriteLine("contenuto cambiato: " + sender.Folder);
             await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
             {
                 this.Actual_Version++;
@@ -430,10 +455,18 @@ namespace UniversalSqlLite.Model
         [PrimaryKey]
         public string Path { get; set; }
 
+        //considerare l' utente!!
+
         public string Name { get; set; }
 
         public string DateMod { get; set; }
 
         public int Versione { get; set; }
     }
+
+    //tabella delle versioni lato server
+    //con nome versione e data
+
+
+    //inserire una tabella utenti
 }
