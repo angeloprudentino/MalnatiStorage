@@ -58,6 +58,11 @@ namespace ClientDiProva
             this.items.Add(item);
         }
 
+        public List<string> getItems()
+        {
+            return this.items;
+        }
+
         public bool Parse(string mex)
         {
             char[] delimiterChars = { '$' };
