@@ -342,7 +342,7 @@ string_ptr opensslCoreChecksum(BIO* aInputBio){
 		throw EOpensslException(err + ERR_error_string(ERR_get_error(), nullptr));
 	}
 
-	if (BIO_set_md(md, EVP_sha224()) == 0){
+	if (BIO_set_md(md, EVP_sha256()) == 0){
 		string err = "BIO_set_md() returns an error: ";
 		throw EOpensslException(err + ERR_error_string(ERR_get_error(), nullptr));
 	}

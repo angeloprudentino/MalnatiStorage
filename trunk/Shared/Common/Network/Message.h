@@ -18,7 +18,7 @@
 
 using namespace std;
 
-#define END_MSG "END_MSG"
+#define END_MSG "END_MSG\n"
 
 //type definitions
 typedef std::vector<string_ptr> string_vector;

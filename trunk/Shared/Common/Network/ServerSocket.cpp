@@ -267,12 +267,14 @@ void TServerSockController::onServerSockAccept(TConnectionHandle aConnection){
 
 void TServerSockController::onServerSockRead(TConnectionHandle aConnection, string_ptr& aMsg){
 	tcp::endpoint peer = aConnection->fPeer;
-	//string s = aMsg->c_str();
+	string s = aMsg->c_str();
+	size_t size = s.size();
 	TBaseMessage_ptr bmsg = new_TBaseMessage_ptr(aMsg);
 	int msgType = bmsg->getID();
+	
 
 	if (!isValidMessageID(msgType)){
-		this->onServerWarning("TServerSockController", "onServerSockRead", "received an unknown message from " + peer.address().to_string() + ":" + std::to_string(peer.port()));
+		this->onServerWarning("TServerSockController", "onServerSockRead", "received an unknown message from " + peer.address().to_string() + ":" + std::to_string(peer.port()) + "content: " + s+ "Endcontent ");//+ "content:" + aMsg->c_str()
 		bmsg.reset();
 		return;
 	}

@@ -20,13 +20,13 @@
     <AppXManifest Include="C:\Projects\Projects\ClientDiProva\ClientDiProva\ClientDiProva.Windows\bin\Debug\AppxManifest.xml">
       <PackagePath>AppxManifest.xml</PackagePath>
       <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
-      <Modified>2016-07-28T11:54:43.035</Modified>
+      <Modified>2016-08-25T12:44:28.562</Modified>
     </AppXManifest>
   </ItemGroup>
   <ItemGroup>
     <AppxPackagedFile Include="C:\Projects\Projects\ClientDiProva\ClientDiProva\ClientDiProva.Windows\bin\Debug\ClientDiProva.Windows.exe">
       <PackagePath>ClientDiProva.Windows.exe</PackagePath>
-      <Modified>2016-07-30T09:14:07.688</Modified>
+      <Modified>2016-08-25T13:11:43.897</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Projects\Projects\ClientDiProva\ClientDiProva\ClientDiProva.Windows\Assets\Logo.scale-100.png">
       <PackagePath>Assets\Logo.scale-100.png</PackagePath>
@@ -62,7 +62,7 @@
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Projects\Projects\ClientDiProva\ClientDiProva\ClientDiProva.Windows\bin\Debug\resources.pri">
       <PackagePath>resources.pri</PackagePath>
-      <Modified>2016-07-28T11:54:42.879</Modified>
+      <Modified>2016-08-25T12:44:28.106</Modified>
     </AppxPackagedFile>
   </ItemGroup>
   <ItemGroup>
