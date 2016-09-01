@@ -147,7 +147,6 @@ namespace StorageClientCS
             Stream streamOut = socket.OutputStream.AsStreamForWrite();
             StreamWriter writer = new StreamWriter(streamOut);
 
-           // token = "UGRxVWZDKzdqZ1BHMDA4L2hqVEhGZ2FzVWtzPSRQaXBwbyQxNDcyMDQ1MjY0JFBkcVVmQys3amdQRzAwOC9oalRIRmdhc1Vrcz0=";
             //provo a comporre io il messaggio
             Message send_mex2 = new Message();
 

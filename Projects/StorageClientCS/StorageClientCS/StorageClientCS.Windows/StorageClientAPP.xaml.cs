@@ -44,7 +44,8 @@ namespace StorageClientCS
         Dictionary<String, StorageFile> map_files;
         StorageFolder fold = KnownFolders.PicturesLibrary;
         SQLiteAsyncConnection connection;
-        int Actual_Version;
+        int Actual_Version_Client;
+        int Actual_Version_Server;
         string user,pass;
         Windows.Networking.Sockets.StreamSocket socket;
         Windows.Networking.HostName serverHost;
@@ -64,12 +65,13 @@ namespace StorageClientCS
             serverHost = new Windows.Networking.HostName("localhost");
             this.ConnectWithServer();
 
-            this.CreateDatabase();
-            Debug.WriteLine("cerco il numero di versione salvato nel db");
-            this.UpdateVersionVariable();
-            this.DisplayDB();
+            //sono state inserite nell' initialize
+          //  this.CreateDatabase();
+           // Debug.WriteLine("cerco il numero di versione salvato nel db");
+          //  this.UpdateVersionVariable();
+          //  this.DisplayDB();
          
-            //this.Initialize();
+            this.Initialize();
             
 
         }
@@ -88,18 +90,19 @@ namespace StorageClientCS
             this.Messages.Text = "Welcome " + user + "   , Press SynchNow to start";
         }
 
+        //bottone SYNCH NOW, sarà da togliere
         private async void Button_Click(object sender, RoutedEventArgs e)
         {
           
             //synch now
             Button _button = (Button)sender;
             _button.IsEnabled = false;
-            this.Actual_Version++;
+           // this.Actual_Version++;
             WriteGrid.RowDefinitions.Clear();
             WriteGrid.Children.Clear();
           //  StorageFolder fold = KnownFolders.PicturesLibrary;
 
-            outputtext = "Files in " + fold.Name + "Version: " + this.Actual_Version + ": \n";
+           // outputtext = "Files in " + fold.Name + "Version: " + this.Actual_Version + ": \n";
 
             try
             {
@@ -147,7 +150,7 @@ namespace StorageClientCS
                 Debug.WriteLine("contenuti del db allo start");
                 var task = Task.Run(async () => { await this.DisplayDB(); });
                 task.Wait();
-                Debug.WriteLine("trovo il numero  della versione allo START");
+                Debug.WriteLine("trovo il numero  della versione allo START nel client");
                 var task2 = Task.Run(async () => { await this.UpdateVersionVariable(); });
                 task2.Wait();
                 this.Messages.Text = "Starting now...\n";
@@ -162,12 +165,16 @@ namespace StorageClientCS
             Versions.IsEnabled = false;
             WriteGrid.RowDefinitions.Clear();
             WriteGrid.Children.Clear();
-            //  StorageFolder fold = KnownFolders.PicturesLibrary;
 
-            outputtext = "Files in " + fold.Name + "Version: "+ this.Actual_Version +"\n";
-            //outputText = new StringBuilder();
-            //outputText.AppendLine("Seach in " + KnownFolders.PicturesLibrary.Name);
-            // this.GetFiles(fold);
+            //SCAMBIO DI MESSAGGI COL SERVER PER VERIFICARE SE HO L' ULTIMA VERSIONE
+            //
+            //se sono indietro -> FARE FUNZIONE PER SCARICARE I NUOVI FILE
+            //DEVE AGIRE QUI
+
+            //////
+
+            //lancio la funzione che scandisce la cartella e fa i controlli
+            //se non rileverò cambiamenti, la versione resterà quella del server
             this.map_files.Clear();
 
             try
@@ -179,11 +186,10 @@ namespace StorageClientCS
             {
                 Debug.WriteLine("Errore nel button_click: " + ecc.Message);
             }
-            //this.GetFiles(fold);
 
             Debug.WriteLine("numero di file in map: " + this.map_files.Count);
 
-            this.UpdateVersionVariable();
+           // this.UpdateVersionVariable();
            
 
             foreach (StorageFile f in this.map_files.Values)
@@ -191,8 +197,11 @@ namespace StorageClientCS
                 outputtext += f.Path + ": \n";
             }
             this.Messages.Text = outputtext;
+            //disegna i bottoni per i file, con la loro apertura
             this.DrawBottonsFiles();
-            this.setListenerOnChanges();
+
+            //NON SETTIAMO IL LISTENER, verifichiamo ogni tot minuti
+          //  this.setListenerOnChanges();
             SynchNow.IsEnabled = true;
             Versions.IsEnabled = true;
         }
@@ -202,13 +211,14 @@ namespace StorageClientCS
         private async Task GetFiles(IStorageItem folder)
         {
 
-          //  outputText.Append("entro in getFiles  \n");
-            //per vedere se accede in memoria alla pictures
-            // StorageFile f = await KnownFolders.PicturesLibrary.GetFileAsync("maxresdefault.jpg");
-           // outputText.Append("trovato files: "+ f.Path);
+            //APRIRE UNA SESSIONE COL SERVER//
+
+
+            ///////
             StorageFolder fold = (StorageFolder)folder;
             IReadOnlyList<IStorageItem> itemList = await fold.GetItemsAsync();
             
+            //file trovati nella cartella folder
             foreach (var item in itemList)
             {
                 if (item is StorageFile)
@@ -231,26 +241,37 @@ namespace StorageClientCS
 
 
 
-                    //vede se è presente nel db
-                    var result = await connection.QueryAsync<FileDB>("SELECT * FROM Files WHERE Path = ?",path_db);
+                    //vede se è presente nel db, con la versione uguale al server
+                    var result = await connection.QueryAsync<FileDB>("SELECT * FROM Files WHERE Path = ? AND Versione = ?",path_db,this.Actual_Version_Server);
                
                     if(result.Count==1){
-                        //era presente nel db
-                        //Debug.WriteLine("file già presente nel db: "+ path_db);
+                        //era presente nel db, nella versione del server
+                        Debug.WriteLine("file già presente nel db, nella versione del server: "+ path_db);
+                        Debug.WriteLine("verifico se è stato modificato dall' ultima accensione");
                         foreach (var it in result)
                         {
                             string OldDateMod = it.DateMod;
-                            it.Versione = this.Actual_Version;
+                         
+                            //se la data di ultima modifica trovata tramite properties è uguale a quella trovata nel db
                             if (OldDateMod.Equals(dateMod))
                             {
                                 //il file non è stato modificato
                                 //faccio l' update della versione
-                                await connection.UpdateAsync(it);
+                                //await connection.UpdateAsync(it);
+
+                                //NON tocco il file nel mio db: la versione del server e la mia sono uguali
+                                Debug.WriteLine("file non modificato: "+ item.Path);
                             }
                             else
                             {
                                 //il file è stato modificato
                                 //sarà da mandare al server
+
+                                //MANDARE AL SERVER
+
+
+
+                                ///
                                 //aggiorno dateMod e versione
                                 it.DateMod = dateMod;
                                 await connection.UpdateAsync(it);
@@ -261,12 +282,13 @@ namespace StorageClientCS
                     else
                     {
                         //non era presente nel db;
+                        //file aggiunto 
                         var File_db = new FileDB()
                         {
                             Path = path_db,
                             Name = name_db,
                             DateMod = dateMod,
-                            Versione = this.Actual_Version
+                        //    Versione = this.Actual_Version
                         };
                         await connection.InsertAsync(File_db);
                     }
@@ -282,11 +304,17 @@ namespace StorageClientCS
                  
 
                 }else if(item is StorageFolder){
+                    //ricorsione nel caso sia una cartella
                      var task = Task.Run(async () => { await this.GetFiles(item); });
                      task.Wait();
                 }
             }
            // this.Messages.Text = outputtext;
+
+            //CHIUDERE LA SESSIONE COL SERVER//
+
+
+            ///////
         }
 
         //disegna i bottoni con i link ai file
@@ -315,6 +343,18 @@ namespace StorageClientCS
             }
         }
 
+        //permette di aprire i file dal bottone
+        void tb_Click(object sender, RoutedEventArgs e)
+        {
+            //evento per gestire l' apertura del file
+            Button _button = (Button)sender;
+
+            String path = (String)_button.Tag;
+
+            StorageFile f = this.map_files[path];
+            Windows.System.Launcher.LaunchFileAsync(f);
+        }
+
 
 
         private void setListenerOnChanges()
@@ -335,7 +375,7 @@ namespace StorageClientCS
             Versions.IsEnabled = false;
             WriteGrid.RowDefinitions.Clear();
             WriteGrid.Children.Clear();
-            this.outputtext = "Update now...\nFiles in " + fold.Name + "Version: " + this.Actual_Version + "\n";
+         //   this.outputtext = "Update now...\nFiles in " + fold.Name + "Version: " + this.Actual_Version + "\n";
             this.map_files.Clear();
             try
             {
@@ -361,7 +401,7 @@ namespace StorageClientCS
            Debug.WriteLine("contenuto cambiato: " + sender.Folder);
             await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
             {
-                this.Actual_Version++;
+           //     this.Actual_Version++;
                 //rootPage.NotifyUser("The toast encountered an error", NotifyType.ErrorMessage);
                 this.OnChanges();
                  Debug.WriteLine("contenuto del db dopo il contenuto cambiato");
@@ -384,30 +424,27 @@ namespace StorageClientCS
 
         }
         
-        void tb_Click(object sender, RoutedEventArgs e)
-        {
-            //evento per gestire l' apertura del file
-            Button _button = (Button)sender;
-            
-            String path = (String)_button.Tag;
-
-            StorageFile f = this.map_files[path];
-            Windows.System.Launcher.LaunchFileAsync(f);
-        }
 
 
+        //pulsante per le versioni
         private void Button_Click_1(object sender, RoutedEventArgs e)
         { //versioni
+
+            //CHIEDERE AL SERVER LE VERSIONI
+
+            //
             this.Messages.Text = "Versions";
             Button _button = (Button)sender;
             _button.IsEnabled = false;
             WriteGrid.RowDefinitions.Clear();
             WriteGrid.Children.Clear();
 
+            //disegnare i ta
             _button.IsEnabled = true;
         }
         public async Task CreateDatabase()
         {
+            //connessione con il database e creazione tabella
             connection = new SQLiteAsyncConnection("Files.db");
             Debug.WriteLine("creo la tabella");
             await connection.CreateTableAsync<FileDB>();
@@ -416,7 +453,7 @@ namespace StorageClientCS
 
         public async Task UpdateVersionVariable()
         {
-            var result = await connection.QueryAsync<FileDB>("SELECT * FROM Files");
+            var result = await connection.QueryAsync<FileDB>("SELECT * FROM Files WHERE User = ?",this.user);
 
             int MaxVers=0;
             foreach (var item in result)
@@ -424,17 +461,17 @@ namespace StorageClientCS
                 if (item.Versione > MaxVers)
                 {
                     Debug.WriteLine("aggiorno la versione, nuovo valore: " + item.Versione);
-                    this.Actual_Version = item.Versione;
-                    MaxVers = this.Actual_Version;
+                    this.Actual_Version_Client = item.Versione;
+                    MaxVers = this.Actual_Version_Client;
                 }
             }
-            Debug.WriteLine("versione più recente: " + this.Actual_Version);
+            Debug.WriteLine("versione più recente nel client per utente: "+ this.user +"= " + this.Actual_Version_Client);
         }
 
         public async Task DisplayDB()
         {
-            Debug.WriteLine("DISPLAY_DB:contenuti del db");
-            var result = await connection.QueryAsync<FileDB>("SELECT * FROM Files");
+            Debug.WriteLine("DISPLAY_DB:contenuti del db per l' utente "+ this.user);
+            var result = await connection.QueryAsync<FileDB>("SELECT * FROM Files WHERE User = ?",this.user);
 
             foreach (var item in result)
             {
@@ -456,6 +493,7 @@ namespace UniversalSqlLite.Model
         public string Path { get; set; }
 
         //considerare l' utente!!
+        public string User { get; set; }
 
         public string Name { get; set; }
 
@@ -466,6 +504,7 @@ namespace UniversalSqlLite.Model
 
     //tabella delle versioni lato server
     //con nome versione e data
+    //-> recupero la versione come massimo valore contenuto nella mia tabela
 
 
     //inserire una tabella utenti
