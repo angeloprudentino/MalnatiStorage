@@ -97,7 +97,7 @@ namespace ClientDiProva
             //stampa di verifica
             Debug.WriteLine("Rcevuto messaggio di tipo: "+ this.type + "\nItems: ");
             foreach (string g in this.items) Debug.WriteLine(g);
-            Debug.WriteLine("\n\n");
+            Debug.WriteLine("\n");
             return true;
         }
 
