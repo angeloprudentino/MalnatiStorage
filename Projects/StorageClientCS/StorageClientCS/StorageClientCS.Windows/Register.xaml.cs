@@ -47,7 +47,7 @@ namespace StorageClientCS
         {
             this.InitializeComponent();
             socket = new Windows.Networking.Sockets.StreamSocket();
-            serverHost = new Windows.Networking.HostName("localhost");
+            serverHost = new Windows.Networking.HostName("192.168.0.105");
             this.ConnectWithServer();
         }
 
@@ -140,10 +140,11 @@ namespace StorageClientCS
             {
                 //ricevuto true, registrazione andata a buon fine,
                 Debug.WriteLine("registrazione riuscita per l' utente: "+ user);
-                var myList = new List<string>()
+                var myList = new List<Object>()
                     {
                        user,
                        pass,
+                       socket,
                     };
                 //passo lo user e la pass come parametro-> serviranno per i successivi messaggi
                 this.Frame.Navigate(typeof(StorageClientAPP),myList);
