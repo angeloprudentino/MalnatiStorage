@@ -21,6 +21,9 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using SQLite;
 using UniversalSqlLite.Model;
+using Windows.Security.Cryptography;
+using Windows.Security.Cryptography.Core;
+using Windows.Storage.Streams;
 
 
 // Il modello di elemento per la pagina vuota è documentato all'indirizzo http://go.microsoft.com/fwlink/?LinkId=234238
@@ -61,9 +64,9 @@ namespace StorageClientCS
             this.InitializeComponent();
 
             //connessione al server
-            socket = new Windows.Networking.Sockets.StreamSocket();
-            serverHost = new Windows.Networking.HostName("localhost");
-            this.ConnectWithServer();
+            //socket = new Windows.Networking.Sockets.StreamSocket();
+            //serverHost = new Windows.Networking.HostName("192.168.0.105");
+            //this.ConnectWithServer();
 
             //sono state inserite nell' initialize
           //  this.CreateDatabase();
@@ -71,7 +74,7 @@ namespace StorageClientCS
           //  this.UpdateVersionVariable();
           //  this.DisplayDB();
          
-            this.Initialize();
+           //this.Initialize();
             
 
         }
@@ -84,54 +87,64 @@ namespace StorageClientCS
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
-            var myList = e.Parameter as List<string>;
-            this.user = myList[0];
-            this.pass = myList[1];
+            var myList = e.Parameter as List<Object>;
+            this.user =(string)myList[0];
+            this.pass =(string)myList[1];
+            this.socket = (Windows.Networking.Sockets.StreamSocket)myList[2];
             this.Messages.Text = "Welcome " + user + "   , Press SynchNow to start";
         }
+
 
         //bottone SYNCH NOW, sarà da togliere
         private async void Button_Click(object sender, RoutedEventArgs e)
         {
-          
-            //synch now
-            Button _button = (Button)sender;
-            _button.IsEnabled = false;
-           // this.Actual_Version++;
-            WriteGrid.RowDefinitions.Clear();
-            WriteGrid.Children.Clear();
-          //  StorageFolder fold = KnownFolders.PicturesLibrary;
-
-           // outputtext = "Files in " + fold.Name + "Version: " + this.Actual_Version + ": \n";
-
             try
             {
-                var task = Task.Run(async () => { await this.GetFiles(fold); });
+                var task = Task.Run(async () => { await this.Initialize(); });
                 task.Wait();
             }
             catch (Exception ecc)
             {
-                Debug.WriteLine("Errore nel button_click: "+ ecc.Message);
+                Debug.WriteLine("Errore nel button_click: " + ecc.Message);
             }
-            //this.GetFiles(fold);
+          //  //synch now
+          //  Button _button = (Button)sender;
+          //  _button.IsEnabled = false;
+          // // this.Actual_Version++;
+          //  WriteGrid.RowDefinitions.Clear();
+          //  WriteGrid.Children.Clear();
+          ////  StorageFolder fold = KnownFolders.PicturesLibrary;
 
-            Debug.WriteLine("numero di file in map: " + this.map_files.Count);
+          // // outputtext = "Files in " + fold.Name + "Version: " + this.Actual_Version + ": \n";
 
-            Debug.WriteLine("contenuto del db dopo il click a synch now: ");
-            this.DisplayDB();
+          //  try
+          //  {
+          //      var task = Task.Run(async () => { await this.GetFiles(fold); });
+          //      task.Wait();
+          //  }
+          //  catch (Exception ecc)
+          //  {
+          //      Debug.WriteLine("Errore nel button_click: "+ ecc.Message);
+          //  }
+          //  //this.GetFiles(fold);
 
-            foreach (StorageFile f in this.map_files.Values)
-            {
-                outputtext += f.Path + ": \n";
-            }
-            this.Messages.Text = outputtext;
-            this.DrawBottonsFiles();
-            this.setListenerOnChanges();
-            _button.IsEnabled = true;
+          //  Debug.WriteLine("numero di file in map: " + this.map_files.Count);
+
+          //  Debug.WriteLine("contenuto del db dopo il click a synch now: ");
+          //  this.DisplayDB();
+
+          //  foreach (StorageFile f in this.map_files.Values)
+          //  {
+          //      outputtext += f.Path + ": \n";
+          //  }
+          //  this.Messages.Text = outputtext;
+          //  this.DrawBottonsFiles();
+          //  this.setListenerOnChanges();
+          //  _button.IsEnabled = true;
         }
 
         //funzione chiamata all' avvio della app
-        private async void Initialize()
+        private async Task Initialize()
         {
            //operazioni preliminari, devono essere eseguite in ordine
 
@@ -153,7 +166,7 @@ namespace StorageClientCS
                 Debug.WriteLine("trovo il numero  della versione allo START nel client");
                 var task2 = Task.Run(async () => { await this.UpdateVersionVariable(); });
                 task2.Wait();
-                this.Messages.Text = "Starting now...\n";
+               // this.Messages.Text = "Starting now...\n";
             }
             catch (Exception ecc)
             {
@@ -161,20 +174,158 @@ namespace StorageClientCS
             }
             
             //synch now
-            SynchNow.IsEnabled = false;
-            Versions.IsEnabled = false;
-            WriteGrid.RowDefinitions.Clear();
-            WriteGrid.Children.Clear();
+           // SynchNow.IsEnabled = false;
+           // Versions.IsEnabled = false;
+
 
             //SCAMBIO DI MESSAGGI COL SERVER PER VERIFICARE SE HO L' ULTIMA VERSIONE
             //
-            //se sono indietro -> FARE FUNZIONE PER SCARICARE I NUOVI FILE
-            //DEVE AGIRE QUI
+            //  get last version request
+            Stream streamOut = socket.OutputStream.AsStreamForWrite();
+            StreamWriter writer = new StreamWriter(streamOut);
+            Message send_mex = new Message();
+            send_mex.setType(12); 
+            send_mex.addItem(this.user);
+            send_mex.addItem(this.pass);
+
+            Debug.WriteLine("creato messaggio, tipo = " + send_mex.ToSend());
+            string req = send_mex.ToSend();
+
+            await writer.WriteAsync(req);
+            await writer.FlushAsync();
+
+           // risposta GET_LAST_VERSION_REPLY
+           
+           Stream streamIn = socket.InputStream.AsStreamForRead();
+
+           StreamReader reader = new StreamReader(streamIn);
+           string response = await reader.ReadLineAsync();
+           Debug.WriteLine("stringa ricevuta: \n" + response);
+           Message resp_mex = new Message();
+           if (resp_mex.Parse(response) == false)
+           {
+               Debug.WriteLine("risposta NON CORRETTA\n");
+           }
+
+            List<string> items_resp = resp_mex.getItems();
+            foreach (string a in items_resp) Debug.WriteLine(a);
+
+            //prendo il token, secondo item ricevuto
+             string versione_server = items_resp[0];
+             this.Actual_Version_Server = int.Parse(versione_server);
+
+             if (this.Actual_Version_Server != this.Actual_Version_Client)
+             {
+                 //devo fare il restore 
+                 //RESTORE VERSION
+                 send_mex = new Message();
+                 send_mex.setType(14); //RESTORE VERSION request
+                 send_mex.addItem(this.user);
+                 send_mex.addItem(this.pass);
+                 send_mex.addItem(this.Actual_Version_Server.ToString());
+
+                 Debug.WriteLine("creato messaggio, tipo = " + send_mex.ToSend());
+                 req = send_mex.ToSend();
+
+
+                 await writer.WriteAsync(req);
+
+                 await writer.FlushAsync();
+
+
+
+                 //restore version reply
+                 streamIn = socket.InputStream.AsStreamForRead();
+                 reader = new StreamReader(streamIn);
+                 response = await reader.ReadLineAsync();
+                 Debug.WriteLine("stringa ricevuta: \n" + response);
+                 resp_mex = new Message();
+                 if (resp_mex.Parse(response) == false)
+                 {
+                     Debug.WriteLine("risposta NON CORRETTA\n");
+                 }
+
+                 items_resp = resp_mex.getItems();
+                 foreach (string a in items_resp) Debug.WriteLine(a);
+
+                 //prendo il token, secondo item ricevuto
+                 string token = items_resp[1];
+                 //nel primo c'è un booleano per vedere se la restore può avere successo
+
+
+                 // WHILE PER OGNI FILE CHE DEVO RICEVERE -> GESTIONE TIPI DI MESSAGGI
+                 //mi manda una sequenza di restore_file message
+                 //in questo caso 1
+                 streamIn = socket.InputStream.AsStreamForRead();
+                 reader = new StreamReader(streamIn);
+                 response = await reader.ReadLineAsync();
+                 Debug.WriteLine("stringa ricevuta: \n" + response);
+                 resp_mex = new Message();
+                 if (resp_mex.Parse(response) == false)
+                 {
+                     Debug.WriteLine("risposta NON CORRETTA\n");
+                 }
+
+                 //[0]path
+                 //[1]checksum
+                 //[2] timestamp ultima modifica
+                 //[3] file content
+
+                 items_resp = resp_mex.getItems();
+                 foreach (string a in items_resp) Debug.WriteLine(a);
+
+                 string path = items_resp[0];
+                 string file_content = items_resp[3];
+                 file_content = Base64Decode(file_content);
+
+
+                 // Create sample file; replace if exists.
+                 Windows.Storage.StorageFolder storageFolder = KnownFolders.PicturesLibrary;
+                 Windows.Storage.StorageFile sampleFile = await storageFolder.CreateFileAsync(path,
+                         Windows.Storage.CreationCollisionOption.ReplaceExisting);
+                 var buffer = Windows.Security.Cryptography.CryptographicBuffer.ConvertStringToBinary(
+ file_content, Windows.Security.Cryptography.BinaryStringEncoding.Utf8);
+
+                 await Windows.Storage.FileIO.WriteBufferAsync(sampleFile, buffer);
+
+
+                 //mando una ACK per ogni file
+                 send_mex = new Message();
+                 send_mex.setType(17); //RESTORE_FILE_ACK
+                 send_mex.addItem(token);
+                 send_mex.addItem("true");
+                 send_mex.addItem(path);
+
+                 Debug.WriteLine("creato messaggio, tipo = " + send_mex.ToSend());
+                 req = send_mex.ToSend();
+
+
+                 await writer.WriteAsync(req);
+
+                 await writer.FlushAsync();
+
+
+                 //ricevere la STOP
+                 reader = new StreamReader(streamIn);
+                 response = await reader.ReadLineAsync();
+                 Debug.WriteLine("stringa ricevuta: \n" + response);
+                 resp_mex = new Message();
+                 if (resp_mex.Parse(response) == false)
+                 {
+                     Debug.WriteLine("risposta NON CORRETTA\n");
+                 }
+
+
+             }
+
 
             //////
 
             //lancio la funzione che scandisce la cartella e fa i controlli
             //se non rileverò cambiamenti, la versione resterà quella del server
+             WriteGrid.RowDefinitions.Clear();
+             WriteGrid.Children.Clear();
+            
             this.map_files.Clear();
 
             try
@@ -455,7 +606,7 @@ namespace StorageClientCS
         {
             var result = await connection.QueryAsync<FileDB>("SELECT * FROM Files WHERE User = ?",this.user);
 
-            int MaxVers=0;
+            int MaxVers=-1;
             foreach (var item in result)
             {
                 if (item.Versione > MaxVers)
@@ -479,6 +630,48 @@ namespace StorageClientCS
             }
 
             Debug.WriteLine("FINE contenuti del db");
+        }
+
+        public static string Base64Encode(string plainText)
+        {
+            var plainTextBytes = System.Text.Encoding.UTF8.GetBytes(plainText);
+            return System.Convert.ToBase64String(plainTextBytes);
+        }
+        public static string Base64Decode(string base64EncodedData)
+        {
+            var base64EncodedBytes = System.Convert.FromBase64String(base64EncodedData);
+            return System.Text.Encoding.UTF8.GetString(base64EncodedBytes, 0, base64EncodedBytes.Length);
+        }
+
+        public static string Base64EncodeBin(byte[] plainTextBytes)
+        {
+            return System.Convert.ToBase64String(plainTextBytes);
+        }
+        public static string Base64DecodeBin(byte[] base64EncodedBytes)
+        {
+            return System.Text.Encoding.UTF8.GetString(base64EncodedBytes, 0, base64EncodedBytes.Length);
+        }
+
+        public static string Base64Checksum(string text)
+        {
+            //tratto da
+            //http://stackoverflow.com/questions/26969469/cannot-find-type-system-security-cryptography-sha256-on-windows-phone-8-1
+
+            HashAlgorithmProvider hap = HashAlgorithmProvider.OpenAlgorithm(HashAlgorithmNames.Md5);
+            CryptographicHash ch = hap.CreateHash();
+            // read in bytes from file then append with ch.Append(data)           
+            byte[] ByteArray = Encoding.UTF8.GetBytes(text);
+            // byte[] ByteArray = Encoding.Unicode.GetBytes(text);
+            IBuffer buffer = ByteArray.AsBuffer();
+            ch.Append(buffer);
+
+            Windows.Storage.Streams.IBuffer b_hash = ch.GetValueAndReset();       // hash it
+            string hash_string = CryptographicBuffer.EncodeToBase64String(b_hash);  // encode it to a hex string for easy reading
+
+            return hash_string;
+
+
+            //
         }
 
     }

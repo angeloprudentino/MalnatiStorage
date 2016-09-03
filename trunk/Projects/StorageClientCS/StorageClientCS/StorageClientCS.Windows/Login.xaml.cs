@@ -36,7 +36,7 @@ namespace StorageClientCS
         {
             this.InitializeComponent();
             socket = new Windows.Networking.Sockets.StreamSocket();
-            serverHost = new Windows.Networking.HostName("localhost");
+            serverHost = new Windows.Networking.HostName("192.168.0.105");
             this.ConnectWithServer();
         }
 
@@ -56,7 +56,6 @@ namespace StorageClientCS
             //mando un messaggio di UPDATE START_REQ
             //per vedere se le credenziali sono giuste
 
-            //DECOMMENTARE
             try
             {
                 var task = Task.Run(async () => { await this.Connect(user, pass); });
@@ -69,7 +68,7 @@ namespace StorageClientCS
 
             //String  prova_pass = "Pippo";
             //int res=String.CompareOrdinal(prova_pass,pass);
-            if (this.server_res=false)
+            if (this.server_res==false)
             {
                 MessageDialog messageDialog =  new MessageDialog("Username or Password not correct, try again", "Invalid Credentials");
                 messageDialog.DefaultCommandIndex = 1;
@@ -77,24 +76,14 @@ namespace StorageClientCS
             }
             else
             {
-                //chiudo la update_start (usata solo per controllare le credenziali)
-              //  this.CloseUpdate(token);
 
-                //DECOMMENTARE-> chiude lo scambio utilizzato per verificare la PASSWORD
-                try
-                {
-                    var task = Task.Run(async () => { await this.CloseUpdate(token); });
-                    task.Wait();
-                }
-                catch (Exception ecc)
-                {
-                    Debug.WriteLine("Errore nel secondo scambio di messaggi: " + ecc.Message);
-                }
-
-                var myList = new List<string>()
+                //credenziali corrette, passo alla pagina della app
+                Debug.WriteLine("Credenziali corrette, passo alla pagina della App" );
+                var myList = new List<Object>()
                     {
                        user,
                        pass,
+                       socket,
                     };
                 this.Frame.Navigate(typeof(StorageClientAPP),myList);
             }
@@ -110,15 +99,15 @@ namespace StorageClientCS
             //provo a comporre io il messaggio
             Message send_mex = new Message();
 
-            //Update _start_req
-            send_mex.setType(2); //user_reg_req
+            //"VERIFY_CREDANTIALS_REQ",
+            send_mex.setType(21); //VERIFY_CREDANTIALS_REQ
             send_mex.addItem(user);
             send_mex.addItem(pass);
 
             Debug.WriteLine("creato messaggio, tipo = " + send_mex.ToSend());
             string req = send_mex.ToSend();
 
-            await writer.WriteLineAsync(req);
+            await writer.WriteAsync(req);
             await writer.FlushAsync();
 
             Stream streamIn = socket.InputStream.AsStreamForRead();
@@ -131,49 +120,14 @@ namespace StorageClientCS
                 Debug.WriteLine("risposta NON CORRETTA\n");
             }
             this.items_resp = resp_mex.getItems();
-            //foreach (string a in items_resp) Debug.WriteLine(a);
 
             //prendo la risposta true/false;
             string resp = items_resp[0];
             int res = String.CompareOrdinal(resp,"true");
             if (res == 0) this.server_res = true;
             else this.server_res = false;
-            this.token = items_resp[1];
 
         }
        
-        private async Task CloseUpdate(string token)
-        {
-            Stream streamOut = socket.OutputStream.AsStreamForWrite();
-            StreamWriter writer = new StreamWriter(streamOut);
-
-            //provo a comporre io il messaggio
-            Message send_mex2 = new Message();
-
-            //Update _stop_req
-            send_mex2.setType(8);
-            send_mex2.addItem(token);
-
-            Debug.WriteLine("creato messaggio, tipo = " + send_mex2.ToSend());
-            string req = send_mex2.ToSend();
-
-            await writer.WriteLineAsync(req);
-            await writer.FlushAsync();
-
-            Stream streamIn = socket.InputStream.AsStreamForRead();
-            StreamReader reader = new StreamReader(streamIn);
-            string response = await reader.ReadLineAsync();
-            Debug.WriteLine("stringa ricevuta: \n" + response);
-            Message resp_mex2 = new Message();
-            if (resp_mex2.Parse(response) == false)
-            {
-                Debug.WriteLine("risposta NON CORRETTA\n");
-            }
-            this.items_resp = resp_mex2.getItems();
-            //foreach (string a in items_resp) Debug.WriteLine(a);
-
-
-        }
-
     }
 }
