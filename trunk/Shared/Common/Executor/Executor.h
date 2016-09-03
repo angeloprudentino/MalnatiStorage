@@ -2,8 +2,7 @@
  * Author: Angelo Prudentino
  * Date: 17/04/2016
  * File: Executor.h
- * Description: this file contains the classes implementing message consumers
- *              both for client and server side
+ * Description: this file contains the class implementing message consumer
  *
  */
 
@@ -23,9 +22,9 @@ using namespace boost;
 ///////////////////////////////////
 public class IBaseExecutorController : public IServerBaseController {
 public:
-	virtual bool isInQueueEmpty() = 0;
+	virtual bool isMessageQueueEmpty() = 0;
 	virtual TMessageContainer_ptr getMessageToProcess() = 0;
-	virtual void enqueueMessageToSend(TMessageContainer_ptr& aMsg) = 0;
+	virtual void sendMessage(TMessageContainer_ptr& aMsg) = 0;
 };
 
 
@@ -45,6 +44,7 @@ public:
 	virtual void processRestoreVersion(TConnectionHandle aConnection, TRestoreVerReqMessage_ptr& aMsg) = 0;
 	virtual void processRestoreFileAck(TConnectionHandle aConnection, TRestoreFileAckMessage_ptr& aMsg) = 0;
 	virtual void processPingRequest(TConnectionHandle aConnection, TPingReqMessage_ptr& aMsg) = 0;
+	virtual void processVerifyCred(TConnectionHandle aConnection, TVerifyCredReqMessage_ptr& aMsg) = 0;
 };
 
 

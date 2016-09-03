@@ -22,8 +22,8 @@ typedef struct Connection{
 	tcp::socket fSocket;
 	tcp::endpoint fPeer;
 	boost::asio::streambuf fReadBuffer;
-	Connection(io_service &aIoService) : fSocket(aIoService), fPeer(), fReadBuffer() { }
-	Connection(io_service &aIoService, size_t aMaxBuffSize) : fSocket(aIoService), fPeer(), fReadBuffer(aMaxBuffSize) { }
+	Connection(io_service *aIoService) : fSocket(*aIoService), fPeer(), fReadBuffer() { }
+	Connection(io_service *aIoService, size_t aMaxBuffSize) : fSocket(*aIoService), fPeer(), fReadBuffer(aMaxBuffSize) { }
 } TConnection;
 typedef list<TConnection> TConnectionList;
 typedef TConnectionList::iterator TConnectionHandle;

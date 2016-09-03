@@ -2,8 +2,7 @@
  * Author: Angelo Prudentino
  * Date: 17/04/2016
  * File: Executor.cpp
- * Description: this file contains the classes implementing message consumers
- *              both for client and server side
+ * Description: this file contains the class implementing message consumer
  *
  */
 
@@ -20,11 +19,11 @@
 #pragma region "TMessageExecutor"
 TMessageExecutor::TMessageExecutor(IServerExecutorController* aCallbackObj){
 	this->fCallbackObj = aCallbackObj;
-	//create all threads
+
+	//create all executor threads
 	for (int i = 0; i < EXECUTOR_NUM; i++){
 		doServerLog(this->fCallbackObj, "TMessageExecutor", "constructor", "creating executor thread " + to_string(i+1));
-		auto main = bind(&TMessageExecutor::serverExecutor, this);
-		fThreadPool.create_thread(main);
+		this->fThreadPool.create_thread(bind(&TMessageExecutor::serverExecutor, this));
 	}
 
 	this->fMustExit.store(false, boost::memory_order_release);
@@ -46,10 +45,8 @@ TMessageExecutor::~TMessageExecutor(){
 
 void TMessageExecutor::serverExecutor(){
     //exit even if other messages are queued to be processed
-	while (!this->fMustExit.load(boost::memory_order_acquire)){
-		TMessageContainer_ptr msg = nullptr;
-		if (this->fCallbackObj != nullptr)
-			msg = this->fCallbackObj->getMessageToProcess();
+	while (!this->fMustExit.load(boost::memory_order_acquire) && this->fCallbackObj != nullptr){
+		TMessageContainer_ptr msg = this->fCallbackObj->getMessageToProcess();
 
 		if (msg != nullptr && !msg->isEmpty()){
 			TBaseMessage_ptr bm = msg->getMessage();
@@ -215,6 +212,21 @@ void TMessageExecutor::serverExecutor(){
 				}
 				catch (EMessageException& e){
 					doServerError(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "error creating TPingReqMessage: " + e.getMessage());
+				}
+				if (mptr != nullptr)
+					mptr.reset();
+
+				break;
+			}
+			case VERIFY_CRED_REQ_ID:{
+				doServerLog(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "calling processVerifyCred method of the controller");
+				TVerifyCredReqMessage_ptr mptr = nullptr;
+				try{
+					mptr = make_TVerifyCredReqMessage_ptr(bm);
+					this->fCallbackObj->processVerifyCred(msg->getConnection(), mptr);
+				}
+				catch (EMessageException& e){
+					doServerError(this->fCallbackObj, "TMessageExecutor", "serverExecutor", "error creating TVerifyCredReqMessage_ptr: " + e.getMessage());
 				}
 				if (mptr != nullptr)
 					mptr.reset();

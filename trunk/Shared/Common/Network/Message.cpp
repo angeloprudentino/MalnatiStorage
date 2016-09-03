@@ -16,6 +16,7 @@
 #include "Message.h"
 
 using namespace std;
+using namespace boost::filesystem;
 
 #define MSG_SEP '$'
 #define MSG_SEP_ESC "&#36"
@@ -42,9 +43,12 @@ using namespace std;
 #define RESTORE_FILE_ACK_TOK_NUM 5
 #define RESTORE_STOP_TOK_NUM 4
 #define PING_TOK_NUM 4
+#define VERIFY_CRED_REQ_TOK_NUM 4
+#define VERIFY_CRED_REPLY_TOK_NUM 3
+#define SYSTEM_ERR_TOK_NUM 3
 
 //Message names
-#define MSG_NUM 19
+#define MSG_NUM 24
 std::string messageNames[] = {
 	/*  0*/ "USER_REG_REQ",
 	/*  1*/ "USER_REG_REPLY",
@@ -66,7 +70,10 @@ std::string messageNames[] = {
 	/* 17*/ "RESTORE_FILE_ACK",
 	/* 18*/ "RESTORE_STOP",
 	/* 19*/ "PING_REQ",
-	/* 20*/ "PING_REPLY"
+	/* 20*/ "PING_REPLY",
+	/* 21*/ "VERIFY_CREDANTIALS_REQ"
+	/* 22*/ "VERIFY_CREDANTIALS_REPLY",
+	/* 23*/ "SYSTEM_ERROR"
 };
 
 #pragma region "Message Utility"
@@ -95,16 +102,16 @@ const string getMessageName(const int aIndex){
 // Utility functions to escape/unescape messages
 void escape(string_ptr& aMsg){
 	if (aMsg != nullptr){
-		string from = to_string(MSG_SEP);
-		string to = MSG_SEP_ESC;
+		const string from = to_string(MSG_SEP);
+		const string to = MSG_SEP_ESC;
 		boost::replace_all(*aMsg, from, to);
 	}
 }
 
 void unescape(string_ptr& aMsg){
 	if (aMsg != nullptr){
-		string from = MSG_SEP_ESC;
-		string to = to_string(MSG_SEP);
+		const string from = MSG_SEP_ESC;
+		const string to = to_string(MSG_SEP);
 		boost::replace_all(*aMsg, from, to);
 	}
 }
@@ -186,10 +193,9 @@ void TBaseMessage::decodeMessage(){
 		this->fItems->push_back(move_string_ptr(tok_ptr));
 	}
 
-	//DECOMMENTARE-> falliva il test e non faceva comunicare
-	//int len = (int)this->fItems->size();
-	//if (*(this->fItems->at(len - 1)) != END_MSG)
-	//	throw EMessageException("The given " + *(this->fItems->at(0)) + " message is not properly terminated");
+	int len = (int)this->fItems->size();
+	if (*(this->fItems->at(len - 1)) != END_MSG)
+		throw EMessageException("The given " + *(this->fItems->at(0)) + " message is not properly terminated");
 }
 #pragma endregion
 
@@ -232,7 +238,7 @@ string_ptr TUserRegistrReqMessage::encodeMessage(){
 }
 
 void TUserRegistrReqMessage::decodeMessage(){
-	/*
+   /*
 	* item[0] -> msg name
 	* item[1] -> username
 	* item[2] -> password
@@ -294,7 +300,7 @@ string_ptr TUserRegistrReplyMessage::encodeMessage(){
 }
 
 void TUserRegistrReplyMessage::decodeMessage(){
-	/*
+   /*
 	* item[0] -> msg name
 	* item[1] -> response
 	*/
@@ -363,7 +369,7 @@ string_ptr TUpdateStartReqMessage::encodeMessage(){
 }
 
 void TUpdateStartReqMessage::decodeMessage(){
-	/*
+   /*
 	* item[0] -> msg name
 	* item[1] -> username
 	* item[2] -> password
@@ -433,7 +439,7 @@ string_ptr TUpdateStartReplyMessage::encodeMessage(){
 }
 
 void TUpdateStartReplyMessage::decodeMessage(){
-	/*
+   /*
 	* item[0] -> msg name
 	* item[1] -> response
 	* item[2] -> user token
@@ -488,23 +494,20 @@ TAddNewFileMessage::TAddNewFileMessage(const string& aToken, const string& aFile
 	this->fID = ADD_NEW_FILE_ID;
 	this->fToken = make_string_ptr(aToken);
 	this->fFilePath = make_string_ptr(aFilePath);
-	//this->fFileContent = nullptr;
-	//this->fChecksum = nullptr;
-	//this->fFileDate = time(nullptr);
 
-	//read file, encode it and calculate checksum
-	try{
-		this->fFileContent = opensslB64EncodeFile(*(this->fFilePath));
-		this->fChecksum = opensslB64Checksum(*(this->fFileContent));
-	}
-	catch (EOpensslException e){
-		throw EMessageException("TAddNewFileMessage: " + e.getMessage());
-	}
-	path p(*(this->fFilePath));
-	boost::system::error_code ec;
-	this->fFileDate = last_write_time(p, ec);
-	if (ec)
-		this->fFileDate = time(nullptr);
+	////read file, encode it and calculate checksum
+	//try{
+	//this->fFileContent = readFile(path(this->fFilePath->c_str()));
+	//	this->fChecksum = opensslB64FileChecksum(*(this->fFileContent));
+	//}
+	//catch (EOpensslException e){
+	//	throw EMessageException("TAddNewFileMessage: " + e.getMessage());
+	//}
+	//path p(*(this->fFilePath));
+	//boost::system::error_code ec;
+	//this->fFileDate = last_write_time(p, ec);
+	//if (ec)
+	//	this->fFileDate = time(nullptr);
 }
 
 TAddNewFileMessage::~TAddNewFileMessage(){
@@ -527,19 +530,19 @@ TAddNewFileMessage::~TAddNewFileMessage(){
 }
 
 string_ptr TAddNewFileMessage::encodeMessage(){
-	////read file, encode it and calculate checksum
-	//try{
-	//	this->fFileContent = opensslB64EncodeFile(*(this->fFilePath));
-	//	this->fChecksum = opensslB64Checksum(*(this->fFileContent));
-	//}
-	//catch (EOpensslException e){
-	//	throw EMessageException("TAddNewFileMessage: " + e.getMessage());
-	//}
-	//path p(*(this->fFilePath));
-	//boost::system::error_code ec;
-	//this->fFileDate = last_write_time(p, ec);
-	//if (ec)
-	//	this->fFileDate = time(nullptr);
+	//read file, encode it and calculate checksum
+	try{
+		this->fFileContent = readFile(path(this->fFilePath->c_str()));
+		this->fChecksum = opensslB64FileChecksum(*(this->fFileContent));
+	}
+	catch (EOpensslException e){
+		throw EMessageException("TAddNewFileMessage: " + e.getMessage());
+	}
+	path p(*(this->fFilePath));
+	boost::system::error_code ec;
+	this->fFileDate = last_write_time(p, ec);
+	if (ec)
+		this->fFileDate = time(nullptr);
 
 	this->fItems->push_back(make_string_ptr(getMessageName(this->fID)));
 	this->fItems->push_back(move_string_ptr(this->fToken));
@@ -552,7 +555,7 @@ string_ptr TAddNewFileMessage::encodeMessage(){
 }
 
 void TAddNewFileMessage::decodeMessage(){
-	/*
+   /*
 	* item[0] -> msg name
 	* item[1] -> token
 	* item[2] -> file path
@@ -577,7 +580,7 @@ void TAddNewFileMessage::decodeMessage(){
 	//user token
 	if (*(this->fItems->at(1)) == EMPTY)
 		throw EMessageException("The token field cannot be empty");
-	this->fToken = move_string_ptr(this->fItems->at(1)); //TODO: implement -> checkToken(this->fItems->at(2));
+	this->fToken = move_string_ptr(this->fItems->at(1));
 
 	//file path
 	if (*(this->fItems->at(2)) == EMPTY)
@@ -604,7 +607,7 @@ bool TAddNewFileMessage::verifyChecksum(){
 	bool checksumMatches = false;
 	string_ptr myChecksum = nullptr;
 	try{
-		myChecksum = opensslB64Checksum(*(this->fFileContent));
+		myChecksum = opensslB64FileChecksum(*(this->fFileContent));
 		checksumMatches = (*(myChecksum) == *(this->fChecksum));
 	}
 	catch (EOpensslException e){
@@ -633,23 +636,20 @@ TUpdateFileMessage::TUpdateFileMessage(const string& aToken, const string& aFile
 	this->fID = UPDATE_FILE_ID;
 	this->fToken = make_string_ptr(aToken);
 	this->fFilePath = make_string_ptr(aFilePath);
-	//this->fFileContent = nullptr;
-	//this->fChecksum = nullptr;
-	//this->fFileDate = time(nullptr);
 
-	//read file, encode it and calculate checksum
-	try{
-		this->fFileContent = opensslB64EncodeFile(*(this->fFilePath));
-		this->fChecksum = opensslB64Checksum(*(this->fFileContent));
-	}
-	catch (EOpensslException e){
-		throw EMessageException("TUpdateFileMessage: " + e.getMessage());
-	}
-	path p(*(this->fFilePath));
-	boost::system::error_code ec;
-	this->fFileDate = last_write_time(p, ec);
-	if (ec)
-		this->fFileDate = time(nullptr);
+	////read file, encode it and calculate checksum
+	//try{
+	//this->fFileContent = readFile(path(this->fFilePath->c_str()));
+	//	this->fChecksum = opensslB64FileChecksum(*(this->fFileContent));
+	//}
+	//catch (EOpensslException e){
+	//	throw EMessageException("TUpdateFileMessage: " + e.getMessage());
+	//}
+	//path p(*(this->fFilePath));
+	//boost::system::error_code ec;
+	//this->fFileDate = last_write_time(p, ec);
+	//if (ec)
+	//	this->fFileDate = time(nullptr);
 }
 
 TUpdateFileMessage::~TUpdateFileMessage(){
@@ -672,19 +672,19 @@ TUpdateFileMessage::~TUpdateFileMessage(){
 }
 
 string_ptr TUpdateFileMessage::encodeMessage(){
-	////read file, encode it and calculate checksum
-	//try{
-	//	this->fFileContent = opensslB64EncodeFile(*(this->fFilePath));
-	//	this->fChecksum = opensslB64Checksum(*(this->fFileContent));
-	//}
-	//catch (EOpensslException e){
-	//	throw EMessageException("TUpdateFileMessage: " + e.getMessage());
-	//}
-	//path p(*(this->fFilePath));
-	//boost::system::error_code ec;
-	//this->fFileDate = last_write_time(p, ec);
-	//if (ec)
-	//	this->fFileDate = time(nullptr);
+	//read file, encode it and calculate checksum
+	try{
+		this->fFileContent = readFile(path(this->fFilePath->c_str()));
+		this->fChecksum = opensslB64FileChecksum(*(this->fFileContent));
+	}
+	catch (EOpensslException e){
+		throw EMessageException("TUpdateFileMessage: " + e.getMessage());
+	}
+	path p(*(this->fFilePath));
+	boost::system::error_code ec;
+	this->fFileDate = last_write_time(p, ec);
+	if (ec)
+		this->fFileDate = time(nullptr);
 
 	this->fItems->push_back(make_string_ptr(getMessageName(this->fID)));
 	this->fItems->push_back(move_string_ptr(this->fToken));
@@ -697,7 +697,7 @@ string_ptr TUpdateFileMessage::encodeMessage(){
 }
 
 void TUpdateFileMessage::decodeMessage(){
-	/*
+   /*
 	* item[0] -> msg name
 	* item[1] -> token
 	* item[2] -> file path
@@ -722,7 +722,7 @@ void TUpdateFileMessage::decodeMessage(){
 	//user token
 	if (*(this->fItems->at(1)) == EMPTY)
 		throw EMessageException("The token field cannot be empty");
-	this->fToken = move_string_ptr(this->fItems->at(1)); //TODO: implement -> checkToken(this->fItems->at(2));
+	this->fToken = move_string_ptr(this->fItems->at(1));
 
 	//file path
 	if (*(this->fItems->at(2)) == EMPTY)
@@ -749,7 +749,7 @@ bool TUpdateFileMessage::verifyChecksum(){
 	bool checksumMatches = false;
 	string_ptr myChecksum = nullptr;
 	try{
-		myChecksum = opensslB64Checksum(*(this->fFileContent));
+		myChecksum = opensslB64FileChecksum(*(this->fFileContent));
 		checksumMatches = (*(myChecksum) == *(this->fChecksum));
 	}
 	catch (EOpensslException e){
@@ -800,7 +800,7 @@ string_ptr TRemoveFileMessage::encodeMessage(){
 }
 
 void TRemoveFileMessage::decodeMessage(){
-	/*
+   /*
 	* item[0] -> msg name
 	* item[1] -> token
 	* item[2] -> file path
@@ -822,7 +822,7 @@ void TRemoveFileMessage::decodeMessage(){
 	//user token
 	if (*(this->fItems->at(1)) == EMPTY)
 		throw EMessageException("The token field cannot be empty");
-	this->fToken = move_string_ptr(this->fItems->at(1)); //TODO: implement -> checkToken(this->fItems->at(2));
+	this->fToken = move_string_ptr(this->fItems->at(1));
 
 	//file path
 	if (*(this->fItems->at(2)) == EMPTY)
@@ -872,7 +872,7 @@ string_ptr TFileAckMessage::encodeMessage(){
 }
 
 void TFileAckMessage::decodeMessage(){
-	/*
+   /*
 	* item[0] -> msg name
 	* item[1] -> response
 	* item[2] -> file path
@@ -941,7 +941,7 @@ string_ptr TUpdateStopReqMessage::encodeMessage(){
 }
 
 void TUpdateStopReqMessage::decodeMessage(){
-	/*
+   /*
 	* item[0] -> msg name
 	* item[1] -> user token
 	*/
@@ -961,7 +961,7 @@ void TUpdateStopReqMessage::decodeMessage(){
 	//user token
 	if (*(this->fItems->at(1)) == EMPTY)
 		throw EMessageException("The token field cannot be empty");
-	this->fToken = move_string_ptr(this->fItems->at(1)); //TODO: implement -> checkToken(this->fItems->at(2));
+	this->fToken = move_string_ptr(this->fItems->at(1));
 }
 #pragma endregion
 
@@ -1001,7 +1001,7 @@ string_ptr TUpdateStopReplyMessage::encodeMessage(){
 }
 
 void TUpdateStopReplyMessage::decodeMessage(){
-	/*
+   /*
 	* item[0] -> msg name
 	* item[1] -> response
 	* item[2] -> version number
@@ -1087,7 +1087,7 @@ string_ptr TGetVersionsReqMessage::encodeMessage(){
 }
 
 void TGetVersionsReqMessage::decodeMessage(){
-	/*
+   /*
 	* item[0] -> msg name
 	* item[1] -> username
 	* item[2] -> password
@@ -1165,7 +1165,7 @@ string_ptr TGetVersionsReplyMessage::encodeMessage(){
 }
 
 void TGetVersionsReplyMessage::decodeMessage(){
-	/*
+   /*
 	* item[0] -> msg name
 	* item[1] -> number of versions
 	* item[2] -> oldest version on server
@@ -1244,7 +1244,7 @@ TGetLastVerReqMessage::TGetLastVerReqMessage(TBaseMessage_ptr& aBase){
 }
 
 TGetLastVerReqMessage::TGetLastVerReqMessage(const string& aUser, const string& aPass){
-	this->fID = GET_VERSIONS_REQ_ID;
+	this->fID = GET_LAST_VERSION_REQ_ID;
 	this->fUser = make_string_ptr(aUser);
 	this->fPass = make_string_ptr(aPass);
 }
@@ -1269,7 +1269,7 @@ string_ptr TGetLastVerReqMessage::encodeMessage(){
 }
 
 void TGetLastVerReqMessage::decodeMessage(){
-	/*
+   /*
 	* item[0] -> msg name
 	* item[1] -> username
 	* item[2] -> password
@@ -1313,7 +1313,7 @@ TGetLastVerReplyMessage::TGetLastVerReplyMessage(TBaseMessage_ptr& aBase){
 }
 
 TGetLastVerReplyMessage::TGetLastVerReplyMessage(int aVersion, time_t aVersionDate){
-	this->fID = RESTORE_STOP_ID;
+	this->fID = GET_LAST_VERSION_REPLY_ID;
 	this->fVersion = aVersion;
 	this->fVersionDate = aVersionDate;
 }
@@ -1327,7 +1327,7 @@ string_ptr TGetLastVerReplyMessage::encodeMessage(){
 }
 
 void TGetLastVerReplyMessage::decodeMessage(){
-	/*
+   /*
 	* item[0] -> msg name
 	* item[1] -> version number
 	* item[2] -> version timestamp
@@ -1404,7 +1404,7 @@ string_ptr TRestoreVerReqMessage::encodeMessage(){
 }
 
 void TRestoreVerReqMessage::decodeMessage(){
-	/*
+   /*
 	* item[0] -> msg name
 	* item[1] -> username
 	* item[2] -> password
@@ -1488,7 +1488,7 @@ string_ptr TRestoreVerReplyMessage::encodeMessage(){
 }
 
 void TRestoreVerReplyMessage::decodeMessage(){
-	/*
+   /*
 	* item[0] -> msg name
 	* item[1] -> response
 	* item[2] -> user token
@@ -1520,7 +1520,7 @@ void TRestoreVerReplyMessage::decodeMessage(){
 	//user token
 	if (*(this->fItems->at(2)) == EMPTY)
 		throw EMessageException("The token field cannot be empty");
-	this->fToken = move_string_ptr(this->fItems->at(2)); //TODO: implement -> checkToken(this->fItems->at(2));
+	this->fToken = move_string_ptr(this->fItems->at(2)); 
 }
 #pragma endregion
 
@@ -1537,22 +1537,21 @@ TRestoreFileMessage::TRestoreFileMessage(TBaseMessage_ptr& aBase){
 	this->decodeMessage();
 }
 
-TRestoreFileMessage::TRestoreFileMessage(const string& aFilePath){
+TRestoreFileMessage::TRestoreFileMessage(const string& aBasePath, const string& aFilePath, const time_t aFileDate){
 	this->fID = RESTORE_FILE_ID;
 	this->fFilePath = make_string_ptr(aFilePath);
+
 	//read file, encode it and calculate checksum
 	try{
-		this->fFileContent = opensslB64EncodeFile(*(this->fFilePath));
-		this->fChecksum = opensslB64Checksum(*(this->fFileContent));
+		this->fFileContent = readFile(path(aBasePath + "//" + aFilePath));
+		this->fChecksum = opensslB64FileChecksum(*(this->fFileContent));
 	}
 	catch (EOpensslException e){
 		throw EMessageException("TRestoreFileMessage: " + e.getMessage());
 	}
-	path p(*(this->fFilePath));
-	boost::system::error_code ec;
-	this->fFileDate = last_write_time(p, ec);
-	if (ec)
-		this->fFileDate = time(nullptr);
+
+
+	this->fFileDate = aFileDate;
 }
 
 TRestoreFileMessage::~TRestoreFileMessage(){
@@ -1581,7 +1580,7 @@ string_ptr TRestoreFileMessage::encodeMessage(){
 }
 
 void TRestoreFileMessage::decodeMessage(){
-	/*
+   /*
 	* item[0] -> msg name
 	* item[1] -> file path
 	* item[2] -> file checksum
@@ -1627,7 +1626,7 @@ bool TRestoreFileMessage::verifyChecksum(){
 	bool checksumMatches = false;
 	string_ptr myChecksum = nullptr;
 	try{
-		myChecksum = opensslB64Checksum(*(this->fFileContent));
+		myChecksum = opensslB64FileChecksum(*(this->fFileContent));
 		checksumMatches = (*(myChecksum) == *(this->fChecksum));
 	}
 	catch (EOpensslException e){
@@ -1686,7 +1685,7 @@ string_ptr TRestoreFileAckMessage::encodeMessage(){
 }
 
 void TRestoreFileAckMessage::decodeMessage(){
-	/*
+   /*
 	* item[0] -> msg name
 	* item[1] -> user token
 	* item[2] -> response
@@ -1708,7 +1707,7 @@ void TRestoreFileAckMessage::decodeMessage(){
 	//user token
 	if (*(this->fItems->at(1)) == EMPTY)
 		throw EMessageException("The token field cannot be empty");
-	this->fToken = move_string_ptr(this->fItems->at(1)); //TODO: implement -> checkToken(this->fItems->at(1));
+	this->fToken = move_string_ptr(this->fItems->at(1));
 
 	//response
 	if (*(this->fItems->at(2)) == EMPTY)
@@ -1756,7 +1755,7 @@ string_ptr TRestoreStopMessage::encodeMessage(){
 }
 
 void TRestoreStopMessage::decodeMessage(){
-	/*
+   /*
 	* item[0] -> msg name
 	* item[1] -> version number
 	* item[2] -> version timestamp
@@ -1846,7 +1845,7 @@ void TPingReqMessage::decodeMessage(){
 	//user token
 	if (*(this->fItems->at(2)) == EMPTY)
 		throw EMessageException("The token field cannot be empty");
-	this->fToken = move_string_ptr(this->fItems->at(2)); //TODO: implement -> checkToken(this->fItems->at(2));
+	this->fToken = move_string_ptr(this->fItems->at(2)); 
 
 }
 #pragma endregion
@@ -1879,7 +1878,7 @@ string_ptr TPingReplyMessage::encodeMessage(){
 }
 
 void TPingReplyMessage::decodeMessage(){
-   /*
+	/*
 	* item[0] -> msg name
 	* item[1] -> timestamp
 	* item[2] -> user token
@@ -1905,6 +1904,187 @@ void TPingReplyMessage::decodeMessage(){
 	//user token
 	if (*(this->fItems->at(2)) == EMPTY)
 		throw EMessageException("The token field cannot be empty");
-	this->fToken = move_string_ptr(this->fItems->at(2)); //TODO: implement -> checkToken(this->fItems->at(2));
+	this->fToken = move_string_ptr(this->fItems->at(2));
+}
+#pragma endregion
+
+
+////////////////////////////////////////
+//       TVerifyCredReqMessage        //
+////////////////////////////////////////
+#pragma region "TVerifyCredReqMessage"
+TVerifyCredReqMessage::TVerifyCredReqMessage(TBaseMessage_ptr& aBase){
+	this->fID = aBase->getID();
+	this->fItems = aBase->getTokens();
+	this->fEncodedMsg = aBase->getMsg();
+
+	this->decodeMessage();
+}
+
+TVerifyCredReqMessage::TVerifyCredReqMessage(const string& aUser, const string& aPass){
+	this->fID = VERIFY_CRED_REQ_ID;
+	this->fUser = make_string_ptr(aUser);
+	this->fPass = make_string_ptr(aPass);
+}
+
+TVerifyCredReqMessage::~TVerifyCredReqMessage(){
+	if (this->fUser != nullptr)
+		this->fUser.reset();
+
+	if (this->fPass != nullptr)
+		this->fPass.reset();
+
+	this->fUser = nullptr;
+	this->fPass = nullptr;
+}
+
+string_ptr TVerifyCredReqMessage::encodeMessage(){
+	this->fItems->push_back(make_string_ptr(getMessageName(this->fID)));
+	this->fItems->push_back(move_string_ptr(this->fUser));
+	this->fItems->push_back(move_string_ptr(this->fPass));
+
+	return TBaseMessage::encodeMessage();
+}
+
+void TVerifyCredReqMessage::decodeMessage(){
+	/*
+	* item[0] -> msg name
+	* item[1] -> username
+	* item[2] -> password
+	*/
+	TBaseMessage::decodeMessage();
+
+	int size = (int)this->fItems->size();
+	if (size != VERIFY_CRED_REQ_TOK_NUM)
+		throw EMessageException("VERIFY_CRED_REQ message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(VERIFY_CRED_REQ_TOK_NUM) + ")");
+
+	for (int i = 0; i < size; i++)
+		if (this->fItems->at(i) == nullptr)
+			throw EMessageException("item " + to_string(i) + " is nullptr");
+
+	if (this->fID != VERIFY_CRED_REQ_ID)
+		throw EMessageException("The given message is not a USER_REG_REQ message");
+
+	//username
+	if (*(this->fItems->at(1)) == EMPTY)
+		throw EMessageException("The user name field cannot be empty");
+	this->fUser = move_string_ptr(this->fItems->at(1));
+
+	//password
+	if (*(this->fItems->at(2)) == EMPTY)
+		throw EMessageException("The password field cannot be empty");
+	this->fPass = move_string_ptr(this->fItems->at(2));
+}
+#pragma endregion
+
+
+///////////////////////////////////////
+//      TVerifyCredReplyMessage      //
+///////////////////////////////////////
+#pragma region "TVerifyCredReplyMessage"
+TVerifyCredReplyMessage::TVerifyCredReplyMessage(TBaseMessage_ptr& aBase){
+	this->fID = aBase->getID();
+	this->fItems = aBase->getTokens();
+	this->fEncodedMsg = aBase->getMsg();
+
+	this->decodeMessage();
+}
+
+TVerifyCredReplyMessage::TVerifyCredReplyMessage(const bool aResp){
+	this->fID = VERIFY_CRED_REPLY_ID;
+	this->fResp = aResp;
+}
+
+string_ptr TVerifyCredReplyMessage::encodeMessage(){
+	string resp = "";
+	if (this->fResp)
+		resp = TRUE_STR;
+	else
+		resp = FALSE_STR;
+
+	this->fItems->push_back(make_string_ptr(getMessageName(this->fID)));
+	this->fItems->push_back(make_string_ptr(resp));
+
+	return TBaseMessage::encodeMessage();
+}
+
+void TVerifyCredReplyMessage::decodeMessage(){
+	/*
+	* item[0] -> msg name
+	* item[1] -> response
+	*/
+	TBaseMessage::decodeMessage();
+
+	int size = (int)this->fItems->size();
+	if (size != VERIFY_CRED_REPLY_TOK_NUM)
+		throw EMessageException("VERIFY_CRED_REPLY message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(VERIFY_CRED_REPLY_TOK_NUM) + ")");
+
+	for (int i = 0; i < size; i++)
+		if (this->fItems->at(i) == nullptr)
+			throw EMessageException("item " + to_string(i) + " is nullptr");
+
+	if (this->fID != VERIFY_CRED_REPLY_ID)
+		throw EMessageException("The given message is not a VERIFY_CRED_REPLY message");
+
+	//response
+	if (*(this->fItems->at(1)) == EMPTY)
+		throw EMessageException("The response field cannot be empty");
+	if (*(this->fItems->at(1)) != TRUE_STR && *(this->fItems->at(1)) != FALSE_STR)
+		throw EMessageException("The response field could be only true or false");
+
+	if (*(this->fItems->at(1)) == TRUE_STR)
+		this->fResp = true;
+	else
+		this->fResp = false;
+}
+#pragma endregion
+
+
+//////////////////////////////////////
+//       TSystemErrorMessage        //
+//////////////////////////////////////
+#pragma region "TSystemErrorMessage"
+TSystemErrorMessage::TSystemErrorMessage(TBaseMessage_ptr& aBase){
+	this->fID = aBase->getID();
+	this->fItems = aBase->getTokens();
+	this->fEncodedMsg = aBase->getMsg();
+
+	this->decodeMessage();
+}
+
+TSystemErrorMessage::TSystemErrorMessage(const string& aDetail){
+	this->fID = SYSTEM_ERR_ID;
+	this->fDetail = make_string_ptr(aDetail);
+}
+
+string_ptr TSystemErrorMessage::encodeMessage(){
+	this->fItems->push_back(make_string_ptr(getMessageName(this->fID)));
+	this->fItems->push_back(move_string_ptr(this->fDetail));
+
+	return TBaseMessage::encodeMessage();
+}
+
+void TSystemErrorMessage::decodeMessage(){
+	/*
+	* item[0] -> msg name
+	* item[1] -> error detail
+	*/
+	TBaseMessage::decodeMessage();
+
+	int size = (int)this->fItems->size();
+	if (size != SYSTEM_ERR_TOK_NUM)
+		throw EMessageException("SYSTEM_ERROR message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(SYSTEM_ERR_TOK_NUM) + ")");
+
+	for (int i = 0; i < size; i++)
+		if (this->fItems->at(i) == nullptr)
+			throw EMessageException("item " + to_string(i) + " is nullptr");
+
+	if (this->fID != SYSTEM_ERR_ID)
+		throw EMessageException("The given message is not a SYSTEM_ERROR message");
+
+	//detail
+	if (*(this->fItems->at(1)) == EMPTY)
+		throw EMessageException("The detail field cannot be empty");
+	this->fDetail = move_string_ptr(this->fItems->at(1));
 }
 #pragma endregion
