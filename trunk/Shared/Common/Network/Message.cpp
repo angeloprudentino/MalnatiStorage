@@ -71,7 +71,7 @@ std::string messageNames[] = {
 	/* 18*/ "RESTORE_STOP",
 	/* 19*/ "PING_REQ",
 	/* 20*/ "PING_REPLY",
-	/* 21*/ "VERIFY_CREDANTIALS_REQ"
+	/* 21*/ "VERIFY_CREDANTIALS_REQ",
 	/* 22*/ "VERIFY_CREDANTIALS_REPLY",
 	/* 23*/ "SYSTEM_ERROR"
 };
