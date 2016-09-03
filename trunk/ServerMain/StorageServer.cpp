@@ -401,7 +401,6 @@ void TStorageServer::processUpdateStart(TConnectionHandle aConnection, TUpdateSt
 		//check if username and password are valid
 		try{
 			if (!checkUserCredential(u, p)){
-				this->onServerError("TStorageServer", "processUpdateStart", "Request from an anauthorized user!");
 				reply = new_TSystemErrorMessage_ptr("Authentication failed; try again!");
 			}
 		}
@@ -827,7 +826,6 @@ void TStorageServer::processGetVersions(TConnectionHandle aConnection, TGetVersi
 		//check if username and password are valid
 		try{
 			if (!checkUserCredential(u, p)){
-				this->onServerError("TStorageServer", "processGetVersions", "Request from an anauthorized user!");
 				err = true;
 			}
 		}
@@ -901,7 +899,6 @@ void TStorageServer::processGetLastVersion(TConnectionHandle aConnection, TGetLa
 		//check if username and password are valid
 		try{
 			if (!checkUserCredential(u, p)){
-				this->onServerError("TStorageServer", "processGetLastVersion", "Request from an anauthorized user!");
 				err = true;
 			}
 		}
@@ -973,7 +970,6 @@ void TStorageServer::processRestoreVersion(TConnectionHandle aConnection, TResto
 		//check if username and password are valid
 		try{
 			if (!checkUserCredential(u, p)){
-				this->onServerError("TStorageServer", "processRestoreVersion", "Request from an anauthorized user!");
 				return;
 			}
 		}
@@ -1168,22 +1164,16 @@ void TStorageServer::processVerifyCred(TConnectionHandle aConnection, TVerifyCre
 		this->onServerLog("TStorageServer", "processRegistrationRequest", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
 
 		TBaseMessage_ptr reply = nullptr;
+		
+		//check if username and password are valid
 		try{
-			//check if username and password are valid
-			try{
-				if (!checkUserCredential(u, p)){
-					this->onServerError("TStorageServer", "processGetLastVersion", "Request from an anauthorized user!");
-					reply = new_TVerifyCredReplyMessage_ptr(false);
-				}
-			}
-			catch (EDBException e){
-				this->onServerError("TStorageServer", "processGetLastVersion", "Unable to verify credentials: " + e.getMessage());
-				reply = new_TSystemErrorMessage_ptr("Unexpected System Error. Try later");
+			if (!checkUserCredential(u, p)){
+				reply = new_TVerifyCredReplyMessage_ptr(false);
 			}
 		}
-		catch (EDBException& e){
-			this->onServerError("TStorageServer", "processVerifyCred", "Unable to insert user in the DB: " + e.getMessage());
-			reply = new_TSystemErrorMessage_ptr("Unexpected System Error. Try later");
+		catch (EDBException e){
+			this->onServerError("TStorageServer", "processGetLastVersion", "Unable to verify credentials: " + e.getMessage());
+			reply = new_TVerifyCredReplyMessage_ptr(false);
 		}
 
 		if (reply == nullptr){

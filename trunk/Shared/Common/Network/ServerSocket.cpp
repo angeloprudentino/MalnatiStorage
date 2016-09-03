@@ -161,7 +161,7 @@ const bool TServerSockController::checkMessageToSend(const string& aClassName, c
 			if (resp)
 				this->onServerLog(aClassName, aFuncName, "=>  result: ok");
 			else
-				this->onServerLog(aClassName, aFuncName, "=>  result: error");
+				this->onServerLog(aClassName, aFuncName, "=>  result: unauthorized");
 			break;
 		}
 		case SYSTEM_ERR_ID:{
