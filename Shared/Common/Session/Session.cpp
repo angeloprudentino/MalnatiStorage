@@ -7,30 +7,8 @@
 *
 */
 
-
 #include <time.h>
 #include "Session.h"
-
-string buildServerPathPrefix(const string& aUser, const int aVersion){
-	string res = STORAGE_ROOT_PATH;
-	string_ptr coded_u = nullptr;
-	string_ptr coded_v = nullptr;
-	try{
-		coded_u = opensslB64Checksum(aUser);
-		coded_v = opensslB64Checksum(to_string(aVersion));
-		res += *coded_u + "\\" + *coded_v;
-	}
-	catch (EOpensslException e){
-		res += aUser + "\\" + to_string(aVersion);
-	}
-
-	if (coded_u != nullptr)
-		coded_u.reset();
-	if (coded_v != nullptr)
-		coded_v.reset();
-
-	return res;
-}
 
 //////////////////////////////////
 //           TFile	            //
@@ -61,8 +39,7 @@ TFile::~TFile(){
 }
 
 const bool TFile::isEqualTo(const TFile& aFile){
-	return (*(this->fServerPathPrefix) == *(aFile.fServerPathPrefix) &&
-		    *(this->fClientRelativePath) == *(aFile.fClientRelativePath));
+	return *(this->fClientRelativePath) == *(aFile.fClientRelativePath);
 }
 #pragma endregion
 
@@ -90,24 +67,35 @@ void TVersion::addFile(TFile_ptr& aFile){
 		this->fNext = this->fFileList.begin();
 }
 
-void TVersion::updateFile(TFile_ptr& aFile){
+const bool TVersion::updateFile(TFile_ptr& aFile){
 	for (TFile_list::iterator it = this->fFileList.begin(); it != this->fFileList.end(); it++)
-		if (aFile->isEqualTo(**(it)))
+		if (*(it) != nullptr && aFile->isEqualTo(**(it))){
+			it->reset();
 			*it = move_TFile_ptr(aFile);
+			return true;
+		}
+
+	return false;
 }
 
 void TVersion::removeFile(TFile_ptr& aFile){
 	for (TFile_list::iterator it = this->fFileList.begin(); it != this->fFileList.end(); it++)
-		if (aFile->isEqualTo(**(it))){
+		if (*(it) != nullptr && aFile->isEqualTo(**(it))){
 			it->reset();
 			this->fFileList.erase(it);
+			break;
 		}
 
 	aFile.reset();
 }
 
-void TVersion::terminateWithSucces(){
+void TVersion::terminateWithSuccess(){
 	this->fId++;
+
+	for (TFile_list::iterator it = this->fFileList.begin(); it != this->fFileList.end(); it++)
+		if (*it != nullptr)
+			(*it)->setVersion(this->fId);
+
 	this->fVersionDate = time(NULL);
 }
 
@@ -149,16 +137,18 @@ void TSession::addFile(TFile_ptr& aFile){
 	this->fVersion->addFile(move_TFile_ptr(aFile));
 }
 
-void TSession::updateFile(TFile_ptr& aFile){
-	this->fVersion->updateFile(move_TFile_ptr(aFile));
+const bool TSession::updateFile(TFile_ptr& aFile){
+	return this->fVersion->updateFile(move_TFile_ptr(aFile));
 }
 
 void TSession::removeFile(TFile_ptr& aFile){
 	this->fVersion->removeFile(move_TFile_ptr(aFile));
 }
 
-TVersion_ptr TSession::terminateWithSucces(){
-	this->fVersion->terminateWithSucces();
+TVersion_ptr TSession::terminateWithSuccess(const bool aIsRestore){
+	if (!aIsRestore)
+		this->fVersion->terminateWithSuccess();
+
 	return move_TVersion_ptr(this->fVersion);
 }
 

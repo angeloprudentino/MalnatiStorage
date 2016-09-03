@@ -18,7 +18,7 @@
 
 using namespace std;
 
-#define END_MSG "END_MSG\n"
+#define END_MSG "END_MSG"
 
 //type definitions
 typedef std::vector<string_ptr> string_vector;
@@ -49,6 +49,9 @@ typedef std::unique_ptr<string_vector> string_vector_ptr;
 #define RESTORE_STOP_ID 18
 #define PING_REQ_ID 19
 #define PING_REPLY_ID 20
+#define VERIFY_CRED_REQ_ID 21
+#define VERIFY_CRED_REPLY_ID 22
+#define SYSTEM_ERR_ID 23
 
 //Message utilities
 const bool isValidMessage(const string aName);
@@ -548,7 +551,7 @@ private:
 
 public:
 	TRestoreFileMessage(TBaseMessage_ptr& aBase);
-	TRestoreFileMessage(const string& aFilePath);
+	TRestoreFileMessage(const string& aBasePath, const string& aFilePath, const time_t aFileDate);
 	TRestoreFileMessage(const TRestoreFileMessage&) = delete;            // disable copying
 	TRestoreFileMessage& operator=(const TRestoreFileMessage&) = delete; // disable assignment
 	~TRestoreFileMessage();
@@ -563,7 +566,7 @@ public:
 	string_ptr getFileContent(){ return move_string_ptr(this->fFileContent); }
 };
 typedef std::unique_ptr<TRestoreFileMessage> TRestoreFileMessage_ptr;
-#define new_TRestoreFileMessage_ptr(aFilePath) std::make_unique<TRestoreFileMessage>(aFilePath)
+#define new_TRestoreFileMessage_ptr(aBasePath, aFilePath, aFileDate) std::make_unique<TRestoreFileMessage>(aBasePath, aFilePath, aFileDate)
 #define make_TRestoreFileMessage_ptr(ptr) std::make_unique<TRestoreFileMessage>(ptr)
 
 
@@ -619,6 +622,7 @@ public:
 	const time_t getVersionDate(){ return this->fVersionDate; }
 };
 typedef std::unique_ptr<TRestoreStopMessage> TRestoreStopMessage_ptr;
+#define new_TRestoreStopMessage_ptr(aVersion, aVersionDate) std::make_unique<TRestoreStopMessage>(aVersion, aVersionDate)
 #define make_TRestoreStopMessage_ptr(ptr) std::make_unique<TRestoreStopMessage>(ptr)
 
 
@@ -673,3 +677,79 @@ public:
 typedef std::unique_ptr<TPingReplyMessage> TPingReplyMessage_ptr;
 #define new_TPingReplyMessage_ptr(aToken) std::make_unique<TPingReplyMessage>(aToken)
 #define make_TPingReplyMessage_ptr(ptr) std::make_unique<TPingReplyMessage>(ptr)
+
+
+////////////////////////////////////////
+//       TVerifyCredReqMessage        //
+////////////////////////////////////////
+public class TVerifyCredReqMessage : public TBaseMessage {
+private:
+	string_ptr fUser = nullptr;
+	string_ptr fPass = nullptr;
+
+public:
+	TVerifyCredReqMessage(TBaseMessage_ptr& aBase);
+	TVerifyCredReqMessage(const string& aUser, const string& aPass);
+	TVerifyCredReqMessage(const TVerifyCredReqMessage&) = delete;            // disable copying
+	TVerifyCredReqMessage& operator=(const TVerifyCredReqMessage&) = delete; // disable assignment
+	~TVerifyCredReqMessage();
+
+	string_ptr encodeMessage();
+	void decodeMessage();
+
+	//getters
+	const string getUser(){ return *(this->fUser); }
+	const string getPass(){ return *(this->fPass); }
+};
+typedef std::unique_ptr<TVerifyCredReqMessage> TVerifyCredReqMessage_ptr;
+#define make_TVerifyCredReqMessage_ptr(ptr) std::make_unique<TVerifyCredReqMessage>(ptr)
+
+
+///////////////////////////////////////
+//      TVerifyCredReplyMessage      //
+///////////////////////////////////////
+public class TVerifyCredReplyMessage : public TBaseMessage {
+private:
+	bool fResp = false;
+
+public:
+	TVerifyCredReplyMessage(TBaseMessage_ptr& aBase);
+	TVerifyCredReplyMessage(const bool aResp);
+	TVerifyCredReplyMessage(const TVerifyCredReplyMessage&) = delete;            // disable copying
+	TVerifyCredReplyMessage& operator=(const TVerifyCredReplyMessage&) = delete; // disable assignment
+	~TVerifyCredReplyMessage() {};
+
+	string_ptr encodeMessage();
+	void decodeMessage();
+
+	//getters
+	const bool getResp(){ return this->fResp; }
+};
+typedef std::unique_ptr<TVerifyCredReplyMessage> TVerifyCredReplyMessage_ptr;
+#define new_TVerifyCredReplyMessage_ptr(aToken) std::make_unique<TVerifyCredReplyMessage>(aToken)
+#define make_TVerifyCredReplyMessage_ptr(ptr) std::make_unique<TVerifyCredReplyMessage>(ptr)
+
+
+//////////////////////////////////////
+//       TSystemErrorMessage        //
+//////////////////////////////////////
+public class TSystemErrorMessage : public TBaseMessage {
+private:
+	string_ptr fDetail = nullptr;
+
+public:
+	TSystemErrorMessage(TBaseMessage_ptr& aBase);
+	TSystemErrorMessage(const string& aDetail);
+	TSystemErrorMessage(const TSystemErrorMessage&) = delete;            // disable copying
+	TSystemErrorMessage& operator=(const TSystemErrorMessage&) = delete; // disable assignment
+	~TSystemErrorMessage() {};
+
+	string_ptr encodeMessage();
+	void decodeMessage();
+
+	//getters
+	const string getDetail(){ return *(this->fDetail); }
+};
+typedef std::unique_ptr<TSystemErrorMessage> TSystemErrorMessage_ptr;
+#define new_TSystemErrorMessage_ptr(aToken) std::make_unique<TSystemErrorMessage>(aToken)
+#define make_TSystemErrorMessage_ptr(ptr) std::make_unique<TSystemErrorMessage>(ptr)

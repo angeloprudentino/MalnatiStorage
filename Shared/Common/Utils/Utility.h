@@ -18,7 +18,6 @@ using namespace boost::filesystem;
 #define TRUE_STR "true"
 #define FALSE_STR "false"
 #define DEFAULT_PORT 4700
-#define STORAGE_ROOT_PATH "StoragePoint\\"
 
 //typedef std::shared_ptr<string> string_ptr;
 //#define make_string_ptr(ptr) std::make_shared<string>(ptr)
@@ -79,8 +78,9 @@ const string getUserFromToken(const string& aToken); //throws EOpensslException
 void initCrypto();
 
 // Evaluate a file and make its checksum
-string_ptr opensslB64EncodeFile(const string& aFileName); //throws EOpensslException
-string_ptr opensslB64Checksum(const string& aString); //throws EOpensslException
+string_ptr opensslB64Checksum(const string& aString, const bool aStrongAlg); //throws EOpensslException
+string_ptr opensslB64PathChecksum(const string& aString); //throws EOpensslException
+#define opensslB64FileChecksum(aString) opensslB64Checksum(aString, false)
 string_ptr opensslB64RandomToken(); //throws EOpensslException
 
 //Log to file
@@ -91,4 +91,6 @@ void criticalErrorToFile(const string& aClassName, const string& aFuncName, cons
 
 //Filesystem utilities
 void storeFile(const path& aPath, string_ptr& aFileContent); //throws EFilesystemException
+string_ptr readFile(const path& aPath); //throws EFilesystemException
 void removeDir(const path& aPath); //throws EFilesystemException
+string buildServerPathPrefix(const string& aUser, const int aVersion);

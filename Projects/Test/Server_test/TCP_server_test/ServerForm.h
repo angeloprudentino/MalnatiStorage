@@ -232,62 +232,74 @@ namespace Server_test {
 	private: TStorageServer* serverEngine = nullptr;
 
 	private: System::Void ServerForm_Load(System::Object^  sender, System::EventArgs^  e) {
-				 server_is_started = false;
+		server_is_started = false;
 	}
 
 	private: System::Void ServerForm_FormClosing(System::Object^  sender, System::Windows::Forms::FormClosingEventArgs^  e) {
-				 if (this->server_is_started){
-					 this->beforeStopServer();
-					 this->Log("TServerForm", "ServerForm_FormClosing", "server is going to stop");
-					 this->dismissTCPserver();
-					 this->Log("TServerForm", "ServerForm_FormClosing", "server is stopped");
-					 this->afterStopServer();
-				 }
+		if (this->server_is_started){
+			this->beforeStopServer();
+			this->Log("TServerForm", "ServerForm_FormClosing", "server is going to stop");
+			this->dismissTCPserver();
+			this->Log("TServerForm", "ServerForm_FormClosing", "server is stopped");
+			this->afterStopServer();
+		}
 	}
 
 	private: System::Void btnStart_Click(System::Object^  sender, System::EventArgs^  e) {
-				 if (!this->server_is_started){
-					 this->beforeStartServer();
-					 this->Log("TServerForm", "btnStart_Click", "server is going to start");
-					 this->ServerThread = gcnew Thread(gcnew ParameterizedThreadStart(this, &TServerForm::initTCPserver));
-					 this->ServerThread->Start(tbPort->Text);
-				 }
-				 else{
-					 this->beforeStopServer();
-					 this->Log("TServerForm", "btnStart_Click", "server is going to stop");
-					 this->dismissTCPserver();
-					 this->Log("TServerForm", "btnStart_Click", "server is stopped");
-					 this->afterStopServer();
-				 }
+		if (!this->server_is_started){
+			this->beforeStartServer();
+			this->Log("TServerForm", "btnStart_Click", "server is going to start");
+			this->ServerThread = gcnew Thread(gcnew ParameterizedThreadStart(this, &TServerForm::initTCPserver));
+			this->ServerThread->Start(tbPort->Text);
+		}
+		else{
+			this->beforeStopServer();
+			this->Log("TServerForm", "btnStart_Click", "server is going to stop");
+			this->dismissTCPserver();
+			this->Log("TServerForm", "btnStart_Click", "server is stopped");
+			this->afterStopServer();
+		}
 	}
 
 	private: void beforeStartServer(){
-				this->ServerStatusLabel->Text = "Server is starting";
-				this->ServerStatusLabel->ForeColor = System::Drawing::Color::Yellow;
-				this->btnStart->Enabled = false;
-				this->tbPort->Enabled = false;
+		if (this->ServerStatusLabel->InvokeRequired){
+			afterStartServerDelegate^ d = gcnew afterStartServerDelegate(this, &TServerForm::beforeStartServer);
+			this->Invoke(d);
+		}
+		else {
+			this->ServerStatusLabel->Text = "Server is starting";
+			this->ServerStatusLabel->ForeColor = System::Drawing::Color::Yellow;
+			this->btnStart->Enabled = false;
+			this->tbPort->Enabled = false;
+		}
 	}
 
 	private: void afterStartServer(){
-				 if (this->ServerStatusLabel->InvokeRequired){
-					 afterStartServerDelegate^ d = gcnew afterStartServerDelegate(this, &TServerForm::afterStartServer);
-					 this->Invoke(d);
-				 }
-				 else {
-					 this->ServerStatusLabel->Text = "Server is started";
-					 this->ServerStatusLabel->ForeColor = System::Drawing::Color::Green;
-					 this->btnStart->Text = "Stop";
-					 this->btnStart->Enabled = true;
-					 this->tbPort->Enabled = false;
-					 this->server_is_started = true;
-				 }
+		if (this->ServerStatusLabel->InvokeRequired){
+			afterStartServerDelegate^ d = gcnew afterStartServerDelegate(this, &TServerForm::afterStartServer);
+			this->Invoke(d);
+		}
+		else {
+			this->ServerStatusLabel->Text = "Server is started";
+			this->ServerStatusLabel->ForeColor = System::Drawing::Color::Green;
+			this->btnStart->Text = "Stop";
+			this->btnStart->Enabled = true;
+			this->tbPort->Enabled = false;
+			this->server_is_started = true;
+		}
 	}
 
 	private: void beforeStopServer(){
-				this->ServerStatusLabel->Text = "Server is stopping";
-				this->ServerStatusLabel->ForeColor = System::Drawing::Color::Yellow;
-				this->btnStart->Enabled = false;
-				this->tbPort->Enabled = false;
+		if (this->ServerStatusLabel->InvokeRequired){
+			afterStartServerDelegate^ d = gcnew afterStartServerDelegate(this, &TServerForm::beforeStopServer);
+			this->Invoke(d);
+		}
+		else {
+			this->ServerStatusLabel->Text = "Server is stopping";
+			this->ServerStatusLabel->ForeColor = System::Drawing::Color::Yellow;
+			this->btnStart->Enabled = false;
+			this->tbPort->Enabled = false;
+		}
 	}
 
 	private: void afterStopServer(){

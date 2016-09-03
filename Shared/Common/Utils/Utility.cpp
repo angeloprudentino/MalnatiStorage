@@ -27,6 +27,7 @@
 #define SEP '$'
 #define SEP_ESC "&#36"
 #define LOG_PATH "Log"
+#define STORAGE_ROOT_PATH "StoragePoint\\"
 
 using namespace std;
 using namespace boost::filesystem;
@@ -54,6 +55,8 @@ const string timeToString(const time_t& t) {
 			oss << t;
 			return oss.str();
 		}
+		else
+			return "";
 	}
 	catch (...) {
 		return "";
@@ -224,7 +227,8 @@ string_ptr opensslB64Encode(char* aContent, int aLen){
 		BIO_free_all(bio);
 
 		ret_data = (*bufferPtr).data;
-		ret_data[(*bufferPtr).length] = '\0';
+		if (ret_data != NULL)
+			ret_data[(*bufferPtr).length] = '\0';
 		return make_string_ptr(ret_data);
 	}
 	catch (const EOpensslException& e) {
@@ -290,7 +294,8 @@ B64result opensslB64Decode(const string& aString){
 		BIO_free_all(bio_out);
 
 		res.data = (*bufferPtr).data;
-		res.data[(*bufferPtr).length] = '\0';
+		if (res.data != NULL)
+			res.data[(*bufferPtr).length] = '\0';
 		res.size = (int)((*bufferPtr).length);
 
 		return res;
@@ -306,31 +311,9 @@ B64result opensslB64Decode(const string& aString){
 	}
 }
 
-string_ptr opensslB64EncodeFile(const string& aFileName){
-	string* contents = new string();
-	std::ifstream file(aFileName, ios::in | ios::binary);
-	if (file){
-		file.seekg(0, ios::end);
-		contents->resize(file.tellg());
-		file.seekg(0, ios::beg);
-
-		file.read((char*)contents->c_str(), contents->size());
-		if (!file)
-			throw EOpensslException("an error is occurred reading from file " + aFileName);
-
-		file.close();
-		if (!file)
-			throw EOpensslException("an error is occurred closing file " + aFileName);
-	}
-
-	string_ptr res = opensslB64Encode((char*)contents->c_str(), (int)contents->length());
-	delete contents;
-
-	return res;
-}
-
-string_ptr opensslCoreChecksum(BIO* aInputBio){
+string_ptr opensslCoreChecksum(BIO* aInputBio, const bool aStrongAlg){
 	BIO *md;
+	const EVP_MD* alg;
 	bool try_again = false;
 	char buf[1024];
 	char mdbuf[EVP_MAX_MD_SIZE];
@@ -342,7 +325,12 @@ string_ptr opensslCoreChecksum(BIO* aInputBio){
 		throw EOpensslException(err + ERR_error_string(ERR_get_error(), nullptr));
 	}
 
-	if (BIO_set_md(md, EVP_sha256()) == 0){
+	if (aStrongAlg)
+		alg = EVP_sha256();
+	else
+		alg = EVP_md5();
+
+	if (BIO_set_md(md, alg) == 0){
 		string err = "BIO_set_md() returns an error: ";
 		throw EOpensslException(err + ERR_error_string(ERR_get_error(), nullptr));
 	}
@@ -379,7 +367,7 @@ string_ptr opensslCoreChecksum(BIO* aInputBio){
 	return opensslB64Encode(mdbuf, mdlen);
 }
 
-string_ptr opensslB64Checksum(const string& aString){
+string_ptr opensslB64Checksum(const string& aString, const bool aStrongAlg){
 	BIO *bio_in = nullptr;
 	bool try_again = false;
 
@@ -398,7 +386,7 @@ string_ptr opensslB64Checksum(const string& aString){
 		bio_in = fillOpensslBIO(bio_in, (char*)aString.c_str(), (int)aString.length());
 		BIO_set_close(bio_in, BIO_NOCLOSE);
 
-		string_ptr result = opensslCoreChecksum(bio_in);
+		string_ptr result = opensslCoreChecksum(bio_in, aStrongAlg);
 		BIO_free_all(bio_in);
 		return result;
 	}
@@ -407,6 +395,16 @@ string_ptr opensslB64Checksum(const string& aString){
 			BIO_free_all(bio_in);
 		throw e;
 	}
+}
+
+string_ptr opensslB64PathChecksum(const string& aString){
+	string_ptr res = opensslB64Checksum(aString, true);
+
+	const string from = "/";
+	const string to = "_";
+	boost::replace_all(*res, from, to);
+
+	return move_string_ptr(res);
 }
 
 string_ptr opensslB64RandomToken(){
@@ -505,6 +503,45 @@ void storeFile(const path& aPath, string_ptr& aFileContent){
 	}
 }
 
+string_ptr readFile(const path& aPath){
+	string* contents = new string();
+	boost::filesystem::ifstream file(aPath, ios::in | ios::binary);
+	if (file){
+		file.seekg(0, ios::end);
+		contents->resize(file.tellg());
+		file.seekg(0, ios::beg);
+
+		file.read((char*)contents->c_str(), contents->size());
+		if (!file)
+			throw EFilesystemException("an error is occurred reading from file " + aPath.string());
+
+		file.close();
+		if (!file)
+			throw EFilesystemException("an error is occurred closing file " + aPath.string());
+	}
+
+#ifdef _DEBUG
+	string_ptr res = nullptr;
+
+	if (contents != nullptr){
+		try{
+			res = opensslB64Encode((char*)contents->c_str(), (int)contents->length());
+			delete contents;
+		}
+		catch (EOpensslException e){
+			delete contents;
+			throw EFilesystemException("Error encoding " + aPath.string() + ": " + e.getMessage());
+		}
+	}
+	return move_string_ptr(res);
+#else
+	if (contents != nullptr)
+		res = make_string_ptr(contents)
+
+	return move_string_ptr(contents);
+#endif
+}
+
 void removeDir(const path& aPath){
 	boost::system::error_code ec;
 
@@ -514,5 +551,31 @@ void removeDir(const path& aPath){
 		if (ec)
 			throw EFilesystemException("Error removing path: " + aPath.string() + " -> " + ec.message());
 	}
+}
+
+string buildServerPathPrefix(const string& aUser, const int aVersion){
+	string res = STORAGE_ROOT_PATH;
+
+#ifdef _DEBUG
+	res += aUser + "\\" + to_string(aVersion);
+#else
+	string_ptr coded_u = nullptr;
+	string_ptr coded_v = nullptr;
+	try{
+		coded_u = opensslB64PathChecksum(aUser);
+		coded_v = opensslB64PathChecksum(to_string(aVersion));
+		res += *coded_u + "\\" + *coded_v;
+	}
+	catch (EOpensslException e){
+		res += aUser + "\\" + to_string(aVersion);
+	}
+
+	if (coded_u != nullptr)
+		coded_u.reset();
+	if (coded_v != nullptr)
+		coded_v.reset();
+#endif
+
+	return res;
 }
 #pragma endregion

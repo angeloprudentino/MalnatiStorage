@@ -10,6 +10,7 @@
 #include <boost/asio.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost\bind.hpp>
+#include <boost/thread/mutex.hpp>
 #include <string>
 #include <vcclr.h>
 #include "NetworkController.h"
@@ -34,15 +35,12 @@ private:
 	
 	TServerSocket* fSock = nullptr;
 	TMessageQueue* fInQueue = nullptr;
-	TMessageQueue* fOutQueue = nullptr;
 	IServerBaseController* fCallbackObj = nullptr;
-	boost::thread* fSender = nullptr;
 
-	void sendBaseMessage();
 	const bool checkMessageToSend(const string& aClassName, const string& aFuncName, TBaseMessage_ptr& aBMsg);
 
 public:
-	TServerSockController(int AServerPort, IServerBaseController* aCallback);
+	TServerSockController(int AServerPort, io_service* aMainIoService, IServerBaseController* aCallback);
 	TServerSockController(const TServerSockController&) = delete;            // disable copying
 	TServerSockController& operator=(const TServerSockController&) = delete; // disable assignment
 	virtual ~TServerSockController();
@@ -58,9 +56,9 @@ public:
 	void onServerSockRead(TConnectionHandle aConnection, string_ptr& aMsg) override;
 	void onServerSockWrite() override;
 
-	bool isInQueueEmpty() override;
+	bool isMessageQueueEmpty() override;
 	TMessageContainer_ptr getMessageToProcess() override;
-	void enqueueMessageToSend(TMessageContainer_ptr& aMsg) override;
+	void sendMessage(TMessageContainer_ptr& aMsg) override;
 };
 
 
@@ -71,10 +69,12 @@ public:
 public class TServerSocket{
 private:
 	int fAcceptPort = -1;
-	thread* fMainIO = nullptr;
-	io_service fMainIoService;
+	//thread* fMainIO = nullptr;
+	io_service* fMainIoService;
 	tcp::acceptor fServerAcceptor;
 	TConnectionList fConnections;
+	mutex fOutQueueMutex;
+	list<string_ptr>* fOutQueue = nullptr;
 
 	//Callback object
 	IServerSockController* fCallbackObj = nullptr;
@@ -82,9 +82,9 @@ private:
 	void doAsyncRead(TConnectionHandle aConnction);
 	void handleAccept(TConnectionHandle aConnection, const boost::system::error_code& aErr);
 	void handleRead(TConnectionHandle aConnection, const boost::system::error_code& aErr, std::size_t aBytes);
-	void handle_write(TConnectionHandle aConnection, const boost::system::error_code& aErr);
+	void handleWrite(TConnectionHandle aConnection, list<string_ptr>::iterator aBuff, const boost::system::error_code& aErr);
 public:
-	TServerSocket(IServerSockController* aCallbackObj);
+	TServerSocket(io_service* aMainIoService, IServerSockController* aCallbackObj);
 	TServerSocket(const TServerSockController&) = delete;            // disable copying
 	TServerSocket& operator=(const TServerSockController&) = delete; // disable assignment
 	~TServerSocket();

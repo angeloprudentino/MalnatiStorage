@@ -17,7 +17,7 @@
 //      TServerSockController	    //
 //////////////////////////////////////
 #pragma region "TServerSockController"
-TServerSockController::TServerSockController(int aServerPort, IServerBaseController* aCallback){
+TServerSockController::TServerSockController(int aServerPort, io_service* aMainIoService, IServerBaseController* aCallback){
 	this->fServerPort = aServerPort;
 
 	this->fCallbackObj = aCallback;
@@ -26,19 +26,11 @@ TServerSockController::TServerSockController(int aServerPort, IServerBaseControl
 	this->fInQueue = new TMessageQueue();
 	this->onServerLog("TServerSockController", "constructor", "incoming message queue object created");
 
-	this->onServerLog("TServerSockController", "constructor", "creating outgoing message queue object...");
-	this->fOutQueue = new TMessageQueue();
-	this->onServerLog("TServerSockController", "constructor", "outgoing message queue object created");
-
 	this->onServerLog("TServerSockController", "constructor", "creating TServerSocket object...");
-	this->fSock = new TServerSocket(this);
+	this->fSock = new TServerSocket(aMainIoService, this);
 	this->onServerLog("TServerSockController", "constructor", "TServerSocket object created");
 
 	this->onServerLog("TServerSockController", "constructor", "creating sender thread object...");
-
-	//TODO: verificare se un thread basta
-	this->fSender = new thread(bind(&TServerSockController::sendBaseMessage, this));
-	this->onServerLog("TServerSockController", "constructor", "sender thread object created");
 }
 
 TServerSockController::~TServerSockController(){
@@ -56,50 +48,13 @@ TServerSockController::~TServerSockController(){
 		this->onServerLog("TServerSockController", "destructor", "incoming message queue object deleted");
 	}
 
-	if (this->fOutQueue != nullptr){
-		this->onServerLog("TServerSockController", "destructor", "deleting outgoing message queue object...");
-		delete this->fOutQueue;
-		this->fOutQueue = nullptr;
-		this->onServerLog("TServerSockController", "destructor", "outgoing message queue object deleted");
-	}
-
-	if (this->fSender != nullptr){
-		this->onServerLog("TServerSockController", "destructor", "deleting fSender thread object...");
-		this->fSender->join();
-		delete this->fSender;
-		this->fSender = nullptr;
-		this->onServerLog("TServerSockController", "destructor", "fSender thread object deleted");
-	}
-
 	this->fCallbackObj = nullptr;
-}
-
-void TServerSockController::sendBaseMessage(){
-	if (this->fSock != nullptr){
-		if (this->fOutQueue != nullptr){
-			TMessageContainer_ptr msg = this->fOutQueue->popMessage();
-			if (msg != nullptr && !msg->isEmpty()){
-				TConnectionHandle conn = msg->getConnection();
-				TBaseMessage_ptr bmsg = msg->getMessage();
-				tcp::endpoint peer = conn->fPeer;
-				this->onServerLog("TServerSockController", "sendBaseMessage", "preparing to send a " + bmsg->getName() + " message to " + peer.address().to_string() + ":" + std::to_string(peer.port()));
-				if (this->checkMessageToSend("TServerSockController", "sendBaseMessage", bmsg))
-					this->fSock->doSend(conn, move_TMessageContainer_ptr(bmsg));
-				else
-					bmsg.reset();
-
-				msg.reset();
-			}
-
-			this->sendBaseMessage();
-		}
-	}
 }
 
 const bool TServerSockController::checkMessageToSend(const string& aClassName, const string& aFuncName, TBaseMessage_ptr& aBMsg){
 	int msgType = aBMsg->getID();
 
-	bool valid = ((msgType == USER_REG_REPLY_ID) || (msgType == UPDATE_START_REPLY_ID)
+	bool valid = ((msgType == USER_REG_REPLY_ID) || (msgType == UPDATE_START_REPLY_ID) || (msgType == VERIFY_CRED_REPLY_ID) || (msgType == SYSTEM_ERR_ID)
 		|| (msgType == FILE_ACK_ID) || (msgType == UPDATE_STOP_REPLY_ID) || (msgType == GET_VERSIONS_REPLY_ID) || (msgType == GET_LAST_VERSION_REPLY_ID)
 		|| (msgType == RESTORE_VER_REPLY_ID) || (msgType == RESTORE_FILE_ID) || (msgType == RESTORE_STOP_ID) || (msgType == PING_REPLY_ID));
 
@@ -199,6 +154,22 @@ const bool TServerSockController::checkMessageToSend(const string& aClassName, c
 			this->onServerLog(aClassName, aFuncName, "=>  token: " + ((TPingReplyMessage_ptr&)aBMsg)->getToken());
 			break;
 		}
+		case VERIFY_CRED_REPLY_ID:{
+			this->onServerLog(aClassName, aFuncName, "=>  VerifyCredentialsReplyMessage");
+			this->onServerLog(aClassName, aFuncName, "=>  ");
+			bool resp = ((TVerifyCredReplyMessage_ptr&)aBMsg)->getResp();
+			if (resp)
+				this->onServerLog(aClassName, aFuncName, "=>  result: ok");
+			else
+				this->onServerLog(aClassName, aFuncName, "=>  result: error");
+			break;
+		}
+		case SYSTEM_ERR_ID:{
+			this->onServerLog(aClassName, aFuncName, "=>  SystemErrorMessage");
+			this->onServerLog(aClassName, aFuncName, "=>  ");
+			this->onServerLog(aClassName, aFuncName, "=>  detail: " + ((TSystemErrorMessage_ptr&)aBMsg)->getDetail());
+			break;
+		}
 		default:
 			break;
 		}
@@ -209,7 +180,7 @@ const bool TServerSockController::checkMessageToSend(const string& aClassName, c
 		return true;
 	}
 	else{
-		this->onServerWarning(aClassName, aFuncName, getMessageName(msgType) + "is not a valid message to be sent!");
+		this->onServerWarning(aClassName, aFuncName, getMessageName(msgType) + " is not a valid message to be sent!");
 		return false;
 	}
 }
@@ -282,7 +253,7 @@ void TServerSockController::onServerSockRead(TConnectionHandle aConnection, stri
 	this->onServerLog("TServerSockController", "onServerSockRead", "received a " + getMessageName(msgType) + " message from " + peer.address().to_string() + ":" + std::to_string(peer.port())/* + " -> " + s*/);
 
 	//check if the message is valid to be received server-side
-	bool valid = ((msgType == USER_REG_REQ_ID) || (msgType == UPDATE_START_REQ_ID) || (msgType == ADD_NEW_FILE_ID)
+	bool valid = ((msgType == USER_REG_REQ_ID) || (msgType == UPDATE_START_REQ_ID) || (msgType == ADD_NEW_FILE_ID) || (msgType == VERIFY_CRED_REQ_ID)
 		|| (msgType == UPDATE_FILE_ID) || (msgType == REMOVE_FILE_ID) || (msgType == UPDATE_STOP_REQ_ID) || (msgType == GET_VERSIONS_REQ_ID)
 		|| (msgType == GET_LAST_VERSION_REQ_ID) || (msgType == RESTORE_VER_REQ_ID) || (msgType == RESTORE_FILE_ACK_ID) || (msgType == PING_REQ_ID));
 
@@ -305,7 +276,7 @@ void TServerSockController::onServerSockWrite(){
 #pragma endregion
 
 #pragma region "IBaseExecutorController implementation"
-bool TServerSockController::isInQueueEmpty(){
+bool TServerSockController::isMessageQueueEmpty(){
 	return this->fInQueue->isEmpty();
 }
 
@@ -313,9 +284,21 @@ TMessageContainer_ptr TServerSockController::getMessageToProcess(){
 	return move_TMessageContainer_ptr(this->fInQueue->popMessage());
 }
 
-void TServerSockController::enqueueMessageToSend(TMessageContainer_ptr& aMsg){
-	if (!aMsg->isEmpty())
-		this->fOutQueue->pushMessage(move_TMessageContainer_ptr(aMsg));
+void TServerSockController::sendMessage(TMessageContainer_ptr& aMsg){
+	if (this->fSock != nullptr){
+		if (aMsg != nullptr && !aMsg->isEmpty()){
+			TConnectionHandle conn = aMsg->getConnection();
+			TBaseMessage_ptr bmsg = aMsg->getMessage();
+			tcp::endpoint peer = conn->fPeer;
+			this->onServerLog("TServerSockController", "sendMessage", "preparing to send a " + bmsg->getName() + " message to " + peer.address().to_string() + ":" + std::to_string(peer.port()));
+			if (this->checkMessageToSend("TServerSockController", "sendMessage", bmsg))
+				this->fSock->doSend(conn, move_TBaseMessage_ptr(bmsg));
+			else
+				bmsg.reset();
+
+			aMsg.reset();
+		}
+	}
 }
 #pragma endregion
 #pragma endregion
@@ -325,7 +308,8 @@ void TServerSockController::enqueueMessageToSend(TMessageContainer_ptr& aMsg){
 //         TServerSocket	        //
 //////////////////////////////////////
 #pragma region "TServerSocket"
-TServerSocket::TServerSocket(IServerSockController* aCallbackObj): fMainIoService(), fServerAcceptor(fMainIoService){
+TServerSocket::TServerSocket(io_service* aMainIoService, IServerSockController* aCallbackObj) : fServerAcceptor(*aMainIoService){
+	this->fMainIoService = aMainIoService;
 	this->fCallbackObj = aCallbackObj;
 }
 
@@ -334,12 +318,22 @@ TServerSocket::~TServerSocket(){
 	this->fConnections.clear();
 	doServerLog(this->fCallbackObj, "TServerSocket", "destructor", "open connections cleared");
 
-	doServerLog(this->fCallbackObj, "TServerSocket", "destructor", "stopping IO service...");
-	this->fMainIoService.stop();
-	this->fMainIO->join();
-	delete this->fMainIO;
-	this->fMainIO = nullptr;
-	doServerLog(this->fCallbackObj, "TServerSocket", "destructor", "IO service stopped");
+	if (this->fOutQueue != nullptr){
+		doServerLog(this->fCallbackObj, "TServerSocket", "destructor", "deleting outgoing message queue object...");
+		for (list<string_ptr>::iterator it = this->fOutQueue->begin(); it != this->fOutQueue->end(); it++)
+			it->reset();
+		this->fOutQueue->clear();
+		delete this->fOutQueue;
+		this->fOutQueue = nullptr;
+		doServerLog(this->fCallbackObj, "TServerSocket", "destructor", "outgoing message queue object deleted");
+	}
+
+	//doServerLog(this->fCallbackObj, "TServerSocket", "destructor", "stopping IO service...");
+	//this->fMainIoService.stop();
+	//this->fMainIO->join();
+	//delete this->fMainIO;
+	//this->fMainIO = nullptr;
+	//doServerLog(this->fCallbackObj, "TServerSocket", "destructor", "IO service stopped");
 
 	this->fCallbackObj = nullptr;
 }
@@ -385,10 +379,10 @@ void TServerSocket::doAccept(){
 		TConnectionHandle connection = fConnections.emplace(fConnections.begin(), this->fMainIoService);
 		auto handler = bind(&TServerSocket::handleAccept, this, connection, boost::asio::placeholders::error);
 		this->fServerAcceptor.async_accept(connection->fSocket, connection->fPeer, handler);
-		this->fMainIoService.reset();
+		//this->fMainIoService.reset();
 
 		//TODO: controllare se un thread solo basta
-		fMainIO = new thread([this](){ this->fMainIoService.run(); });
+		//fMainIO = new thread([this](){ this->fMainIoService.run(); });
 }
 
 void TServerSocket::handleAccept(TConnectionHandle aConnection, const boost::system::error_code& aErr){
@@ -412,7 +406,7 @@ void TServerSocket::handleAccept(TConnectionHandle aConnection, const boost::sys
 
 void TServerSocket::doAsyncRead(TConnectionHandle aConnection) {
 	auto handler = bind(&TServerSocket::handleRead, this, aConnection, boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred);
-	async_read_until(aConnection->fSocket, aConnection->fReadBuffer, END_MSG, handler);
+	async_read_until(aConnection->fSocket, aConnection->fReadBuffer, END_MSG + string("\n"), handler);
 }
 
 void TServerSocket::handleRead(TConnectionHandle aConnection, const boost::system::error_code& aErr, std::size_t aBytes){
@@ -426,48 +420,81 @@ void TServerSocket::handleRead(TConnectionHandle aConnection, const boost::syste
 			doServerLog(this->fCallbackObj, "TServerSocket", "handleRead", "Message Received from " + peer.address().to_string() + ":" + std::to_string(peer.port()));
 			if (this->fCallbackObj != nullptr)
 				this->fCallbackObj->onServerSockRead(aConnection, move_string_ptr(line));
-			line.reset();
+			else
+				line.reset();
 		}
 
 		this->doAsyncRead(aConnection);
 	}
 	else {
-		this->fConnections.erase(aConnection);
 		if (aErr.value() == DISCONNECTED)
 			doServerLog(this->fCallbackObj, "TServerSocket", "handleRead", "Received disconnection from " + peer.address().to_string() + ":" + std::to_string(peer.port()))
 		else
 			doServerError(this->fCallbackObj, "TServerSocket", "handleRead", "Error \"" + aErr.message() + "\" from " + peer.address().to_string() + ":" + std::to_string(peer.port()))
+			
+		if (aConnection->fSocket.is_open()) {
+			doServerLog(this->fCallbackObj, "TServerSocket", "handleRead", "Closing socket with " + peer.address().to_string() + ":" + std::to_string(peer.port()));
+			aConnection->fSocket.close();
+		}
+		//remove this connection
+		this->fConnections.erase(aConnection);
 	}
 }
 
 void TServerSocket::doSend(TConnectionHandle aConnection, TBaseMessage_ptr& aMsg){
-	string_ptr buff = nullptr;
+	if (this->fOutQueue == nullptr)
+		this->fOutQueue = new list<string_ptr>();
+
+	string_ptr s = nullptr;
 	try{
-		buff = aMsg->encodeMessage();
+		s = aMsg->encodeMessage();
+		s->append("\n");
 		aMsg.reset();
-		auto handler = boost::bind(&TServerSocket::handle_write, this, aConnection, boost::asio::placeholders::error);
-		boost::asio::async_write(aConnection->fSocket, boost::asio::buffer(*buff), handler);
-		buff.reset();
 	}
 	catch (EMessageException e){
 		doServerError(this->fCallbackObj, "TServerSocket", "doSend", e.getMessage());
-		buff.reset();
+		aMsg.reset();
+		return;
 	}
+
+	list<string_ptr>::iterator buff;
+	try{
+		unique_lock<mutex> lock(this->fOutQueueMutex);
+		this->fOutQueue->push_front(move_string_ptr(s));
+		buff = this->fOutQueue->begin();
+	}
+	catch (...){
+		//just to have a syncronized block
+	}
+
+	auto handler = boost::bind(&TServerSocket::handleWrite, this, aConnection, buff, boost::asio::placeholders::error);
+	boost::asio::async_write(aConnection->fSocket, boost::asio::buffer(**buff), handler);
 }
 
-void TServerSocket::handle_write(TConnectionHandle aConnection, const boost::system::error_code& aErr) {
+void TServerSocket::handleWrite(TConnectionHandle aConnection, list<string_ptr>::iterator aBuff, const boost::system::error_code& aErr) {
 	tcp::endpoint peer = aConnection->fPeer;
 
 	if (!aErr) {
-		doServerLog(this->fCallbackObj, "TServerSocket", "handle_write", "Finished sending message to " + peer.address().to_string() + ":" + std::to_string(peer.port()));
+		doServerLog(this->fCallbackObj, "TServerSocket", "handleWrite", "Finished sending message to " + peer.address().to_string() + ":" + std::to_string(peer.port()));
 		//if (aConnection->fSocket.is_open()) {
 		//	// Write completed successfully and connection is open
+		//	doServerLog(this->fCallbackObj, "TServerSocket", "handleWrite", "Closing socket with " + peer.address().to_string() + ":" + std::to_string(peer.port()));
+		//	aConnection->fSocket.close();
 		//}
 	}
 	else {
+		doServerError(this->fCallbackObj, "TServerSocket", "handleWrite", "Error \"" + aErr.message() + "\" while sending a message to " + peer.address().to_string() + ":" + std::to_string(peer.port()));
+		if (aConnection->fSocket.is_open()) {
+			doServerLog(this->fCallbackObj, "TServerSocket", "handleWrite", "Closing socket with " + peer.address().to_string() + ":" + std::to_string(peer.port()));
+			aConnection->fSocket.close();
+		}
 		//remove this connection
 		this->fConnections.erase(aConnection);
-		doServerError(this->fCallbackObj, "TServerSocket", "handle_write", "Error \"" + aErr.message() + "\" while sending a message to " + peer.address().to_string() + ":" + std::to_string(peer.port()));
+	}
+
+	if (aBuff != this->fOutQueue->end()){
+		aBuff->reset();
+		this->fOutQueue->erase(aBuff);
 	}
 
 	if (this->fCallbackObj != nullptr)

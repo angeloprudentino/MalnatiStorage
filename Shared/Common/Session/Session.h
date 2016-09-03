@@ -24,6 +24,7 @@ using namespace std;
 
 #define NO_VERSION -1
 
+#define SESSION_TIMEOUT 180
 
 //////////////////////////////////
 //           TFile	            //
@@ -78,11 +79,11 @@ public:
 	~TVersion();
 	
 	void addFile(TFile_ptr& aFile);
-	void updateFile(TFile_ptr& aFile);
+	const bool updateFile(TFile_ptr& aFile);
 	void removeFile(TFile_ptr& aFile);
 
 	void updateNext() { this->fNext++; }
-	void terminateWithSucces();
+	void terminateWithSuccess();
 	void purge();
 	
 	//getters
@@ -117,14 +118,15 @@ public:
 	~TSession();
 
 	void addFile(TFile_ptr& aFile);
-	void updateFile(TFile_ptr& aFile);
+	const bool updateFile(TFile_ptr& aFile);
 	void removeFile(TFile_ptr& aFile);
-	TVersion_ptr terminateWithSucces();
+	TVersion_ptr terminateWithSuccess(const bool aIsRestore);
 	const bool purge(); //throws EOpensslException
 
 	//getters
 	const int getKind() { return this->fKind; }
 	const string getToken() { return *(this->fToken); }
+	const time_t getLastPing() { return this->fLastPing; }
 	const int getVersion() { return this->fVersion->getVersion(); }
 	TFile_ptr getNextFileToSend(){ return move_TFile_ptr(this->fVersion->getNextFile()); }
 	TFile_ptr updateNextFileToSend(){ this->fVersion->updateNext(); return move_TFile_ptr(this->fVersion->getNextFile()); }

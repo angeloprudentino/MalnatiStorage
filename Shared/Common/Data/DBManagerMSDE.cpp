@@ -1,12 +1,12 @@
 /*
  * Author: Angelo Prudentino
  * Date: 10/07/2016
- * File: DBManager.cpp
- * Description: This class manages all the communications with the DB
+ * File: DBManagerMSDE.cpp
+ * Description: This class manages all the interactions with an MSDE DB
  *
  */
 #pragma once
-#include "DBManager.h"
+#include "DBManagerMSDE.h"
 #include "Utility.h"
 #include <ctime>
 
@@ -24,10 +24,10 @@ string marshalString(String ^ aStr) {
 
 
 ////////////////////////////////////
-//          TDBManager	          //
+//       TDBManagerMSDE	          //
 ////////////////////////////////////
-#pragma region "TDBManager"
-const int TDBManager::getUserID(const string& aUser, SqlTransaction^ aTransaction){
+#pragma region "TDBManagerMSDE"
+const int TDBManagerMSDE::getUserID(const string& aUser, SqlTransaction^ aTransaction){
 	int uID = -1;
 
 	if (!System::Object::ReferenceEquals(this->fConnection, nullptr) && (this->fConnection->State == ConnectionState::Open)){
@@ -64,7 +64,7 @@ const int TDBManager::getUserID(const string& aUser, SqlTransaction^ aTransactio
 	return uID;
 }
 
-TDBManager::TDBManager(const string& aHost, const string& aDBName){
+TDBManagerMSDE::TDBManagerMSDE(const string& aHost, const string& aDBName){
 	this->fConnection = gcnew SqlConnection();
 	string cs = "Server=" + aHost + "; Database=" + aDBName + "; Trusted_Connection=True;";
 	this->fConnection->ConnectionString = gcnew String(cs.c_str());
@@ -88,7 +88,7 @@ TDBManager::TDBManager(const string& aHost, const string& aDBName){
 	}
 }
 
-TDBManager::~TDBManager(){
+TDBManagerMSDE::~TDBManagerMSDE(){
 	delete this->fInsertUserCmd;
 	delete this->fInsertVersionCmd;
 	delete this->fInsertFilesCmd;
@@ -117,7 +117,7 @@ TDBManager::~TDBManager(){
 	}
 }
 
-void TDBManager::insertNewUser(const string& aUser, const string& aPass){
+void TDBManagerMSDE::insertNewUser(const string& aUser, const string& aPass){
 	if (!System::Object::ReferenceEquals(this->fConnection, nullptr) && (this->fConnection->State == ConnectionState::Open)){
 
 		if (System::Object::ReferenceEquals(this->fInsertUserCmd, nullptr)){
@@ -133,7 +133,7 @@ void TDBManager::insertNewUser(const string& aUser, const string& aPass){
 			saltedPass = make_string_ptr(salt->c_str());
 			saltedPass->append(aPass.c_str());
 			saltedPass->append(salt->c_str());
-			saltedPass = opensslB64Checksum(saltedPass->c_str());
+			saltedPass = opensslB64Checksum(saltedPass->c_str(), true);
 		}
 		catch (EOpensslException e){
 			salt.reset();
@@ -161,7 +161,7 @@ void TDBManager::insertNewUser(const string& aUser, const string& aPass){
 	}
 }
 
-void TDBManager::InsertNewVersion(const string& aUser, TVersion_ptr& aVersion){
+void TDBManagerMSDE::InsertNewVersion(const string& aUser, TVersion_ptr& aVersion){
 	if (!System::Object::ReferenceEquals(this->fConnection, nullptr) && (this->fConnection->State == ConnectionState::Open)){
 		int uID = -1;
 		SqlTransaction^ transaction;
@@ -247,7 +247,7 @@ void TDBManager::InsertNewVersion(const string& aUser, TVersion_ptr& aVersion){
 	}
 }
 
-const bool TDBManager::checkIfUserExists(const string& aUser){
+const bool TDBManagerMSDE::checkIfUserExists(const string& aUser){
 	SqlTransaction^ transaction = this->fConnection->BeginTransaction();
 	int uID = -1;
 
@@ -266,7 +266,7 @@ const bool TDBManager::checkIfUserExists(const string& aUser){
 		return true;
 }
 
-const bool TDBManager::verifyUserCredentials(const string& aUser, const string& aPass){
+const bool TDBManagerMSDE::verifyUserCredentials(const string& aUser, const string& aPass){
 	if (!System::Object::ReferenceEquals(this->fConnection, nullptr) && (this->fConnection->State == ConnectionState::Open)){
 		string salt = "";
 		SqlDataReader^ reader;
@@ -297,7 +297,6 @@ const bool TDBManager::verifyUserCredentials(const string& aUser, const string& 
 		}
 		catch (Exception^ e) {
 			this->fSelectUserSaltCmd->Parameters->Clear();
-			transaction->Rollback();
 			throw EDBException("Error during SelectUserSaltCmd: " + marshalString(e->Message));
 		}
 
@@ -312,7 +311,7 @@ const bool TDBManager::verifyUserCredentials(const string& aUser, const string& 
 		saltedPass->append(aPass.c_str());
 		saltedPass->append(salt);
 		try{
-			saltedPass = opensslB64Checksum(saltedPass->c_str());
+			saltedPass = opensslB64Checksum(saltedPass->c_str(), true);
 		}
 		catch (EOpensslException e){
 			saltedPass.reset();
@@ -343,7 +342,6 @@ const bool TDBManager::verifyUserCredentials(const string& aUser, const string& 
 		catch (Exception^ e) {
 			this->fVerifyCredentialCmd->Parameters->Clear();
 			reader->Close();
-			transaction->Rollback();
 			throw EDBException("Error during VerifyCredentialCmd: " + marshalString(e->Message));
 		}
 
@@ -358,7 +356,7 @@ const bool TDBManager::verifyUserCredentials(const string& aUser, const string& 
 	}
 }
 
-TVersion_ptr TDBManager::getVersion(const string& aUser, int aVersion){
+TVersion_ptr TDBManagerMSDE::getVersion(const string& aUser, int aVersion){
 	if (!System::Object::ReferenceEquals(this->fConnection, nullptr) && (this->fConnection->State == ConnectionState::Open)){
 		TVersion_ptr version = nullptr;
 
@@ -405,7 +403,7 @@ TVersion_ptr TDBManager::getVersion(const string& aUser, int aVersion){
 	}
 }
 
-TVersion_ptr TDBManager::getLastVersion(const string& aUser, bool aLoadFiles){
+TVersion_ptr TDBManagerMSDE::getLastVersion(const string& aUser, bool aLoadFiles){
 	if (!System::Object::ReferenceEquals(this->fConnection, nullptr) && (this->fConnection->State == ConnectionState::Open)){
 		TVersion_ptr version = nullptr;
 
@@ -471,7 +469,7 @@ TVersion_ptr TDBManager::getLastVersion(const string& aUser, bool aLoadFiles){
 	}
 }
 
-TVersionList_ptr TDBManager::getAllVersions(const string& aUser){
+TVersionList_ptr TDBManagerMSDE::getAllVersions(const string& aUser){
 	if (!System::Object::ReferenceEquals(this->fConnection, nullptr) && (this->fConnection->State == ConnectionState::Open)){
 		TVersionList_ptr versionList = nullptr;
 
