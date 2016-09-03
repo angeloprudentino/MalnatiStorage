@@ -22,7 +22,7 @@ using namespace std;
 #define UPDATE_SESSION 0
 #define RESTORE_SESSION 1
 
-#define NO_VERSION -1
+#define NO_VERSION 0
 
 #define SESSION_TIMEOUT 180
 

@@ -435,7 +435,7 @@ TVersion_ptr TDBManagerMSDE::getLastVersion(const string& aUser, bool aLoadFiles
 			reader = cmd->ExecuteReader();
 
 			if (reader->HasRows){
-				int v = -1;
+				int v = -0;
 				while (reader->Read()){
 					if (version == nullptr){
 						//build version object
