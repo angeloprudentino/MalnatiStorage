@@ -36,7 +36,7 @@ namespace StorageClientCS
         {
             this.InitializeComponent();
             socket = new Windows.Networking.Sockets.StreamSocket();
-            serverHost = new Windows.Networking.HostName("192.168.0.105");
+            serverHost = new Windows.Networking.HostName("localhost");
             this.ConnectWithServer();
         }
 
