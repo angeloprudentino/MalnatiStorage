@@ -115,13 +115,14 @@ void TStorageServer::checkAndCleanSessions(const boost::system::error_code& aErr
 	if (!aErr){
 		this->onServerLog("TStorageServer", "checkAndCleanSessions", "start sessions cleaning");
 		if (this->fSessions != nullptr){
-			for (TSessions::iterator it = this->fSessions->begin(); it != this->fSessions->end(); it++){
+			TSessions::iterator it = this->fSessions->begin();
+			while (it != this->fSessions->end()){
 				if (time(nullptr) - it->second->getLastPing() > SESSION_TIMEOUT){
 					this->onServerWarning("TStorageServer", "checkAndCleanSessions", it->first + "'s session was pending so it has been cleaned");
-					unique_lock<mutex> lock(this->fSessionsMutex);
-					it->second.reset();
-					this->fSessions->erase(it);
+					this->removeSession(it->first);
 				}
+				else
+					it++;
 			}
 		}
 	}
@@ -1136,10 +1137,35 @@ void TStorageServer::processPingRequest(TConnectionHandle aConnection, TPingReqM
 		this->onServerLog("TStorageServer", "processPingRequest", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
 		this->onServerLog("TStorageServer", "processPingRequest", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
 
-		//send ping reply
-		TPingReplyMessage_ptr reply = new_TPingReplyMessage_ptr(tok);
-		TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(reply), aConnection); //reply is moved
-		this->sendMessage(move_TMessageContainer_ptr(replyContainer)); //replyContainer is moved
+		TBaseMessage_ptr reply = nullptr;
+		TMessageContainer_ptr replyContainer = nullptr;
+
+		//check if token is associated to a valid session
+		string u;
+		try{
+			u = getUserFromToken(tok);
+		}
+		catch (EOpensslException e){
+			this->onServerError("TStorageServer", "processPingRequest", "Error in getUserFromToken(): " + e.getMessage());
+
+			//system failure
+			reply = new_TSystemErrorMessage_ptr("Unexpected System Error. Try later");
+			replyContainer = new_TMessageContainer_ptr(move_TBaseMessage_ptr(reply), aConnection); //reply is moved
+			this->sendMessage(move_TMessageContainer_ptr(replyContainer)); //replyContainer is moved
+			return;
+		}
+
+		TSession_ptr session = this->isThereASessionFor(u);
+		if (session != nullptr){
+			session->setLastPing(aMsg->getTime());
+
+			//send ping reply
+			TPingReplyMessage_ptr reply = new_TPingReplyMessage_ptr(tok);
+			TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(reply), aConnection); //reply is moved
+			this->sendMessage(move_TMessageContainer_ptr(replyContainer)); //replyContainer is moved
+		}
+		else
+			this->onServerError("TStorageServer", "processPingRequest", "There is no session opened for user: " + u);
 	}
 	else{
 		this->onServerError("TStorageServer", "processPingRequest", "received an empty message; skipped.");
