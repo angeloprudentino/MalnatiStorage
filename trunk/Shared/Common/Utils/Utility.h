@@ -77,7 +77,7 @@ const string getUserFromToken(const string& aToken); //throws EOpensslException
 // openssl crypto system init
 void initCrypto();
 
-// Evaluate a file and make its checksum
+// Evaluate content and make its checksum
 string_ptr opensslB64Checksum(const string& aString, const bool aStrongAlg); //throws EOpensslException
 string_ptr opensslB64PathChecksum(const string& aString); //throws EOpensslException
 #define opensslB64FileChecksum(aString) opensslB64Checksum(aString, false)
@@ -93,4 +93,4 @@ void criticalErrorToFile(const string& aClassName, const string& aFuncName, cons
 void storeFile(const path& aPath, string_ptr& aFileContent); //throws EFilesystemException
 string_ptr readFile(const path& aPath); //throws EFilesystemException
 void removeDir(const path& aPath); //throws EFilesystemException
-string buildServerPathPrefix(const string& aUser, const int aVersion);
+string buildServerPathPrefix(const string& aUser, const int aVersion); //throws EFilesystemException

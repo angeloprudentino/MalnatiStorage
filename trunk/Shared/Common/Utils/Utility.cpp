@@ -108,47 +108,55 @@ const string formatLogFileDate(const time_t& t){
 
 string escape(const string& aUser){
 	string res = aUser;
-
-	string from = to_string(SEP);
-	string to = SEP_ESC;
-	boost::replace_all(res, from, to);
+	if (!aUser.empty()){
+		string from = to_string(SEP);
+		string to = SEP_ESC;
+		boost::replace_all(res, from, to);
+	}
 
 	return res;
 }
 
 string unescape(const string& aUser){
 	string res = aUser;
-
-	string from = SEP_ESC;
-	string to = to_string(SEP);
-	boost::replace_all(res, from, to);
+	if (!aUser.empty()){
+		string from = SEP_ESC;
+		string to = to_string(SEP);
+		boost::replace_all(res, from, to);
+	}
 
 	return res;
 }
 
 string_ptr getUniqueToken(const string& aUser){
 	string_ptr rand = opensslB64RandomToken();
-	string t = timeToString(time(NULL));
-	string token(*rand + SEP + escape(aUser) + SEP + t + SEP + *rand);
-	return opensslB64Encode((char*)token.c_str(), (int)token.size());
+	if (rand != nullptr){
+		string t = timeToString(time(NULL));
+		string token(*rand + SEP + escape(aUser) + SEP + t + SEP + *rand);
+		return opensslB64Encode((char*)token.c_str(), (int)token.size());
+	}
+	else
+		return nullptr;
 }
 
 const string getUserFromToken(const string& aToken){
 	B64result ret = opensslB64Decode(aToken);
-	string s(ret.data);
 
-	// Turn into a stream.
-	stringstream ss(ret.data);
-	string tok;
+	if (ret.data != nullptr && ret.size > 0){
+		// Turn into a stream.
+		stringstream ss(ret.data);
+		string tok;
 
-	getline(ss, tok, SEP); //skip first rand
-	getline(ss, tok, SEP);
+		getline(ss, tok, SEP); //skip first rand
+		getline(ss, tok, SEP);
 
-	return unescape(tok);
+		return unescape(tok);
+	}
+	else
+		return "";
 }
 
 #pragma region "Crypto Utilities"
-// openssl crypto system init
 void initCrypto(){
 	CRYPTO_malloc_init();           // Initialize malloc, free, etc for OpenSSL's use
 	SSL_library_init();             // Initialize OpenSSL's SSL libraries
@@ -161,12 +169,21 @@ BIO* fillOpensslBIO(BIO* aBio, char* aContent, int aLen){
 	bool try_again = false;
 	int ret;
 
+	if (aBio == nullptr)
+		throw EOpensslException("error in fillOpensslBIO(): aBio is NULL!");
+
+	if (aContent == nullptr)
+		throw EOpensslException("error in fillOpensslBIO(): aContent is NULL!");
+
+	if (aLen == 0)
+		throw EOpensslException("error in fillOpensslBIO(): aContent is empty!");
+
 	try_again = false;
 	do {
 		ret = BIO_write(aBio, (void*)aContent, aLen);
 		if (ret == -2) {
 			//not implemented for that bio
-			string err = "BIO_write returns -2 (not implemented for that bio): ";
+			string err = "error in fillOpensslBIO(): BIO_write returns -2 (not implemented for that bio): ";
 			throw EOpensslException(err + ERR_error_string(ERR_get_error(), nullptr));
 		}
 		else if (ret == 0 || ret == -1){
@@ -176,7 +193,7 @@ BIO* fillOpensslBIO(BIO* aBio, char* aContent, int aLen){
 				try_again = true;
 			}
 			else{
-				string err = "BIO_should_retry signals an error: ";
+				string err = "error in fillOpensslBIO(): BIO_should_retry signals an error: ";
 				throw EOpensslException(err + ERR_error_string(ERR_get_error(), nullptr));
 			}
 		}
@@ -185,7 +202,7 @@ BIO* fillOpensslBIO(BIO* aBio, char* aContent, int aLen){
 	} while (try_again);
 
 	if (BIO_flush(aBio) != 1){
-		string err = "BIO_flush returns -1: ";
+		string err = "error in fillOpensslBIO(): BIO_flush returns -1: ";
 		throw EOpensslException(err + ERR_error_string(ERR_get_error(), nullptr));
 	}
 
@@ -198,21 +215,23 @@ string_ptr opensslB64Encode(char* aContent, int aLen){
 	char* ret_data = nullptr;
 	BUF_MEM *bufferPtr = nullptr;
 
-	if (aContent == nullptr) {
-		return nullptr;
-	}
+	if (aContent == nullptr) 
+		throw EOpensslException("error in opensslB64Encode(): aContent is NULL!");
+	
+	if (aLen == 0)
+		throw EOpensslException("error in opensslB64Encode(): aContent is empty!");
 
 	try {
 		/* setup input BIO chain */
 		bio = BIO_new(BIO_s_mem());
 		if (bio == nullptr){
-			string err = "BIO_new(BIO_s_mem()) returns nullptr: ";
+			string err = "error in opensslB64Encode(): BIO_new(BIO_s_mem()) returns nullptr: ";
 			throw EOpensslException(err + ERR_error_string(ERR_get_error(), nullptr));
 		}
 
 		b64 = BIO_new(BIO_f_base64());
 		if (b64 == nullptr){
-			string err = "BIO_new(BIO_f_base64()) returns nullptr: ";
+			string err = "error in opensslB64Encode(): BIO_new(BIO_f_base64()) returns nullptr: ";
 			throw EOpensslException(err + ERR_error_string(ERR_get_error(), nullptr));
 		}
 
@@ -225,11 +244,15 @@ string_ptr opensslB64Encode(char* aContent, int aLen){
 		BIO_set_close(bio, BIO_NOCLOSE);
 
 		BIO_free_all(bio);
-
-		ret_data = (*bufferPtr).data;
-		if (ret_data != NULL)
-			ret_data[(*bufferPtr).length] = '\0';
-		return make_string_ptr(ret_data);
+		
+		if (bufferPtr != nullptr){
+			ret_data = (*bufferPtr).data;
+			if (ret_data != nullptr)
+				ret_data[(*bufferPtr).length] = '\0';
+			return make_string_ptr(ret_data);
+		}
+		else
+			return nullptr;
 	}
 	catch (const EOpensslException& e) {
 		if (bio != nullptr)
@@ -257,7 +280,7 @@ B64result opensslB64Decode(const string& aString){
 		/* setup input BIO chain */
 		bio_in = BIO_new(BIO_s_mem());
 		if (bio_in == nullptr){
-			string err = "bio_in = BIO_new(BIO_s_mem()) returns nullptr: ";
+			string err = "error in opensslB64Decode(): BIO_new(BIO_s_mem()) returns nullptr: ";
 			throw EOpensslException(err + ERR_error_string(ERR_get_error(), nullptr));
 		}
 
@@ -266,7 +289,7 @@ B64result opensslB64Decode(const string& aString){
 
 		b64 = BIO_new(BIO_f_base64());
 		if (b64 == nullptr){
-			string err = "BIO_new(BIO_f_base64()) returns nullptr: ";
+			string err = "error in opensslB64Decode(): BIO_new(BIO_f_base64()) returns nullptr: ";
 			throw EOpensslException(err + ERR_error_string(ERR_get_error(), nullptr));
 		}
 
@@ -275,7 +298,7 @@ B64result opensslB64Decode(const string& aString){
 
 		bio_out = BIO_new(BIO_s_mem());
 		if (bio_out == nullptr) {
-			string err = "bio_out = BIO_new(BIO_s_mem()) returns nullptr: ";
+			string err = "error in opensslB64Decode(): BIO_new(BIO_s_mem()) returns nullptr: ";
 			throw EOpensslException(err + ERR_error_string(ERR_get_error(), nullptr));
 		}
 
@@ -283,7 +306,7 @@ B64result opensslB64Decode(const string& aString){
 			BIO_write(bio_out, buffer, ret);
 		}
 		if (BIO_flush(bio_out) != 1){
-			string err = "BIO_flush(bio_out) returns -1: ";
+			string err = "error in opensslB64Decode(): BIO_flush(bio_out) returns -1: ";
 			throw EOpensslException(err + ERR_error_string(ERR_get_error(), nullptr));
 		}
 
@@ -293,11 +316,13 @@ B64result opensslB64Decode(const string& aString){
 		BIO_free_all(bio_in);
 		BIO_free_all(bio_out);
 
-		res.data = (*bufferPtr).data;
-		if (res.data != NULL)
-			res.data[(*bufferPtr).length] = '\0';
-		res.size = (int)((*bufferPtr).length);
-
+		if (bufferPtr != nullptr){
+			res.data = (*bufferPtr).data;
+			if (res.data != nullptr)
+				res.data[(*bufferPtr).length] = '\0';
+			res.size = (int)((*bufferPtr).length);
+		}
+		
 		return res;
 	}
 	catch (const EOpensslException& e) {
@@ -319,9 +344,13 @@ string_ptr opensslCoreChecksum(BIO* aInputBio, const bool aStrongAlg){
 	char mdbuf[EVP_MAX_MD_SIZE];
 	int mdlen;
 	
+	if (aInputBio == nullptr) {
+		throw EOpensslException("error in opensslCoreChecksum(): aInputBio is NULL!");
+	}
+
 	md = BIO_new(BIO_f_md());
 	if (md == nullptr){
-		string err = "BIO_new(BIO_f_md()) returns nullptr: ";
+		string err = "error in opensslCoreChecksum(): BIO_new(BIO_f_md()) returns nullptr: ";
 		throw EOpensslException(err + ERR_error_string(ERR_get_error(), nullptr));
 	}
 
@@ -331,7 +360,7 @@ string_ptr opensslCoreChecksum(BIO* aInputBio, const bool aStrongAlg){
 		alg = EVP_md5();
 
 	if (BIO_set_md(md, alg) == 0){
-		string err = "BIO_set_md() returns an error: ";
+		string err = "error in opensslCoreChecksum(): BIO_set_md() returns an error: ";
 		throw EOpensslException(err + ERR_error_string(ERR_get_error(), nullptr));
 	}
 
@@ -346,7 +375,7 @@ string_ptr opensslCoreChecksum(BIO* aInputBio, const bool aStrongAlg){
 		mdlen = BIO_gets(md, mdbuf, sizeof mdbuf);
 		if (mdlen == -2) {
 			//not implemented for that bio
-			string err = "BIO_gets returns -2 (not implemented for that bio): ";
+			string err = "error in opensslCoreChecksum(): BIO_gets returns -2 (not implemented for that bio): ";
 			throw EOpensslException(err + ERR_error_string(ERR_get_error(), nullptr));
 		}
 		else if (mdlen == 0 || mdlen == -1){
@@ -356,7 +385,7 @@ string_ptr opensslCoreChecksum(BIO* aInputBio, const bool aStrongAlg){
 				try_again = true;
 			}
 			else{
-				string err = "BIO_should_retry signals an error: ";
+				string err = "error in opensslCoreChecksum(): BIO_should_retry signals an error: ";
 				throw EOpensslException(err + ERR_error_string(ERR_get_error(), nullptr));
 			}
 		}
@@ -379,7 +408,7 @@ string_ptr opensslB64Checksum(const string& aString, const bool aStrongAlg){
 		/* setup input BIO chain */
 		bio_in = BIO_new(BIO_s_mem());
 		if (bio_in == nullptr){
-			string err = "bio_in = BIO_new(BIO_s_mem()) returns nullptr: ";
+			string err = "error in opensslB64Checksum(): BIO_new(BIO_s_mem()) returns nullptr: ";
 			throw EOpensslException(err + ERR_error_string(ERR_get_error(), nullptr));
 		}
 
@@ -398,6 +427,10 @@ string_ptr opensslB64Checksum(const string& aString, const bool aStrongAlg){
 }
 
 string_ptr opensslB64PathChecksum(const string& aString){
+	if (aString.empty()) {
+		return nullptr;
+	}
+
 	string_ptr res = opensslB64Checksum(aString, true);
 
 	const string from = "/";
@@ -477,7 +510,8 @@ void storeFile(const path& aPath, string_ptr& aFileContent){
 #ifdef _DEBUG
 			B64result ret = opensslB64Decode(*aFileContent);
 			aFileContent.reset();
-			of.write(ret.data, ret.size);
+			if (ret.data != nullptr && ret.size > 0)
+				of.write(ret.data, ret.size);
 			of.close();
 		}
 		catch (EOpensslException e){
@@ -486,7 +520,8 @@ void storeFile(const path& aPath, string_ptr& aFileContent){
 			throw EFilesystemException("Error decoding file: " + aPath.string() + " -> " + e.getMessage());
 		}
 #else
-			of.write(aFileContent->c_str(), aFileContent->size());
+			if(!aFileContent->empty())
+				of.write(aFileContent->c_str(), aFileContent->size());
 			aFileContent.reset();
 			of.close();
 		}
@@ -556,6 +591,12 @@ void removeDir(const path& aPath){
 string buildServerPathPrefix(const string& aUser, const int aVersion){
 	string res = STORAGE_ROOT_PATH;
 
+	if (aUser.empty())
+		throw EFilesystemException("error in buildServerPathPrefix(): aUser is empty!");
+
+	if(aVersion <= 0)
+		throw EFilesystemException("error in buildServerPathPrefix(): aVersion is lower than 1!");
+
 #ifdef _DEBUG
 	res += aUser + "\\" + to_string(aVersion);
 #else
@@ -563,11 +604,20 @@ string buildServerPathPrefix(const string& aUser, const int aVersion){
 	string_ptr coded_v = nullptr;
 	try{
 		coded_u = opensslB64PathChecksum(aUser);
+		if (coded_u != nullptr)
+			throw EFilesystemException("error in buildServerPathPrefix(): coded_u is NULL!");
+
 		coded_v = opensslB64PathChecksum(to_string(aVersion));
+		if (coded_v != nullptr){
+			if (coded_u != nullptr)
+				coded_u.reset();
+			throw EFilesystemException("error in buildServerPathPrefix(): coded_v is NULL!");
+		}
+
 		res += *coded_u + "\\" + *coded_v;
 	}
 	catch (EOpensslException e){
-		res += aUser + "\\" + to_string(aVersion);
+		throw EFilesystemException("error in buildServerPathPrefix(): " + e.getMessage());
 	}
 
 	if (coded_u != nullptr)
