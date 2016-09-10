@@ -1156,7 +1156,7 @@ string_ptr TGetVersionsReplyMessage::encodeMessage(){
 
 	if (this->fVersions != nullptr){
 		int size = (int)this->fVersions->size();
-		for (int i = GET_VERSIONS_REPLY_MIN_TOK_NUM + 1; i < size; i++){
+		for (int i = 0; i < size; i++){
 			time_t t = this->fVersions->at(i)->getDate();
 			this->fItems->push_back(make_string_ptr(timeToString(t)));
 		}

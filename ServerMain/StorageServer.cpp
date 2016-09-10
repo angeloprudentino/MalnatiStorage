@@ -163,13 +163,18 @@ TStorageServer::TStorageServer(int AServerPort, IManagedServerController^ aCallb
 	this->fServerPort = AServerPort;
 	this->fCallbackObj = aCallbackObj;
 	
-	this->onServerLog("TStorageServer", "constructor", "########################################");
-	this->onServerLog("TStorageServer", "constructor", "########################################");
-	this->onServerLog("TStorageServer", "constructor", "## ");
-	this->onServerLog("TStorageServer", "constructor", "##             SERVER START");
-	this->onServerLog("TStorageServer", "constructor", "##");
-	this->onServerLog("TStorageServer", "constructor", "########################################");
-	this->onServerLog("TStorageServer", "constructor", "########################################");
+	try{
+		unique_lock<mutex> lock(this->fLogMutex);
+
+		this->onServerLog("TStorageServer", "constructor", "########################################");
+		this->onServerLog("TStorageServer", "constructor", "########################################");
+		this->onServerLog("TStorageServer", "constructor", "## ");
+		this->onServerLog("TStorageServer", "constructor", "##             SERVER START");
+		this->onServerLog("TStorageServer", "constructor", "##");
+		this->onServerLog("TStorageServer", "constructor", "########################################");
+		this->onServerLog("TStorageServer", "constructor", "########################################");
+	}
+	catch (...){}
 
 	this->onServerLog("TStorageServer", "constructor", "creating TServerSockController object...");
 
@@ -283,6 +288,8 @@ void TStorageServer::onServerLog(const string& aClassName, const string& aFuncNa
 }
 
 void TStorageServer::onServerWarning(const string& aClassName, const string& aFuncName, const string& aMsg){
+	unique_lock<mutex> lock(this->fLogMutex);
+
 	if (!System::Object::ReferenceEquals(this->fCallbackObj, nullptr))
 		this->fCallbackObj->onServerWarning(aClassName, aFuncName, aMsg);
 
@@ -290,6 +297,8 @@ void TStorageServer::onServerWarning(const string& aClassName, const string& aFu
 }
 
 void TStorageServer::onServerError(const string& aClassName, const string& aFuncName, const string& aMsg){
+	unique_lock<mutex> lock(this->fLogMutex);
+
 	if (!System::Object::ReferenceEquals(this->fCallbackObj, nullptr))
 		this->fCallbackObj->onServerError(aClassName, aFuncName, aMsg);
 
@@ -297,6 +306,8 @@ void TStorageServer::onServerError(const string& aClassName, const string& aFunc
 }
 
 void TStorageServer::onServerCriticalError(const string& aClassName, const string& aFuncName, const string& aMsg){
+	unique_lock<mutex> lock(this->fLogMutex);
+
 	if (!System::Object::ReferenceEquals(this->fCallbackObj, nullptr))
 		this->fCallbackObj->onServerCriticalError(aClassName, aFuncName, aMsg);
 
@@ -331,17 +342,22 @@ void TStorageServer::processRegistrationRequest(TConnectionHandle aConnection, T
 		string u = aMsg->getUser();
 		string p = aMsg->getPass();
 
-		//Log the message
-		this->onServerLog("TStorageServer", "processRegistrationRequest", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
-		this->onServerLog("TStorageServer", "processRegistrationRequest", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
-		this->onServerLog("TStorageServer", "processRegistrationRequest", "<=  ");
-		this->onServerLog("TStorageServer", "processRegistrationRequest", "<=   UserRegistrReqMessage ");
-		this->onServerLog("TStorageServer", "processRegistrationRequest", "<=  ");
-		this->onServerLog("TStorageServer", "processRegistrationRequest", "<=   user: " + u);
-		this->onServerLog("TStorageServer", "processRegistrationRequest", "<=   coded pass: " + p);
-		this->onServerLog("TStorageServer", "processRegistrationRequest", "<=  ");
-		this->onServerLog("TStorageServer", "processRegistrationRequest", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
-		this->onServerLog("TStorageServer", "processRegistrationRequest", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+		try{
+			unique_lock<mutex> lock(this->fLogMutex);
+
+			//Log the message
+			this->onServerLog("TStorageServer", "processRegistrationRequest", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+			this->onServerLog("TStorageServer", "processRegistrationRequest", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+			this->onServerLog("TStorageServer", "processRegistrationRequest", "<=  ");
+			this->onServerLog("TStorageServer", "processRegistrationRequest", "<=   UserRegistrReqMessage ");
+			this->onServerLog("TStorageServer", "processRegistrationRequest", "<=  ");
+			this->onServerLog("TStorageServer", "processRegistrationRequest", "<=   user: " + u);
+			this->onServerLog("TStorageServer", "processRegistrationRequest", "<=   coded pass: " + p);
+			this->onServerLog("TStorageServer", "processRegistrationRequest", "<=  ");
+			this->onServerLog("TStorageServer", "processRegistrationRequest", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+			this->onServerLog("TStorageServer", "processRegistrationRequest", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+		}
+		catch (...){ }
 
 		TBaseMessage_ptr reply = nullptr;
 		try{
@@ -384,17 +400,22 @@ void TStorageServer::processUpdateStart(TConnectionHandle aConnection, TUpdateSt
 		string u = aMsg->getUser();
 		string p = aMsg->getPass();
 
-		//Log the message
-		this->onServerLog("TStorageServer", "processUpdateStart", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
-		this->onServerLog("TStorageServer", "processUpdateStart", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
-		this->onServerLog("TStorageServer", "processUpdateStart", "<=  ");
-		this->onServerLog("TStorageServer", "processUpdateStart", "<=   UpdateStartReqMessage ");
-		this->onServerLog("TStorageServer", "processUpdateStart", "<=  ");
-		this->onServerLog("TStorageServer", "processUpdateStart", "<=   user: " + u);
-		this->onServerLog("TStorageServer", "processUpdateStart", "<=   coded pass: " + p);
-		this->onServerLog("TStorageServer", "processUpdateStart", "<=  ");
-		this->onServerLog("TStorageServer", "processUpdateStart", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
-		this->onServerLog("TStorageServer", "processUpdateStart", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+		try{
+			unique_lock<mutex> lock(this->fLogMutex);
+
+			//Log the message
+			this->onServerLog("TStorageServer", "processUpdateStart", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+			this->onServerLog("TStorageServer", "processUpdateStart", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+			this->onServerLog("TStorageServer", "processUpdateStart", "<=  ");
+			this->onServerLog("TStorageServer", "processUpdateStart", "<=   UpdateStartReqMessage ");
+			this->onServerLog("TStorageServer", "processUpdateStart", "<=  ");
+			this->onServerLog("TStorageServer", "processUpdateStart", "<=   user: " + u);
+			this->onServerLog("TStorageServer", "processUpdateStart", "<=   coded pass: " + p);
+			this->onServerLog("TStorageServer", "processUpdateStart", "<=  ");
+			this->onServerLog("TStorageServer", "processUpdateStart", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+			this->onServerLog("TStorageServer", "processUpdateStart", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+		}
+		catch (...) { }
 
 		TBaseMessage_ptr reply = nullptr;
 		TMessageContainer_ptr replyContainer = nullptr;
@@ -468,18 +489,23 @@ void TStorageServer::processAddNewFile(TConnectionHandle aConnection, TAddNewFil
 		string fp = aMsg->getFilePath();
 		time_t fd = aMsg->getFileDate(); 
 
-		//Log the message
-		this->onServerLog("TStorageServer", "processAddNewFile", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
-		this->onServerLog("TStorageServer", "processAddNewFile", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
-		this->onServerLog("TStorageServer", "processAddNewFile", "<=  ");
-		this->onServerLog("TStorageServer", "processAddNewFile", "<=   AddNewFileMessage ");
-		this->onServerLog("TStorageServer", "processAddNewFile", "<=  ");
-		this->onServerLog("TStorageServer", "processAddNewFile", "<=   token: " + t);
-		this->onServerLog("TStorageServer", "processAddNewFile", "<=   file path: " + fp);
-		this->onServerLog("TStorageServer", "processAddNewFile", "<=   file date: " + formatFileDate(fd));
-		this->onServerLog("TStorageServer", "processAddNewFile", "<=  ");
-		this->onServerLog("TStorageServer", "processAddNewFile", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
-		this->onServerLog("TStorageServer", "processAddNewFile", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+		try{
+			unique_lock<mutex> lock(this->fLogMutex);
+
+			//Log the message
+			this->onServerLog("TStorageServer", "processAddNewFile", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+			this->onServerLog("TStorageServer", "processAddNewFile", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+			this->onServerLog("TStorageServer", "processAddNewFile", "<=  ");
+			this->onServerLog("TStorageServer", "processAddNewFile", "<=   AddNewFileMessage ");
+			this->onServerLog("TStorageServer", "processAddNewFile", "<=  ");
+			this->onServerLog("TStorageServer", "processAddNewFile", "<=   token: " + t);
+			this->onServerLog("TStorageServer", "processAddNewFile", "<=   file path: " + fp);
+			this->onServerLog("TStorageServer", "processAddNewFile", "<=   file date: " + formatFileDate(fd));
+			this->onServerLog("TStorageServer", "processAddNewFile", "<=  ");
+			this->onServerLog("TStorageServer", "processAddNewFile", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+			this->onServerLog("TStorageServer", "processAddNewFile", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+		}
+		catch (...){ }
 
 		TFileAckMessage_ptr reply = nullptr;
 		TMessageContainer_ptr replyContainer = nullptr;
@@ -562,18 +588,23 @@ void TStorageServer::processUpdateFile(TConnectionHandle aConnection, TUpdateFil
 		string fp = aMsg->getFilePath();
 		time_t fd = aMsg->getFileDate();
 
-		//Log the message
-		this->onServerLog("TStorageServer", "processUpdateFile", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
-		this->onServerLog("TStorageServer", "processUpdateFile", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
-		this->onServerLog("TStorageServer", "processUpdateFile", "<=  ");
-		this->onServerLog("TStorageServer", "processUpdateFile", "<=   UpdateFileMessage ");
-		this->onServerLog("TStorageServer", "processUpdateFile", "<=  ");
-		this->onServerLog("TStorageServer", "processUpdateFile", "<=   token: " + t);
-		this->onServerLog("TStorageServer", "processUpdateFile", "<=   file path: " + fp);
-		this->onServerLog("TStorageServer", "processUpdateFile", "<=   file date: " + formatFileDate(fd));
-		this->onServerLog("TStorageServer", "processUpdateFile", "<=  ");
-		this->onServerLog("TStorageServer", "processUpdateFile", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
-		this->onServerLog("TStorageServer", "processUpdateFile", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+		try{
+			unique_lock<mutex> lock(this->fLogMutex);
+
+			//Log the message
+			this->onServerLog("TStorageServer", "processUpdateFile", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+			this->onServerLog("TStorageServer", "processUpdateFile", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+			this->onServerLog("TStorageServer", "processUpdateFile", "<=  ");
+			this->onServerLog("TStorageServer", "processUpdateFile", "<=   UpdateFileMessage ");
+			this->onServerLog("TStorageServer", "processUpdateFile", "<=  ");
+			this->onServerLog("TStorageServer", "processUpdateFile", "<=   token: " + t);
+			this->onServerLog("TStorageServer", "processUpdateFile", "<=   file path: " + fp);
+			this->onServerLog("TStorageServer", "processUpdateFile", "<=   file date: " + formatFileDate(fd));
+			this->onServerLog("TStorageServer", "processUpdateFile", "<=  ");
+			this->onServerLog("TStorageServer", "processUpdateFile", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+			this->onServerLog("TStorageServer", "processUpdateFile", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+		}
+		catch (...){ }
 
 		TFileAckMessage_ptr reply = nullptr;
 		TMessageContainer_ptr replyContainer = nullptr;
@@ -657,17 +688,22 @@ void TStorageServer::processRemoveFile(TConnectionHandle aConnection, TRemoveFil
 		string t = aMsg->getToken();
 		string fp = aMsg->getFilePath();
 
-		//Log the message
-		this->onServerLog("TStorageServer", "processRemoveFile", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
-		this->onServerLog("TStorageServer", "processRemoveFile", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
-		this->onServerLog("TStorageServer", "processRemoveFile", "<=  ");
-		this->onServerLog("TStorageServer", "processRemoveFile", "<=   RemoveFileMessage ");
-		this->onServerLog("TStorageServer", "processRemoveFile", "<=  ");
-		this->onServerLog("TStorageServer", "processRemoveFile", "<=   token: " + t);
-		this->onServerLog("TStorageServer", "processRemoveFile", "<=   file path: " + fp);
-		this->onServerLog("TStorageServer", "processRemoveFile", "<=  ");
-		this->onServerLog("TStorageServer", "processRemoveFile", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
-		this->onServerLog("TStorageServer", "processRemoveFile", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+		try{
+			unique_lock<mutex> lock(this->fLogMutex);
+
+			//Log the message
+			this->onServerLog("TStorageServer", "processRemoveFile", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+			this->onServerLog("TStorageServer", "processRemoveFile", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+			this->onServerLog("TStorageServer", "processRemoveFile", "<=  ");
+			this->onServerLog("TStorageServer", "processRemoveFile", "<=   RemoveFileMessage ");
+			this->onServerLog("TStorageServer", "processRemoveFile", "<=  ");
+			this->onServerLog("TStorageServer", "processRemoveFile", "<=   token: " + t);
+			this->onServerLog("TStorageServer", "processRemoveFile", "<=   file path: " + fp);
+			this->onServerLog("TStorageServer", "processRemoveFile", "<=  ");
+			this->onServerLog("TStorageServer", "processRemoveFile", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+			this->onServerLog("TStorageServer", "processRemoveFile", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+		}
+		catch (...){ }
 
 		TFileAckMessage_ptr reply = nullptr;
 		TMessageContainer_ptr replyContainer = nullptr;
@@ -717,16 +753,21 @@ void TStorageServer::processUpdateStop(TConnectionHandle aConnection, TUpdateSto
 	if (aMsg != nullptr){
 		string t = aMsg->getToken();
 
-		//Log the message
-		this->onServerLog("TStorageServer", "processUpdateStop", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
-		this->onServerLog("TStorageServer", "processUpdateStop", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
-		this->onServerLog("TStorageServer", "processUpdateStop", "<=  ");
-		this->onServerLog("TStorageServer", "processUpdateStop", "<=   UpdateStopReqMessage ");
-		this->onServerLog("TStorageServer", "processUpdateStop", "<=  ");
-		this->onServerLog("TStorageServer", "processUpdateStop", "<=   token: " + t);
-		this->onServerLog("TStorageServer", "processUpdateStop", "<=  ");
-		this->onServerLog("TStorageServer", "processUpdateStop", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
-		this->onServerLog("TStorageServer", "processUpdateStop", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+		try{
+			unique_lock<mutex> lock(this->fLogMutex);
+
+			//Log the message
+			this->onServerLog("TStorageServer", "processUpdateStop", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+			this->onServerLog("TStorageServer", "processUpdateStop", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+			this->onServerLog("TStorageServer", "processUpdateStop", "<=  ");
+			this->onServerLog("TStorageServer", "processUpdateStop", "<=   UpdateStopReqMessage ");
+			this->onServerLog("TStorageServer", "processUpdateStop", "<=  ");
+			this->onServerLog("TStorageServer", "processUpdateStop", "<=   token: " + t);
+			this->onServerLog("TStorageServer", "processUpdateStop", "<=  ");
+			this->onServerLog("TStorageServer", "processUpdateStop", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+			this->onServerLog("TStorageServer", "processUpdateStop", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+		}
+		catch (...){ }
 
 		TUpdateStopReplyMessage_ptr reply = nullptr;
 		TMessageContainer_ptr replyContainer = nullptr;
@@ -808,17 +849,22 @@ void TStorageServer::processGetVersions(TConnectionHandle aConnection, TGetVersi
 		string u = aMsg->getUser();
 		string p = aMsg->getPass();
 
-		//Log the message
-		this->onServerLog("TStorageServer", "processGetVersions", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
-		this->onServerLog("TStorageServer", "processGetVersions", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
-		this->onServerLog("TStorageServer", "processGetVersions", "<=  ");
-		this->onServerLog("TStorageServer", "processGetVersions", "<=   GetVersionsReqMessage ");
-		this->onServerLog("TStorageServer", "processGetVersions", "<=  ");
-		this->onServerLog("TStorageServer", "processGetVersions", "<=   user: " + u);
-		this->onServerLog("TStorageServer", "processGetVersions", "<=   coded pass: " + p);
-		this->onServerLog("TStorageServer", "processGetVersions", "<=  ");
-		this->onServerLog("TStorageServer", "processGetVersions", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
-		this->onServerLog("TStorageServer", "processGetVersions", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+		try{
+			unique_lock<mutex> lock(this->fLogMutex);
+
+			//Log the message
+			this->onServerLog("TStorageServer", "processGetVersions", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+			this->onServerLog("TStorageServer", "processGetVersions", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+			this->onServerLog("TStorageServer", "processGetVersions", "<=  ");
+			this->onServerLog("TStorageServer", "processGetVersions", "<=   GetVersionsReqMessage ");
+			this->onServerLog("TStorageServer", "processGetVersions", "<=  ");
+			this->onServerLog("TStorageServer", "processGetVersions", "<=   user: " + u);
+			this->onServerLog("TStorageServer", "processGetVersions", "<=   coded pass: " + p);
+			this->onServerLog("TStorageServer", "processGetVersions", "<=  ");
+			this->onServerLog("TStorageServer", "processGetVersions", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+			this->onServerLog("TStorageServer", "processGetVersions", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+		}
+		catch (...){ }
 
 		TGetVersionsReplyMessage_ptr reply = nullptr;
 		TMessageContainer_ptr replyContainer = nullptr;
@@ -863,8 +909,8 @@ void TStorageServer::processGetVersions(TConnectionHandle aConnection, TGetVersi
 		int last = 0;
 		if (!err && vers != nullptr){
 			totVers = (int)vers->size();
-			oldest = 0;
-			last = totVers - 1;
+			oldest = 1;
+			last = totVers;
 		}
 
 		reply = new_TGetVersionsReplyMessage_ptr(totVers, oldest, last, vers);
@@ -881,17 +927,22 @@ void TStorageServer::processGetLastVersion(TConnectionHandle aConnection, TGetLa
 		string u = aMsg->getUser();
 		string p = aMsg->getPass();
 
-		//Log the message
-		this->onServerLog("TStorageServer", "processGetLastVersion", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
-		this->onServerLog("TStorageServer", "processGetLastVersion", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
-		this->onServerLog("TStorageServer", "processGetLastVersion", "<=  ");
-		this->onServerLog("TStorageServer", "processGetLastVersion", "<=   GetLastVersionReqMessage ");
-		this->onServerLog("TStorageServer", "processGetLastVersion", "<=  ");
-		this->onServerLog("TStorageServer", "processGetLastVersion", "<=   user: " + u);
-		this->onServerLog("TStorageServer", "processGetLastVersion", "<=   coded pass: " + p);
-		this->onServerLog("TStorageServer", "processGetLastVersion", "<=  ");
-		this->onServerLog("TStorageServer", "processGetLastVersion", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
-		this->onServerLog("TStorageServer", "processGetLastVersion", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+		try{
+			unique_lock<mutex> lock(this->fLogMutex);
+
+			//Log the message
+			this->onServerLog("TStorageServer", "processGetLastVersion", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+			this->onServerLog("TStorageServer", "processGetLastVersion", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+			this->onServerLog("TStorageServer", "processGetLastVersion", "<=  ");
+			this->onServerLog("TStorageServer", "processGetLastVersion", "<=   GetLastVersionReqMessage ");
+			this->onServerLog("TStorageServer", "processGetLastVersion", "<=  ");
+			this->onServerLog("TStorageServer", "processGetLastVersion", "<=   user: " + u);
+			this->onServerLog("TStorageServer", "processGetLastVersion", "<=   coded pass: " + p);
+			this->onServerLog("TStorageServer", "processGetLastVersion", "<=  ");
+			this->onServerLog("TStorageServer", "processGetLastVersion", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+			this->onServerLog("TStorageServer", "processGetLastVersion", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+		}
+		catch (...){ }
 
 		TGetLastVerReplyMessage_ptr reply = nullptr;
 		TMessageContainer_ptr replyContainer = nullptr;
@@ -955,18 +1006,23 @@ void TStorageServer::processRestoreVersion(TConnectionHandle aConnection, TResto
 		string p = aMsg->getPass();
 		int v = aMsg->getVersion();
 
-		//Log the message
-		this->onServerLog("TStorageServer", "processRestoreVersion", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
-		this->onServerLog("TStorageServer", "processRestoreVersion", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
-		this->onServerLog("TStorageServer", "processRestoreVersion", "<=  ");
-		this->onServerLog("TStorageServer", "processRestoreVersion", "<=   RestoreVerReqMessage ");
-		this->onServerLog("TStorageServer", "processRestoreVersion", "<=  ");
-		this->onServerLog("TStorageServer", "processRestoreVersion", "<=   user: " + u);
-		this->onServerLog("TStorageServer", "processRestoreVersion", "<=   coded pass: " + p);
-		this->onServerLog("TStorageServer", "processRestoreVersion", "<=   required version: " + to_string(v));
-		this->onServerLog("TStorageServer", "processRestoreVersion", "<=  ");
-		this->onServerLog("TStorageServer", "processRestoreVersion", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
-		this->onServerLog("TStorageServer", "processRestoreVersion", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+		try{
+			unique_lock<mutex> lock(this->fLogMutex);
+
+			//Log the message
+			this->onServerLog("TStorageServer", "processRestoreVersion", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+			this->onServerLog("TStorageServer", "processRestoreVersion", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+			this->onServerLog("TStorageServer", "processRestoreVersion", "<=  ");
+			this->onServerLog("TStorageServer", "processRestoreVersion", "<=   RestoreVerReqMessage ");
+			this->onServerLog("TStorageServer", "processRestoreVersion", "<=  ");
+			this->onServerLog("TStorageServer", "processRestoreVersion", "<=   user: " + u);
+			this->onServerLog("TStorageServer", "processRestoreVersion", "<=   coded pass: " + p);
+			this->onServerLog("TStorageServer", "processRestoreVersion", "<=   required version: " + to_string(v));
+			this->onServerLog("TStorageServer", "processRestoreVersion", "<=  ");
+			this->onServerLog("TStorageServer", "processRestoreVersion", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+			this->onServerLog("TStorageServer", "processRestoreVersion", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+		}
+		catch (...){ }
 
 		//check if username and password are valid
 		try{
@@ -1061,21 +1117,26 @@ void TStorageServer::processRestoreFileAck(TConnectionHandle aConnection, TResto
 		string fp = aMsg->getFilePath();
 		bool r = aMsg->getResp();
 
-		//Log the message
-		this->onServerLog("TStorageServer", "processRestoreFileAck", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
-		this->onServerLog("TStorageServer", "processRestoreFileAck", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
-		this->onServerLog("TStorageServer", "processRestoreFileAck", "<=  ");
-		this->onServerLog("TStorageServer", "processRestoreFileAck", "<=   RestoreFileAckMessage ");
-		this->onServerLog("TStorageServer", "processRestoreFileAck", "<=  ");
-		this->onServerLog("TStorageServer", "processRestoreFileAck", "<=   token: " + t);
-		this->onServerLog("TStorageServer", "processRestoreFileAck", "<=   file path: " + fp);
-		if (r)
-			this->onServerLog("TStorageServer", "processRestoreFileAck", "<=   result: ok");
-		else
-			this->onServerLog("TStorageServer", "processRestoreFileAck", "<=   result: error");
-		this->onServerLog("TStorageServer", "processRestoreFileAck", "<=  ");
-		this->onServerLog("TStorageServer", "processRestoreFileAck", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
-		this->onServerLog("TStorageServer", "processRestoreFileAck", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+		try{
+			unique_lock<mutex> lock(this->fLogMutex);
+
+			//Log the message
+			this->onServerLog("TStorageServer", "processRestoreFileAck", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+			this->onServerLog("TStorageServer", "processRestoreFileAck", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+			this->onServerLog("TStorageServer", "processRestoreFileAck", "<=  ");
+			this->onServerLog("TStorageServer", "processRestoreFileAck", "<=   RestoreFileAckMessage ");
+			this->onServerLog("TStorageServer", "processRestoreFileAck", "<=  ");
+			this->onServerLog("TStorageServer", "processRestoreFileAck", "<=   token: " + t);
+			this->onServerLog("TStorageServer", "processRestoreFileAck", "<=   file path: " + fp);
+			if (r)
+				this->onServerLog("TStorageServer", "processRestoreFileAck", "<=   result: ok");
+			else
+				this->onServerLog("TStorageServer", "processRestoreFileAck", "<=   result: error");
+			this->onServerLog("TStorageServer", "processRestoreFileAck", "<=  ");
+			this->onServerLog("TStorageServer", "processRestoreFileAck", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+			this->onServerLog("TStorageServer", "processRestoreFileAck", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+		}
+		catch (...){ }
 
 		//check if token is associated to a valid session
 		string u;
@@ -1106,6 +1167,8 @@ void TStorageServer::processRestoreFileAck(TConnectionHandle aConnection, TResto
 			TRestoreFileMessage_ptr next = new_TRestoreFileMessage_ptr(f->getServerPathPrefix(), f->getClientRelativePath(), f->getLastMod());
 			TMessageContainer_ptr nextContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(next), aConnection);
 			this->sendMessage(move_TMessageContainer_ptr(nextContainer));
+
+			f.reset();
 		}
 		else{
 			TVersion_ptr v = session->terminateWithSuccess(true);
@@ -1125,17 +1188,22 @@ void TStorageServer::processPingRequest(TConnectionHandle aConnection, TPingReqM
 		string t = formatFileDate(aMsg->getTime());
 		string tok = aMsg->getToken();
 
-		//Log the message
-		this->onServerLog("TStorageServer", "processPingRequest", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
-		this->onServerLog("TStorageServer", "processPingRequest", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
-		this->onServerLog("TStorageServer", "processPingRequest", "<=  ");
-		this->onServerLog("TStorageServer", "processPingRequest", "<=   PingReqMessage ");
-		this->onServerLog("TStorageServer", "processPingRequest", "<=  ");
-		this->onServerLog("TStorageServer", "processPingRequest", "<=   time: " + t);
-		this->onServerLog("TStorageServer", "processPingRequest", "<=   token: " + tok);
-		this->onServerLog("TStorageServer", "processPingRequest", "<=  ");
-		this->onServerLog("TStorageServer", "processPingRequest", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
-		this->onServerLog("TStorageServer", "processPingRequest", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+		try{
+			unique_lock<mutex> lock(this->fLogMutex);
+
+			//Log the message
+			this->onServerLog("TStorageServer", "processPingRequest", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+			this->onServerLog("TStorageServer", "processPingRequest", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+			this->onServerLog("TStorageServer", "processPingRequest", "<=  ");
+			this->onServerLog("TStorageServer", "processPingRequest", "<=   PingReqMessage ");
+			this->onServerLog("TStorageServer", "processPingRequest", "<=  ");
+			this->onServerLog("TStorageServer", "processPingRequest", "<=   time: " + t);
+			this->onServerLog("TStorageServer", "processPingRequest", "<=   token: " + tok);
+			this->onServerLog("TStorageServer", "processPingRequest", "<=  ");
+			this->onServerLog("TStorageServer", "processPingRequest", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+			this->onServerLog("TStorageServer", "processPingRequest", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+		}
+		catch (...){ }
 
 		TBaseMessage_ptr reply = nullptr;
 		TMessageContainer_ptr replyContainer = nullptr;
@@ -1177,17 +1245,22 @@ void TStorageServer::processVerifyCred(TConnectionHandle aConnection, TVerifyCre
 		string u = aMsg->getUser();
 		string p = aMsg->getPass();
 
-		//Log the message
-		this->onServerLog("TStorageServer", "processRegistrationRequest", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
-		this->onServerLog("TStorageServer", "processRegistrationRequest", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
-		this->onServerLog("TStorageServer", "processRegistrationRequest", "<=  ");
-		this->onServerLog("TStorageServer", "processRegistrationRequest", "<=   VerifyCredReqMessage ");
-		this->onServerLog("TStorageServer", "processRegistrationRequest", "<=  ");
-		this->onServerLog("TStorageServer", "processRegistrationRequest", "<=   user: " + u);
-		this->onServerLog("TStorageServer", "processRegistrationRequest", "<=   coded pass: " + p);
-		this->onServerLog("TStorageServer", "processRegistrationRequest", "<=  ");
-		this->onServerLog("TStorageServer", "processRegistrationRequest", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
-		this->onServerLog("TStorageServer", "processRegistrationRequest", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+		try{
+			unique_lock<mutex> lock(this->fLogMutex);
+
+			//Log the message
+			this->onServerLog("TStorageServer", "processRegistrationRequest", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+			this->onServerLog("TStorageServer", "processRegistrationRequest", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+			this->onServerLog("TStorageServer", "processRegistrationRequest", "<=  ");
+			this->onServerLog("TStorageServer", "processRegistrationRequest", "<=   VerifyCredReqMessage ");
+			this->onServerLog("TStorageServer", "processRegistrationRequest", "<=  ");
+			this->onServerLog("TStorageServer", "processRegistrationRequest", "<=   user: " + u);
+			this->onServerLog("TStorageServer", "processRegistrationRequest", "<=   coded pass: " + p);
+			this->onServerLog("TStorageServer", "processRegistrationRequest", "<=  ");
+			this->onServerLog("TStorageServer", "processRegistrationRequest", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+			this->onServerLog("TStorageServer", "processRegistrationRequest", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+		}
+		catch (...){ }
 
 		TBaseMessage_ptr reply = nullptr;
 		

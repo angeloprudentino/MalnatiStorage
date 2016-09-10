@@ -38,9 +38,9 @@ private:
 	
 	io_service fMainIoService;
 	deadline_timer* fSessionsCleaner = nullptr;
-
 	TSessions* fSessions = nullptr;
 	mutex fSessionsMutex;
+	mutex fLogMutex;
 
 	TServerSockController* fSockController = nullptr;
 	IBaseExecutorController* fExeController = nullptr;
