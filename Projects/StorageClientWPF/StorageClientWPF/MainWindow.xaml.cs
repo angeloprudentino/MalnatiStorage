@@ -18,7 +18,7 @@ namespace StorageClientWPF
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window//, StorageClientController
+    public partial class MainWindow : Window, StorageClientController
     {
         private string username;
         private string password;
@@ -34,14 +34,6 @@ namespace StorageClientWPF
             this.second_pass_label.Visibility = Visibility.Collapsed;
             this.repeat_pass.Visibility = Visibility.Collapsed;
             this.Register_button.Visibility = Visibility.Collapsed;
-        }
-
-        private void Button_Click(object sender, RoutedEventArgs e)
-        {
-            //StorageClientCore core = new StorageClientCore(this);
-            //Version v = new Version()
-            //core.test();
-           // btn.Visibility = Visibility.Collapsed;
         }
 
         private void Button_Click_1(object sender, RoutedEventArgs e)
@@ -75,11 +67,54 @@ namespace StorageClientWPF
             this.username = this.user.Text;
             this.password = this.pass.Password;
 
-            if (this.password.CompareTo("Pippo")!=0)
-            {
-                MessageBox.Show("Invalid Credentials");
-            }
-            this.text.Text = "user:" + this.username + " pass:" + this.password;
+            StorageClientCore core = new StorageClientCore(this);
+            core.issueRequest(new LoginRequest("pippo", "pippo"));
         }
+
+        public void onGetVersionsError(string aMsg)
+        {
+
+        }
+        public void onGetVersionsSuccess()
+        {
+
+        }
+        public void onLoginError(string aMsg)
+        {
+            this.text.Text = aMsg;
+        }
+        public void onLoginSuccess()
+        {
+
+        }
+        public void onRegistrationError(string aMsg)
+        {
+
+        }
+        public void onRegistrationSucces()
+        {
+
+        }
+        public void onRestoreError(string aMsg)
+        {
+
+        }
+        public void onRestoreSuccess()
+        {
+
+        }
+        public void onUpdateError(string aMsg)
+        {
+
+        }
+        public void onUpdateStart()
+        {
+
+        }
+        public void onUpdateSuccess()
+        {
+
+        }
+
     }
 }

@@ -53,16 +53,16 @@ public:
 public interface class StorageClientController{
 public:
 	void onLoginSuccess();
-	String^ onLoginError();
+	void onLoginError(String^ aMsg);
 	void onRegistrationSucces();
-	String^ onRegistrationError();
+	void onRegistrationError(String^ aMsg);
 	void onUpdateStart();
-	///List<File> onUpdateSuccess();
-	String^ onUpdateError();
+	void onUpdateSuccess();
+	void onUpdateError(String^ aMsg);
 	void onRestoreSuccess();
-	String^ onRestoreError();
-	//std::list<UserVersion> onGetVersionsSuccess();
-	String^ onGetVersionsError();
+	void onRestoreError(String^ aMsg);
+	void onGetVersionsSuccess();
+	void onGetVersionsError(String^ aMsg);
 };
 
 

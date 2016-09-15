@@ -19,7 +19,6 @@ StorageClientCore::~StorageClientCore(){
 	delete this->fCore;
 }
 
-const bool StorageClientCore::issueRequest(UserRequest aRequest){
-
-	return true;
+const bool StorageClientCore::issueRequest(UserRequest^ aRequest){
+	return this->fCore->issueRequest(aRequest);
 }
