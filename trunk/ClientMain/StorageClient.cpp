@@ -509,13 +509,12 @@ const int TStorageClient::getLastVersion(const string& aUser, const string& aPas
 //	return result;
 //}
 
-const bool TStorageClient::issueRequest(UserRequest aRequest){
-	if (aRequest.getID() == LOGIN_REQ)
-		this->fCallbackObj->onLoginSuccess();
+const bool TStorageClient::issueRequest(UserRequest^ aRequest){
+		this->fCallbackObj->onLoginError("fottiti");
 
 	return true;
 }
 
-void TStorageClient::processRequest(UserRequest aRequest){
+void TStorageClient::processRequest(UserRequest^ aRequest){
 
 }

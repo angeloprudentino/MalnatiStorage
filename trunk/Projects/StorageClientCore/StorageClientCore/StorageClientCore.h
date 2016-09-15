@@ -23,6 +23,6 @@ public:
 	StorageClientCore(StorageClientController^ aCallbackObj);
 	~StorageClientCore();
 
-	const bool issueRequest(UserRequest aRequest);
+	const bool issueRequest(UserRequest^ aRequest);
 };
 

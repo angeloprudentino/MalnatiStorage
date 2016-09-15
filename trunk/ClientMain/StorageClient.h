@@ -43,12 +43,12 @@ private:
 	void restoreVersion(const string& aUser, const string& aPass, const int aVersion, const string& aDestPath);
 	//std::list<UserVersion> getAllVersions(const string& aUser, const string& aPass);
 
-	void processRequest(UserRequest aRequest);
+	void processRequest(UserRequest^ aRequest);
 
 public:
 	TStorageClient(StorageClientController^ aCallbackObj);
 	TStorageClient(const TStorageClient&) = delete;            // disable copying
 	TStorageClient& operator=(const TStorageClient&) = delete; // disable assignment
 
-	const bool issueRequest(UserRequest aRequest);
+	const bool issueRequest(UserRequest^ aRequest);
 };
