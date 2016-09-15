@@ -459,16 +459,18 @@ const int TStorageClient::getLastVersion(const string& aUser, const string& aPas
 	return version;
 }
 
-//void TStorageClient::printAllVersions(const string& aUser, const string& aPass){
+//std::list<UserVersion> TStorageClient::getAllVersions(const string& aUser, const string& aPass){
+//	std::list<UserVersion> result;
+//
 //	if (aUser.empty() || aPass.empty())
-//		return;
+//		return result;
 //
 //	string_ptr msg = nullptr;
 //	TBaseMessage_ptr bm = nullptr;
 //	TSystemErrorMessage_ptr sysErr = nullptr;
 //
 //	if (!this->sendMsg((TBaseMessage_ptr&)move_TBaseMessage_ptr(new_TGetVersionsReqMessage_ptr(aUser, aPass))))
-//		return;
+//		return result;
 //	msg = this->readMsg();
 //
 //	TGetVersionsReplyMessage_ptr verReply = nullptr;
@@ -477,7 +479,7 @@ const int TStorageClient::getLastVersion(const string& aUser, const string& aPas
 //		int kind = bm->getID();
 //		if (kind == SYSTEM_ERR_ID){
 //			sysErr = new_TSystemErrorMessage_ptr(bm);
-//			cout << sysErr->getDetail() << endl;
+//			errorToFile("TStorageClient", "getAllVersions", sysErr->getDetail());
 //		}
 //		else if (kind == GET_VERSIONS_REPLY_ID){
 //			verReply = make_TGetVersionsReplyMessage_ptr(bm);
@@ -485,25 +487,35 @@ const int TStorageClient::getLastVersion(const string& aUser, const string& aPas
 //			if (tot > 0){
 //				int oldest = verReply->getOldestVersion();
 //				int last = verReply->getLastVersion();
-//				cout << "Versions of user " << aUser << ":" << endl;
-//				for (int i = oldest; i <= last; i++)
-//					cout << "-\tVersion " << to_string(i) << " [" << formatFileDate(verReply->getVersionDate(i)) << "]" << endl;
+//				logToFile("TStorageClient", "getAllVersions", "Versions of user " + aUser + ":");
+//				for (int i = oldest; i <= last; i++){
+//					string vd = formatFileDate(verReply->getVersionDate(i));
+//					logToFile("TStorageClient", "getAllVersions", "-\tVersion " + to_string(i) + " [" + vd + "]");
+//					result.emplace_back(unmarshalString(vd), i);
+//				}
 //			}
 //		}
 //		else{
-//			cout << getMessageName(kind) << " is invalid" << endl;
+//			errorToFile("TStorageClient", "getAllVersions", getMessageName(kind) + " is invalid");
 //		}
 //	}
 //	catch (EMessageException& e){
-//		cout << "*********************" << endl;
-//		cout << "*********************" << endl;
-//		cout << "**   " << endl;
-//		cout << "**   " << e.getMessage() << endl;
-//		cout << "**   " << endl;
-//		cout << "*********************" << endl;
-//		cout << "*********************" << endl;
+//		errorToFile("TStorageClient", "getAllVersions", e.getMessage());
 //	}
 //	bm.reset();
 //	sysErr.reset();
 //	verReply.reset();
+//
+//	return result;
 //}
+
+const bool TStorageClient::issueRequest(UserRequest aRequest){
+	if (aRequest.getID() == LOGIN_REQ)
+		this->fCallbackObj->onLoginSuccess();
+
+	return true;
+}
+
+void TStorageClient::processRequest(UserRequest aRequest){
+
+}
