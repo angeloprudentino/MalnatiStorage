@@ -21,7 +21,8 @@ private:
 
 public:
 	StorageClientCore(StorageClientController^ aCallbackObj);
+	~StorageClientCore();
 
-	void test();
+	const bool issueRequest(UserRequest aRequest);
 };
 
