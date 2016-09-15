@@ -42,7 +42,7 @@ private:
 	String^ fVersionDate = nullptr;
 
 public:
-	Version(const String^ aVersionDate, const int aVersionID){ this->fVersionID = aVersionID; this->fVersionDate = (String^)aVersionDate; }
+	Version(const String^ aVersionDate, const int aVersionID);
 
 	//getters
 	const int getVersionID(){ return this->fVersionID; }
@@ -62,4 +62,6 @@ public:
 	File(const String^ aFilePath);
 
 	//getters
+	const String^ getFileName() { return this->fFileName; }
+	const String^ getFilePath() { return this->fFilePath; }
 };

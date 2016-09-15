@@ -29,7 +29,7 @@ using namespace boost::filesystem;
 ////////////////////////////////////
 //        TStorageServer	      //
 ////////////////////////////////////
-public class TStorageServer : public IServerExecutorController{
+class TStorageServer : public IServerExecutorController{
 private:
 	int fServerPort = -1;
 

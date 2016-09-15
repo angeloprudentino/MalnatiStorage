@@ -7,7 +7,7 @@
  *
  */
 
-#include "ClientController.h
+#include "ClientController.h"
 
 
 //////////////////////////////////
@@ -23,5 +23,5 @@ Version::Version(const String^ aVersionDate, const int aVersionID){
 //          File		     //
 ///////////////////////////////
 File::File(const String^ aFilePath){
-
+	//TODO: estrarre il nome del file dal path
 }

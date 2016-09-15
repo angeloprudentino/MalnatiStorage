@@ -55,13 +55,13 @@ const bool TStorageServer::newSession(const string& aUser, const string& aToken,
 	unique_lock<mutex> lock(this->fSessionsMutex);
 	this->fSessions->emplace(aUser, s);
 
-	//init session cleaner timer if necessary
-	if (this->fSessionsCleaner == nullptr){
-		this->onServerLog("TStorageServer", "newSession", "creating sessions cleaner timer...");
-		this->fSessionsCleaner = new deadline_timer(this->fMainIoService, boost::posix_time::seconds(DEADLINE));
-		this->fSessionsCleaner->async_wait(bind(&TStorageServer::checkAndCleanSessions, this, boost::asio::placeholders::error));
-		this->onServerLog("TStorageServer", "newSession", "sessions cleaner timer created");
-	}
+	////init session cleaner timer if necessary
+	//if (this->fSessionsCleaner == nullptr){
+	//	this->onServerLog("TStorageServer", "newSession", "creating sessions cleaner timer...");
+	//	this->fSessionsCleaner = new deadline_timer(this->fMainIoService, boost::posix_time::seconds(DEADLINE));
+	//	this->fSessionsCleaner->async_wait(bind(&TStorageServer::checkAndCleanSessions, this, boost::asio::placeholders::error));
+	//	this->onServerLog("TStorageServer", "newSession", "sessions cleaner timer created");
+	//}
 
 	return true;
 }
@@ -120,6 +120,7 @@ void TStorageServer::checkAndCleanSessions(const boost::system::error_code& aErr
 				if (time(nullptr) - it->second->getLastPing() > SESSION_TIMEOUT){
 					this->onServerWarning("TStorageServer", "checkAndCleanSessions", it->first + "'s session was pending so it has been cleaned");
 					this->removeSession(it->first);
+					//TODO: remove files on disk
 				}
 				else
 					it++;
