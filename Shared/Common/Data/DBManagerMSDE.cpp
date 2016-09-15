@@ -10,17 +10,8 @@
 #include "Utility.h"
 #include <ctime>
 
+using namespace System;
 using namespace System::Configuration;
-
-
-string marshalString(String ^ aStr) {
-	using namespace Runtime::InteropServices;
-	const char* chars = (const char*)(Marshal::StringToHGlobalAnsi(aStr)).ToPointer();
-	string res = chars;
-	Marshal::FreeHGlobal(IntPtr((void*)chars));
-
-	return res;
-}
 
 
 ////////////////////////////////////
@@ -30,14 +21,14 @@ string marshalString(String ^ aStr) {
 const int TDBManagerMSDE::getUserID(const string& aUser, SqlTransaction^ aTransaction){
 	int uID = -1;
 
-	if (!System::Object::ReferenceEquals(this->fConnection, nullptr) && (this->fConnection->State == ConnectionState::Open)){
-		if (System::Object::ReferenceEquals(this->fSelectUserIdCmd, nullptr)){
+	if (!Object::ReferenceEquals(this->fConnection, nullptr) && (this->fConnection->State == ConnectionState::Open)){
+		if (Object::ReferenceEquals(this->fSelectUserIdCmd, nullptr)){
 			this->fSelectUserIdCmd = gcnew SqlCommand("SELECT UserID FROM Users WHERE Username = @username;");
 			this->fSelectUserIdCmd->CommandType = CommandType::Text;
 			this->fSelectUserIdCmd->Connection = this->fConnection;
 		}
 		this->fSelectUserIdCmd->Transaction = aTransaction;
-		this->fSelectUserIdCmd->Parameters->Add("@username", SqlDbType::NVarChar, 50)->Value = gcnew String(aUser.c_str());
+		this->fSelectUserIdCmd->Parameters->Add("@username", SqlDbType::NVarChar, 50)->Value = unmarshalString(aUser);
 
 		SqlDataReader^ reader;
 		try{

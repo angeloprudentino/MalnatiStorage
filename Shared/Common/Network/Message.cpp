@@ -12,7 +12,6 @@
 #include <sstream>
 #include <vector>
 #include <time.h>
-
 #include "Message.h"
 
 using namespace std;
@@ -1218,14 +1217,17 @@ void TGetVersionsReplyMessage::decodeMessage(){
 		throw EMessageException("The last version number field cannot be converted into an int value");
 	}
 
-	int totSize = GET_VERSIONS_REPLY_MIN_TOK_NUM + (this->fLastVersion - this->fOldestVersion);
-	if (size != totSize)
-		throw EMessageException("GET_VERSIONS_REPLY message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(totSize) + ")");
+	if (this->fTotVersions > 0){
+		int totSize = GET_VERSIONS_REPLY_MIN_TOK_NUM + (this->fLastVersion - this->fOldestVersion) + 1;
+		if (size != totSize)
+			throw EMessageException("GET_VERSIONS_REPLY message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(totSize) + ")");
 
-	int i, j;
-	for (i = GET_VERSIONS_REPLY_MIN_TOK_NUM + 1, j = this->fOldestVersion; i < totSize; i++, j++){
-		TVersion_ptr pv = new_TVersion_ptr(j, stringToTime(*(this->fItems->at(i))));
-		this->fVersions->push_back(move_TVersion_ptr(pv));
+		int i, j;
+		for (i = GET_VERSIONS_REPLY_MIN_TOK_NUM-1, j = this->fOldestVersion; i < totSize-1; i++, j++){
+			if (this->fVersions == nullptr)
+				this->fVersions = new_TVersionList_ptr();
+			this->fVersions->push_back(new_TVersion_ptr(j, stringToTime(*(this->fItems->at(i)))));
+		}
 	}
 }
 #pragma endregion

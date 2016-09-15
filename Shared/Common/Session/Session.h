@@ -29,7 +29,7 @@ using namespace std;
 //////////////////////////////////
 //           TFile	            //
 //////////////////////////////////
-public class TFile{
+class TFile{
 private:
 	string_ptr fServerPathPrefix = nullptr;
 	string_ptr fClientRelativePath = nullptr;
@@ -65,7 +65,7 @@ typedef TFile_list::iterator TFileHandle;
 //////////////////////////////////
 //          TVersion	        //
 //////////////////////////////////
-public class TVersion{
+class TVersion{
 private:
 	int fId = NO_ID;
 	time_t fVersionDate;
@@ -104,7 +104,7 @@ typedef unique_ptr<TVersionList> TVersionList_ptr;
 //////////////////////////////////
 //          TSession	        //
 //////////////////////////////////
-public class TSession{
+class TSession{
 private:
 	int fKind = NO_SESSION;
 	string_ptr fToken = nullptr;

@@ -12,6 +12,7 @@
 #include <boost/filesystem.hpp>
 
 using namespace std;
+using namespace System;
 using namespace boost::filesystem;
 
 #define EMPTY ""
@@ -37,7 +38,7 @@ typedef struct{
 //////////////////////////////////////
 //        EBaseException	        //
 //////////////////////////////////////
-public class EBaseException : public std::exception {
+class EBaseException : public std::exception {
 private:
 	string fMessage;
 public:
@@ -48,7 +49,7 @@ public:
 //////////////////////////////////////
 //       EOpensslException	        //
 //////////////////////////////////////
-public class EOpensslException : public EBaseException{
+class EOpensslException : public EBaseException{
 public:
 	EOpensslException(const string& aMsg) : EBaseException(aMsg){}
 };
@@ -56,7 +57,7 @@ public:
 //////////////////////////////////////
 //      EFilesystemException	    //
 //////////////////////////////////////
-public class EFilesystemException : public EBaseException{
+class EFilesystemException : public EBaseException{
 public:
 	EFilesystemException(const string& aMsg) : EBaseException(aMsg){}
 };
@@ -69,6 +70,10 @@ const string currentDateTime();
 const string timeToString(const time_t& t);
 const time_t stringToTime(const string& s);
 const string formatFileDate(const time_t& t);
+
+// Convert strings from std to System and viceversa
+const string marshalString(String^ aStr);
+String^ unmarshalString(const string& aStr);
 
 // Generate a unique token to identify a session
 string_ptr getUniqueToken(const string& aUser); //throws EOpensslException

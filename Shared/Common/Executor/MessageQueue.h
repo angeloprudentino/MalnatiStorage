@@ -20,7 +20,7 @@
 //////////////////////////////////////
 //       TMessageContainer          //
 //////////////////////////////////////
-public class TMessageContainer{
+class TMessageContainer{
 private:
 	TBaseMessage_ptr fMsg = nullptr;
 	TConnectionHandle fConnection;
@@ -47,7 +47,7 @@ typedef std::unique_ptr<TMessageContainer> TMessageContainer_ptr;
 //////////////////////////////////////
 //        TMessageQueue	            //
 //////////////////////////////////////
-public class TMessageQueue{
+class TMessageQueue{
 private:
 	queue<TMessageContainer_ptr> fQueue;
 	mutex fMutex;

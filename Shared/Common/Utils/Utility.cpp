@@ -29,6 +29,7 @@
 #define LOG_PATH "Log"
 #define STORAGE_ROOT_PATH "StoragePoint\\"
 
+using namespace System;
 using namespace std;
 using namespace boost::filesystem;
 
@@ -103,7 +104,21 @@ const string formatLogFileDate(const time_t& t){
 		return "";
 	}
 }
+#pragma endregion
 
+#pragma region "String conversion"
+const string marshalString(String^ aStr) {
+	using namespace Runtime::InteropServices;
+	const char* chars = (const char*)(Marshal::StringToHGlobalAnsi(aStr)).ToPointer();
+	string res = chars;
+	Marshal::FreeHGlobal(IntPtr((void*)chars));
+
+	return res;
+}
+
+String^ unmarshalString(const string& aStr){
+	return gcnew String(aStr.c_str());
+}
 #pragma endregion
 
 string escape(const string& aUser){

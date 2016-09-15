@@ -20,7 +20,7 @@ using namespace boost;
 ///////////////////////////////////
 //    IBaseExecutorController    //
 ///////////////////////////////////
-public class IBaseExecutorController : public IServerBaseController {
+class IBaseExecutorController : public IServerBaseController {
 public:
 	virtual bool isMessageQueueEmpty() = 0;
 	virtual TMessageContainer_ptr getMessageToProcess() = 0;
@@ -31,7 +31,7 @@ public:
 //////////////////////////////////////
 //    IServerExecutorController    //
 //////////////////////////////////////
-public class IServerExecutorController : public IBaseExecutorController {
+class IServerExecutorController : public IBaseExecutorController {
 public:
 	virtual void processRegistrationRequest(TConnectionHandle aConnection, TUserRegistrReqMessage_ptr& aMsg) = 0;
 	virtual void processUpdateStart(TConnectionHandle aConnection, TUpdateStartReqMessage_ptr& aMsg) = 0;
@@ -51,7 +51,7 @@ public:
 //////////////////////////////////////
 //        TMessageExecutor          //
 //////////////////////////////////////
-public class TMessageExecutor{
+class TMessageExecutor{
 private:
 	atomic<bool> fMustExit;
 	thread_group fThreadPool;

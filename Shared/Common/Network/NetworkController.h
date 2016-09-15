@@ -33,7 +33,7 @@ typedef TConnectionList::iterator TConnectionHandle;
 //      IServerSockController	    //
 //////////////////////////////////////
 // Standard server socket controller interface
-public class IServerSockController : public IServerBaseController{
+class IServerSockController : public IServerBaseController{
 public:
 	virtual void onServerSockAccept(TConnectionHandle aConnection) = 0;
 	virtual void onServerSockRead(TConnectionHandle aConnection, string_ptr& aMsg) = 0;

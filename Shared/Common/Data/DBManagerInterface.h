@@ -14,7 +14,7 @@
 //////////////////////////////////
 //       EDBException	        //
 //////////////////////////////////
-public class EDBException : public EBaseException{
+class EDBException : public EBaseException{
 public:
 	EDBException(const string aMsg) : EBaseException(aMsg){}
 };
@@ -23,7 +23,7 @@ public:
 //////////////////////////////////
 //     IDBManagerInterface      //
 //////////////////////////////////
-public class IDBManagerInterface{
+class IDBManagerInterface{
 public:
 	virtual void insertNewUser(const string& aUser, const string& aPass) = 0; // throws EDBException
 	virtual void InsertNewVersion(const string& aUser, TVersion_ptr& aVersion) = 0; // throws EDBException

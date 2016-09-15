@@ -62,7 +62,10 @@ TVersion::~TVersion(){
 
 void TVersion::addFile(TFile_ptr& aFile){
 	int size = (int)this->fFileList.size();
-	this->fFileList.push_back(move_TFile_ptr(aFile));
+
+	if (!this->updateFile(aFile))
+		this->fFileList.push_back(move_TFile_ptr(aFile));
+	
 	if (size == 0)
 		this->fNext = this->fFileList.begin();
 }

@@ -26,7 +26,7 @@ public:
 //////////////////////////////////////
 //      IServerBaseController	    //
 //////////////////////////////////////
-public class IServerBaseController{
+class IServerBaseController{
 public:
 	virtual void onServerLog(const string& aClassName, const string& aFuncName, const string& aMsg) = 0;
 	virtual void onServerWarning(const string& aClassName, const string& aFuncName, const string& aMsg) = 0;

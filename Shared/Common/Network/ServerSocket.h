@@ -28,8 +28,7 @@ class TServerSocket;
 //////////////////////////////////////
 //      TServerSockController	    //
 //////////////////////////////////////
-// Socket controller class
-public class TServerSockController : public IServerSockController, public IBaseExecutorController{
+class TServerSockController : public IServerSockController, public IBaseExecutorController{
 private:
 	int fServerPort = -1;
 	
@@ -65,8 +64,7 @@ public:
 //////////////////////////////////////
 //         TServerSocket	        //
 //////////////////////////////////////
-//Boost-asio server socket class 
-public class TServerSocket{
+class TServerSocket{
 private:
 	int fAcceptPort = -1;
 	//thread* fMainIO = nullptr;

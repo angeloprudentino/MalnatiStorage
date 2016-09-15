@@ -26,7 +26,7 @@ using namespace System::Data::SqlClient;
 ////////////////////////////////////
 //       TDBManagerMSDE	          //
 ////////////////////////////////////
-public class TDBManagerMSDE : public IDBManagerInterface {
+class TDBManagerMSDE : public IDBManagerInterface {
 private:
 	gcroot<SqlConnection^> fConnection = nullptr;
 	string_ptr fHost = nullptr;
