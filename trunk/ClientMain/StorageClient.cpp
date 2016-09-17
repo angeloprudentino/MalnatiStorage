@@ -22,14 +22,40 @@ using namespace boost::filesystem;
 //       TStorageClient	        //
 //////////////////////////////////
 #pragma region "TStorageClient"
+void TStorageClient::connect(const string& aHost, int aPort){
+	if (this->fSock == nullptr)
+		this->fSock = new tcp::socket(this->fMainIoService);
+
+	if (!this->fSock->is_open()){
+		tcp::endpoint ep(ip::address::from_string(aHost), aPort);
+		this->fSock->connect(ep);
+	}
+}
+
+void TStorageClient::disconnect(){
+	if (this->fSock != nullptr){
+		if (this->fSock->is_open()){
+			this->fSock->shutdown(socket_base::shutdown_both);
+			this->fSock->close();
+		}
+		delete this->fSock;
+	}
+}
+
 const bool TStorageClient::sendMsg(TBaseMessage_ptr& aMsg){
+	if (this->fSock == nullptr){
+		errorToFile("TStorageClient", "sendMsg", "socket is null!");
+		return false;
+	}
+
 	if (aMsg == nullptr){
 		errorToFile("TStorageClient", "sendMsg", "msg to send is null!");
 		return false;
 	}
+
 	string_ptr msg = aMsg->encodeMessage();
 	msg->append("\n");
-	boost::asio::write(this->fSock, boost::asio::buffer(*msg));
+	boost::asio::write(*(this->fSock), boost::asio::buffer(*msg));
 	msg.reset();
 	aMsg.reset();
 
@@ -37,8 +63,13 @@ const bool TStorageClient::sendMsg(TBaseMessage_ptr& aMsg){
 }
 
 string_ptr TStorageClient::readMsg(){
+	if (this->fSock == nullptr){
+		errorToFile("TStorageClient", "readMsg", "socket is null!");
+		return false;
+	}
+
 	boost::asio::streambuf* buf = new boost::asio::streambuf();
-	boost::asio::read_until(this->fSock, *buf, END_MSG + string("\n"));
+	boost::asio::read_until(*(this->fSock), *buf, END_MSG + string("\n"));
 	istream*is = new istream(buf);
 	string_ptr msg = new_string_ptr();
 	getline(*is, *msg);
@@ -104,18 +135,26 @@ void TStorageClient::processFile(const string& aToken, const path& aFilePath){
 	}
 }
 
-void TStorageClient::connect(const string& aHost, int aPort){
-	tcp::endpoint ep(ip::address::from_string(aHost), aPort); 
-	this->fSock.connect(ep);
-}
-
-void TStorageClient::disconnect(){
-	this->fSock.shutdown(socket_base::shutdown_both);
-	this->fSock.close();
-}
-
-TStorageClient::TStorageClient(StorageClientController^ aCallbackObj) : fMainIoService(), fSock(fMainIoService){
+TStorageClient::TStorageClient(StorageClientController^ aCallbackObj) : fMainIoService(){
 	this->fCallbackObj = aCallbackObj;
+	this->connect("127.0.0.1", 4700);
+
+	this->fMustExit.store(false, boost::memory_order_release);
+	this->fQueue = new RequestsQueue();
+
+	this->fExecutor = new thread(bind(&TStorageClient::processRequest, this));
+}
+
+TStorageClient::~TStorageClient(){
+	this->fMustExit.store(true, boost::memory_order_release);
+	
+	this->disconnect();
+
+	if (this->fQueue != nullptr)
+		delete this->fQueue;
+
+	if (this->fExecutor != nullptr)
+		this->fExecutor->join();
 }
 
 const bool TStorageClient::verifyUser(const string& aUser, const string& aPass){
@@ -509,12 +548,49 @@ const int TStorageClient::getLastVersion(const string& aUser, const string& aPas
 //	return result;
 //}
 
+void TStorageClient::processRequest(){
+	while (!this->fMustExit.load(boost::memory_order_acquire) && !System::Object::ReferenceEquals(this->fCallbackObj, nullptr) && this->fQueue != nullptr){
+		UserRequest^ req = this->fQueue->popRequest();
+		int kind = req->getID();
+		switch (kind){
+			case REGISTR_REQ:{
+				RegistrRequest^ rr = (RegistrRequest^)req;
+				if (this->registerUser(marshalString(rr->getUser()), marshalString(rr->getPass()), marshalString(rr->getPath())))
+					this->fCallbackObj->onRegistrationSucces();
+				else
+					this->fCallbackObj->onRegistrationError("Error during registration process! Try again.");
+				break;
+			}
+			case LOGIN_REQ:{
+				LoginRequest^ lr = (LoginRequest^)req;
+				if (this->verifyUser(marshalString(lr->getUser()), marshalString(lr->getPass())))
+					this->fCallbackObj->onLoginSuccess();
+				else
+					this->fCallbackObj->onLoginError("Error doing log-in! Try again.");
+				break;
+			}
+			case UPDATE_REQ:{
+				break;
+			}
+			case GET_VERSIONS_REQ:{
+				break;
+			}
+			case RESTORE_REQ:{
+				break;
+			}
+			default:{
+				errorToFile("TStorageClient", "processRequest", "invalid request ignored");
+			}
+		}
+	}
+}
+
 const bool TStorageClient::issueRequest(UserRequest^ aRequest){
-		this->fCallbackObj->onLoginError("fottiti");
-
-	return true;
+	if (this->fQueue != nullptr){
+		this->fQueue->pushRequest(aRequest);
+		return true;
+	}
+	else
+		return false;
 }
 
-void TStorageClient::processRequest(UserRequest^ aRequest){
-
-}
