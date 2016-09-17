@@ -32,6 +32,7 @@
 
 
         <Button x:Name="LogOut"  Content="LogOut" HorizontalAlignment="Left" Margin="17,275,0,0" VerticalAlignment="Top" Width="75" Click="LogOut_Click"/>
+        <Button x:Name="RestoreButton" Content="Restore" HorizontalAlignment="Left" Margin="126,275,0,0" VerticalAlignment="Top" Width="75" Click="RestoreButton_Click"/>
 
 
     </Grid>
