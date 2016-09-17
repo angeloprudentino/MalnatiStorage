@@ -47,6 +47,7 @@ namespace StorageClientWPF
             this.folder_label.Visibility = Visibility.Collapsed;
             this.folder_picker.Visibility = Visibility.Collapsed;
             this.folder_testbox.Visibility = Visibility.Collapsed;
+            this.LogOut.Visibility = Visibility.Collapsed;
         }
 
         private void Button_Click_1(object sender, RoutedEventArgs e)
@@ -61,15 +62,18 @@ namespace StorageClientWPF
             this.Register_button.Visibility = Visibility.Visible;
         }
 
-        private void Login_Click(object sender, RoutedEventArgs e)
-        {
-            //Click on Login
-            this.user.Visibility = Visibility.Visible;
-            this.user_label.Visibility = Visibility.Visible;
-            this.pass.Visibility = Visibility.Visible;
-            this.pass_label.Visibility = Visibility.Visible;
-            this.LoginButton.Visibility = Visibility.Visible;
-        }
+        //private void Login_Click(object sender, RoutedEventArgs e)
+        //{
+        //    //Click on Login
+        //    this.user.Visibility = Visibility.Visible;
+        //    this.user_label.Visibility = Visibility.Visible;
+        //    this.pass.Visibility = Visibility.Visible;
+        //    this.pass_label.Visibility = Visibility.Visible;
+        //    this.LoginButton.Visibility = Visibility.Visible;
+        //    this.LogOut.Visibility = Visibility.Visible;
+        //    this.back_button.Visibility = Visibility.Collapsed;
+            
+        //}
 
         private void LoginButton_Click(object sender, RoutedEventArgs e)
         {
@@ -80,7 +84,11 @@ namespace StorageClientWPF
 
             //aggiornamento grafica
             this.user_label.Visibility = Visibility.Collapsed;
-            
+            this.user.Visibility = Visibility.Collapsed;
+            this.pass_label.Visibility = Visibility.Collapsed;
+            this.pass.Visibility = Visibility.Collapsed;
+            this.LoginButton.Visibility = Visibility.Collapsed;
+            this.label_reg.Visibility = Visibility.Collapsed;
             this.second_pass_label.Visibility = Visibility.Collapsed;
             this.repeat_pass.Visibility = Visibility.Collapsed;
             this.Register_button.Visibility = Visibility.Collapsed;
@@ -88,6 +96,9 @@ namespace StorageClientWPF
             this.folder_label.Visibility = Visibility.Collapsed;
             this.folder_picker.Visibility = Visibility.Collapsed;
             this.folder_testbox.Visibility = Visibility.Collapsed;
+            this.LogOut.Visibility = Visibility.Visible;
+
+            this.status_label.Content = "Utente Loggato";
 
             //if (!this.core.issueRequest(new LoginRequest(username, password)))
             //    this.onLoginError("not Called");
@@ -261,7 +272,7 @@ namespace StorageClientWPF
             this.folder_testbox.Visibility = Visibility.Visible;
             this.LoginButton.Visibility = Visibility.Collapsed;
             this.label_reg.Visibility = Visibility.Collapsed;
-
+            this.status_label.Content = " ";
 
         }
 
@@ -289,6 +300,9 @@ namespace StorageClientWPF
             this.folder_testbox.Visibility = Visibility.Collapsed;
             this.LoginButton.Visibility = Visibility.Visible;
             this.label_reg.Visibility = Visibility.Visible;
+            this.back_button.Visibility = Visibility.Collapsed;
+
+            this.status_label.Content = "";
         }
 
         private void folder_picker_Click(object sender, RoutedEventArgs e)
@@ -307,6 +321,42 @@ namespace StorageClientWPF
             Debug.WriteLine(path);
             this.folder_testbox.Text = path;
             //}
+        }
+
+        private void LogOut_Click(object sender, RoutedEventArgs e)
+        {
+            this.user_label.Visibility = Visibility.Visible;
+            this.user.Visibility = Visibility.Visible;
+            this.pass_label.Visibility = Visibility.Visible;
+            this.pass.Visibility = Visibility.Visible;
+            this.LoginButton.Visibility = Visibility.Visible;
+            this.label_reg.Visibility = Visibility.Visible;
+            this.LogOut.Visibility = Visibility.Collapsed;
+            this.status_label.Content = "Utente LogOut";
+        }
+
+        private void Register_button_Click(object sender, RoutedEventArgs e)
+        {
+            //aggiorno la grafica
+            this.user.Visibility = Visibility.Collapsed;
+            this.user_label.Visibility = Visibility.Collapsed;
+            this.pass.Visibility = Visibility.Collapsed;
+            this.pass_label.Visibility = Visibility.Collapsed;
+            this.repeat_pass.Visibility = Visibility.Collapsed;
+            this.second_pass_label.Visibility = Visibility.Collapsed;
+            this.Register_button.Visibility = Visibility.Collapsed;
+            this.label_reg.Visibility = Visibility.Collapsed;
+            this.back_button.Visibility = Visibility.Collapsed;
+            this.LoginButton.Visibility = Visibility.Collapsed;
+            this.label_reg.Visibility = Visibility.Collapsed;
+            this.folder_label.Visibility = Visibility.Collapsed;
+            this.folder_picker.Visibility = Visibility.Collapsed;
+            this.folder_testbox.Visibility = Visibility.Collapsed;
+            this.LoginButton.Visibility = Visibility.Collapsed;
+            this.label_reg.Visibility = Visibility.Collapsed;
+            this.LogOut.Visibility = Visibility.Visible;
+
+            this.status_label.Content = "Utente registrato";
         }
 
 

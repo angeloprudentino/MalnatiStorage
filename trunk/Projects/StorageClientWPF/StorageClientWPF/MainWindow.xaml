@@ -13,7 +13,7 @@
         <Button x:Name="LoginButton" Content="LogIn" HorizontalAlignment="Left" Margin="137,151,0,0" VerticalAlignment="Top" Width="91" Click="LoginButton_Click"/>
         <TextBlock x:Name="second_pass_label" HorizontalAlignment="Left" Margin="24,106,0,0" TextWrapping="Wrap" Text="Repeat Password" VerticalAlignment="Top"/>
         <PasswordBox x:Name="repeat_pass" HorizontalAlignment="Left" Margin="137,106,0,0" Password="password" VerticalAlignment="Top" Width="91" Height="16"/>
-        <Button x:Name="Register_button" Content="Register" HorizontalAlignment="Left" Margin="137,186,0,0" VerticalAlignment="Top" Width="91"/>
+        <Button x:Name="Register_button" Content="Register" HorizontalAlignment="Left" Margin="137,186,0,0" VerticalAlignment="Top" Width="91" Click="Register_button_Click"/>
         <Label x:Name="label_reg" Content="Register" HorizontalAlignment="Left" Margin="255,151,0,0" VerticalAlignment="Top" Height="35" Width="67" MouseUp="cl_MouseUp"  MouseEnter="cl_MouseEnter" MouseLeave="cl_MouseLeave"  />
         <Button x:Name="back_button" Content="Back" HorizontalAlignment="Left" Margin="18,275,0,0" VerticalAlignment="Top" Width="74" Height="20" Click="back_button_Click"/>
         <TextBlock x:Name="folder_label" HorizontalAlignment="Left" Margin="24,146,0,0" TextWrapping="Wrap" Text="Folder" VerticalAlignment="Top" RenderTransformOrigin="0.465,1.034"/>
@@ -21,6 +21,8 @@
         <Button x:Name="folder_picker" Content="F" HorizontalAlignment="Left" Margin="238,148,0,0" VerticalAlignment="Top" Width="17" Height="18" Click="folder_picker_Click"/>
         <Label  x:Name="status_label" HorizontalAlignment="Left" Height="25" Margin="0,306,-11,-49" VerticalAlignment="Top" Width="384"/>
         <Grid x:Name="grid_files_versions" HorizontalAlignment="Left" Height="202" Margin="10,64,0,0" VerticalAlignment="Top" Width="353"/>
+        <Button x:Name="LogOut"  Content="LogOut" HorizontalAlignment="Left" Margin="17,275,0,0" VerticalAlignment="Top" Width="75" Click="LogOut_Click"/>
+
 
     </Grid>
 </Window>
