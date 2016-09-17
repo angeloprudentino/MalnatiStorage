@@ -20,7 +20,17 @@
         <TextBox x:Name="folder_testbox" TextWrapping="NoWrap"  MaxLines="1"  HorizontalAlignment="Left" Height="18" Margin="137,148,0,0"  VerticalAlignment="Top" Width="91"/>
         <Button x:Name="folder_picker" Content="F" HorizontalAlignment="Left" Margin="238,148,0,0" VerticalAlignment="Top" Width="17" Height="18" Click="folder_picker_Click"/>
         <Label  x:Name="status_label" HorizontalAlignment="Left" Height="25" Margin="0,306,-11,-49" VerticalAlignment="Top" Width="384"/>
-        <Grid x:Name="grid_files_versions" HorizontalAlignment="Left" Height="202" Margin="10,64,0,0" VerticalAlignment="Top" Width="353"/>
+
+
+
+        <Grid Name="SoWriteGrid" ScrollViewer.VerticalScrollBarVisibility="Auto" HorizontalAlignment="Left" Height="164" Margin="10,106,0,0" VerticalAlignment="Top" Width="353">
+            <ScrollViewer Name="scroll" Visibility="Visible">
+                <Grid Name="WriteGrid" HorizontalAlignment="Left" Height="854" VerticalAlignment="Top" Width="366"/>
+            </ScrollViewer>
+        </Grid>
+
+
+
         <Button x:Name="LogOut"  Content="LogOut" HorizontalAlignment="Left" Margin="17,275,0,0" VerticalAlignment="Top" Width="75" Click="LogOut_Click"/>
 
 

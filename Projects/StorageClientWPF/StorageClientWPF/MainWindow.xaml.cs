@@ -17,6 +17,7 @@ using System.Windows.Forms;
 using System.Drawing;
 using System.IO;
 
+
 namespace StorageClientWPF
 {
     /// <summary>
@@ -48,6 +49,7 @@ namespace StorageClientWPF
             this.folder_picker.Visibility = Visibility.Collapsed;
             this.folder_testbox.Visibility = Visibility.Collapsed;
             this.LogOut.Visibility = Visibility.Collapsed;
+            this.SoWriteGrid.Visibility = Visibility.Collapsed;
         }
 
         private void Button_Click_1(object sender, RoutedEventArgs e)
@@ -99,6 +101,9 @@ namespace StorageClientWPF
             this.LogOut.Visibility = Visibility.Visible;
 
             this.status_label.Content = "Utente Loggato";
+            this.SoWriteGrid.Visibility = Visibility.Visible;
+            //PER PROVA
+            this.DrawFileBottons();
 
             //if (!this.core.issueRequest(new LoginRequest(username, password)))
             //    this.onLoginError("not Called");
@@ -333,6 +338,13 @@ namespace StorageClientWPF
             this.label_reg.Visibility = Visibility.Visible;
             this.LogOut.Visibility = Visibility.Collapsed;
             this.status_label.Content = "Utente LogOut";
+
+
+            WriteGrid.RowDefinitions.Clear();
+            WriteGrid.Children.Clear();
+            
+
+            this.SoWriteGrid.Visibility = Visibility.Collapsed;
         }
 
         private void Register_button_Click(object sender, RoutedEventArgs e)
@@ -356,9 +368,65 @@ namespace StorageClientWPF
             this.label_reg.Visibility = Visibility.Collapsed;
             this.LogOut.Visibility = Visibility.Visible;
 
+            this.SoWriteGrid.Visibility = Visibility.Visible;
             this.status_label.Content = "Utente registrato";
+
+
+
         }
 
+        private void DrawFileBottons()
+        {
+            //prima pulisci tutto
+            WriteGrid.RowDefinitions.Clear();
+            WriteGrid.Children.Clear();
+            
+            
+            //file di prova
+            string path = "C:/Users/Daniele/Pictures/word_prova.docx";
+          
+            RowDefinition row = new RowDefinition();
+            row.Height = new GridLength(40);
+            //grid_files_versions.RowDefinitions.Add(row);
+            SoWriteGrid.RowDefinitions.Add(row);
+            int i = SoWriteGrid.RowDefinitions.Count;
+            System.Windows.Controls.Label lb = new System.Windows.Controls.Label();
+            lb.Content = path;
+            lb.MouseUp += lb_MouseUp;
+            lb.MouseEnter += lb_MouseEnter;
+            lb.MouseLeave += lb_MouseLeave;
+            //System.Windows.Controls.Button lb = new System.Windows.Controls.Button();
 
+            StackPanel sp = new StackPanel();
+            sp.Children.Clear();
+            sp.SetValue(Grid.RowProperty, i - 1);
+          
+            sp.Children.Add(lb);
+
+            //grid_files_versions.Children.Add(sp);
+            WriteGrid.Children.Add(sp);
+     
+        }
+
+        void lb_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            System.Windows.Controls.Label lb = (System.Windows.Controls.Label)sender;
+            lb.Background = new SolidColorBrush(Colors.White);
+        }
+
+        void lb_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            System.Windows.Controls.Label lb = (System.Windows.Controls.Label)sender;
+            lb.Background = new SolidColorBrush(Colors.Beige);
+        }
+
+        void lb_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            //evento per gestire l' apertura del file
+            System.Windows.Controls.Label lb = (System.Windows.Controls.Label)sender;
+
+            String path = (String)lb.Content;
+            System.Diagnostics.Process.Start(path);
+        }
     }
 }
