@@ -12,13 +12,17 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Diagnostics;
+using System.Windows.Forms;
+using System.Drawing;
+using System.IO;
 
 namespace StorageClientWPF
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window, StorageClientController
+    public partial class MainWindow : Window//, StorageClientController
     {
         private string username;
         private string password;
@@ -26,25 +30,28 @@ namespace StorageClientWPF
 
         public MainWindow()
         {
-            InitializeComponent();
+            try
+            {
+                InitializeComponent();
+            }catch(Exception e)
+            {
+                Debug.WriteLine("eccezione: " + e.Message);
+            }
 
-            core = new StorageClientCore(this);
+           // core = new StorageClientCore(this);
 
-            this.user.Visibility = Visibility.Collapsed;
-            this.user_label.Visibility = Visibility.Collapsed;
-            this.pass.Visibility = Visibility.Collapsed;
-            this.pass_label.Visibility = Visibility.Collapsed;
-            this.LoginButton.Visibility = Visibility.Collapsed;
             this.second_pass_label.Visibility = Visibility.Collapsed;
             this.repeat_pass.Visibility = Visibility.Collapsed;
             this.Register_button.Visibility = Visibility.Collapsed;
+            this.back_button.Visibility = Visibility.Collapsed;
+            this.folder_label.Visibility = Visibility.Collapsed;
+            this.folder_picker.Visibility = Visibility.Collapsed;
+            this.folder_testbox.Visibility = Visibility.Collapsed;
         }
 
         private void Button_Click_1(object sender, RoutedEventArgs e)
         {
-            //Click on Register
-            Login.Visibility = Visibility.Collapsed;
-            Register.Visibility = Visibility.Collapsed;
+            //Click on Register            
             this.user.Visibility = Visibility.Visible;
             this.user_label.Visibility = Visibility.Visible;
             this.pass.Visibility = Visibility.Visible;
@@ -57,8 +64,6 @@ namespace StorageClientWPF
         private void Login_Click(object sender, RoutedEventArgs e)
         {
             //Click on Login
-            Login.Visibility = Visibility.Collapsed;
-            Register.Visibility = Visibility.Collapsed;
             this.user.Visibility = Visibility.Visible;
             this.user_label.Visibility = Visibility.Visible;
             this.pass.Visibility = Visibility.Visible;
@@ -68,11 +73,24 @@ namespace StorageClientWPF
 
         private void LoginButton_Click(object sender, RoutedEventArgs e)
         {
+            //ha fatto login,
+            //eliminare tutto ciò che è visualizzato e stampare la grid
             this.username = this.user.Text;
             this.password = this.pass.Password;
 
-            if (!this.core.issueRequest(new LoginRequest(username, password)))
-                this.onLoginError("not Called");
+            //aggiornamento grafica
+            this.user_label.Visibility = Visibility.Collapsed;
+            
+            this.second_pass_label.Visibility = Visibility.Collapsed;
+            this.repeat_pass.Visibility = Visibility.Collapsed;
+            this.Register_button.Visibility = Visibility.Collapsed;
+            this.back_button.Visibility = Visibility.Collapsed;
+            this.folder_label.Visibility = Visibility.Collapsed;
+            this.folder_picker.Visibility = Visibility.Collapsed;
+            this.folder_testbox.Visibility = Visibility.Collapsed;
+
+            //if (!this.core.issueRequest(new LoginRequest(username, password)))
+            //    this.onLoginError("not Called");
         }
 
         public void onGetVersionsError(string aMsg)
@@ -106,7 +124,7 @@ namespace StorageClientWPF
             if (this.Dispatcher.CheckAccess())
             {
                 //update UI safely
-                this.text.Text = aMsg;
+                //this.text.Text = aMsg;
             }
             else
             {
@@ -223,5 +241,74 @@ namespace StorageClientWPF
             //do clean-up operations
             this.core.Dispose();
         }
+
+        private void cl_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            //selezionata la register
+            this.user.Visibility = Visibility.Visible;
+            this.user_label.Visibility = Visibility.Visible;
+            this.pass.Visibility = Visibility.Visible;
+            this.pass_label.Visibility = Visibility.Visible;
+            this.repeat_pass.Visibility = Visibility.Visible;
+            this.second_pass_label.Visibility = Visibility.Visible;
+            this.Register_button.Visibility = Visibility.Visible;
+            this.label_reg.Visibility = Visibility.Collapsed;
+            this.back_button.Visibility = Visibility.Visible;
+            this.LoginButton.Visibility = Visibility.Visible;
+            this.label_reg.Visibility = Visibility.Visible;
+            this.folder_label.Visibility = Visibility.Visible;
+            this.folder_picker.Visibility = Visibility.Visible;
+            this.folder_testbox.Visibility = Visibility.Visible;
+            this.LoginButton.Visibility = Visibility.Collapsed;
+            this.label_reg.Visibility = Visibility.Collapsed;
+
+
+        }
+
+        private void cl_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            this.label_reg.Foreground = new SolidColorBrush(Colors.Violet);
+        }
+
+        private void cl_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            this.label_reg.Foreground = new SolidColorBrush(Colors.Black);
+        }
+
+        private void back_button_Click(object sender, RoutedEventArgs e)
+        {
+            this.user.Visibility = Visibility.Visible;
+            this.user_label.Visibility = Visibility.Visible;
+            this.pass.Visibility = Visibility.Visible;
+            this.pass_label.Visibility = Visibility.Visible;
+            this.repeat_pass.Visibility = Visibility.Collapsed;
+            this.second_pass_label.Visibility = Visibility.Collapsed;
+            this.Register_button.Visibility = Visibility.Collapsed;
+            this.folder_label.Visibility = Visibility.Collapsed;
+            this.folder_picker.Visibility = Visibility.Collapsed;
+            this.folder_testbox.Visibility = Visibility.Collapsed;
+            this.LoginButton.Visibility = Visibility.Visible;
+            this.label_reg.Visibility = Visibility.Visible;
+        }
+
+        private void folder_picker_Click(object sender, RoutedEventArgs e)
+        {
+            FolderBrowserDialog folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
+            // Set the help text description for the FolderBrowserDialog.
+            folderBrowserDialog1.Description =
+                "Select the directory that you want to use as the default.";
+
+            // Do not allow the user to create new files via the FolderBrowserDialog.
+            folderBrowserDialog1.ShowNewFolderButton = false;
+            folderBrowserDialog1.ShowDialog();
+            //if (folderBrowserDialog1.ShowDialog() == DialogResult.HasValue)
+            //{
+            string path = folderBrowserDialog1.SelectedPath;
+            Debug.WriteLine(path);
+            this.folder_testbox.Text = path;
+            //}
+        }
+
+
     }
 }
