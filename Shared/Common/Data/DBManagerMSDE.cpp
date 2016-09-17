@@ -108,15 +108,15 @@ TDBManagerMSDE::~TDBManagerMSDE(){
 	}
 }
 
-void TDBManagerMSDE::insertNewUser(const string& aUser, const string& aPass){
+void TDBManagerMSDE::insertNewUser(const string& aUser, const string& aPass, const string& aPath){
 	if (!System::Object::ReferenceEquals(this->fConnection, nullptr) && (this->fConnection->State == ConnectionState::Open)){
 
 		if (System::Object::ReferenceEquals(this->fInsertUserCmd, nullptr)){
-			this->fInsertUserCmd = gcnew SqlCommand("INSERT INTO Users (Username, Password, Salt) VALUES (@username, @password, @salt);");
+			this->fInsertUserCmd = gcnew SqlCommand("INSERT INTO Users (Username, Password, Salt, Path) VALUES (@username, @password, @salt, @path);");
 			this->fInsertUserCmd->CommandType = CommandType::Text;
 			this->fInsertUserCmd->Connection = this->fConnection;
 		}
-		this->fInsertUserCmd->Parameters->Add("@username", SqlDbType::NVarChar, 50)->Value = gcnew String(aUser.c_str());
+		this->fInsertUserCmd->Parameters->Add("@username", SqlDbType::NVarChar, 50)->Value = unmarshalString(aUser);
 		string_ptr salt = nullptr;
 		string_ptr saltedPass = nullptr;
 		try{
@@ -131,10 +131,11 @@ void TDBManagerMSDE::insertNewUser(const string& aUser, const string& aPass){
 			saltedPass.reset();
 			throw EDBException("insertNewUser failed due to an EOpensslException: " + e.getMessage());
 		}
-		this->fInsertUserCmd->Parameters->Add("@password", SqlDbType::NVarChar)->Value = gcnew String(saltedPass->c_str());
-		this->fInsertUserCmd->Parameters->Add("@salt", SqlDbType::NVarChar)->Value = gcnew String(salt->c_str());
+		this->fInsertUserCmd->Parameters->Add("@password", SqlDbType::NVarChar)->Value = unmarshalString(saltedPass->c_str());
+		this->fInsertUserCmd->Parameters->Add("@salt", SqlDbType::NVarChar)->Value = unmarshalString(salt->c_str());
 		salt.reset();
 		saltedPass.reset();
+		this->fInsertUserCmd->Parameters->Add("@path", SqlDbType::NVarChar)->Value = unmarshalString(aPath);
 
 		try{
 			int n = this->fInsertUserCmd->ExecuteNonQuery();
@@ -210,8 +211,8 @@ void TDBManagerMSDE::InsertNewVersion(const string& aUser, TVersion_ptr& aVersio
 			this->fInsertFilesCmd->Transaction = transaction;
 			this->fInsertFilesCmd->Parameters->Add("@verID", SqlDbType::Int)->Value = aVersion->getVersion();
 			this->fInsertFilesCmd->Parameters->Add("@userID", SqlDbType::Int)->Value = uID;
-			this->fInsertFilesCmd->Parameters->Add("@serverPath", SqlDbType::NVarChar)->Value = gcnew String(f->getServerPathPrefix().c_str());
-			this->fInsertFilesCmd->Parameters->Add("@clientRelativePath", SqlDbType::NVarChar)->Value = gcnew String(f->getClientRelativePath().c_str());
+			this->fInsertFilesCmd->Parameters->Add("@serverPath", SqlDbType::NVarChar)->Value = unmarshalString(f->getServerPathPrefix());
+			this->fInsertFilesCmd->Parameters->Add("@clientRelativePath", SqlDbType::NVarChar)->Value = unmarshalString(f->getClientRelativePath());
 			this->fInsertFilesCmd->Parameters->Add("@lastModDate", SqlDbType::BigInt)->Value = f->getLastMod();
 
 			try{
@@ -257,7 +258,7 @@ const bool TDBManagerMSDE::checkIfUserExists(const string& aUser){
 		return true;
 }
 
-const bool TDBManagerMSDE::verifyUserCredentials(const string& aUser, const string& aPass){
+string_ptr TDBManagerMSDE::verifyUserCredentials(const string& aUser, const string& aPass){
 	if (!System::Object::ReferenceEquals(this->fConnection, nullptr) && (this->fConnection->State == ConnectionState::Open)){
 		string salt = "";
 		SqlDataReader^ reader;
@@ -270,7 +271,7 @@ const bool TDBManagerMSDE::verifyUserCredentials(const string& aUser, const stri
 			this->fSelectUserSaltCmd->Connection = this->fConnection;
 		}
 		this->fSelectUserSaltCmd->Transaction = transaction;
-		this->fSelectUserSaltCmd->Parameters->Add("@username", SqlDbType::NVarChar, 50)->Value = gcnew String(aUser.c_str());
+		this->fSelectUserSaltCmd->Parameters->Add("@username", SqlDbType::NVarChar, 50)->Value = unmarshalString(aUser);
 		try{
 			reader = fSelectUserSaltCmd->ExecuteReader();
 			if (reader->HasRows){
@@ -293,7 +294,7 @@ const bool TDBManagerMSDE::verifyUserCredentials(const string& aUser, const stri
 
 		//verify user credentials
 		if (System::Object::ReferenceEquals(this->fVerifyCredentialCmd, nullptr)){
-			this->fVerifyCredentialCmd = gcnew SqlCommand("SELECT COUNT(*) FROM Users WHERE Username = @username AND Password = @password;");
+			this->fVerifyCredentialCmd = gcnew SqlCommand("SELECT Path FROM Users WHERE Username = @username AND Password = @password;");
 			this->fVerifyCredentialCmd->CommandType = CommandType::Text;
 			this->fVerifyCredentialCmd->Connection = this->fConnection;
 		}
@@ -309,18 +310,18 @@ const bool TDBManagerMSDE::verifyUserCredentials(const string& aUser, const stri
 			transaction->Rollback();
 			throw EDBException("verifyUserCredentials failed due to an EOpensslException: " + e.getMessage());
 		}
-		this->fVerifyCredentialCmd->Parameters->Add("@username", SqlDbType::NVarChar, 50)->Value = gcnew String(aUser.c_str());
-		this->fVerifyCredentialCmd->Parameters->Add("@password", SqlDbType::NVarChar)->Value = gcnew String(saltedPass->c_str());
+		this->fVerifyCredentialCmd->Parameters->Add("@username", SqlDbType::NVarChar, 50)->Value = unmarshalString(aUser);
+		this->fVerifyCredentialCmd->Parameters->Add("@password", SqlDbType::NVarChar)->Value = unmarshalString(saltedPass->c_str());
 		saltedPass.reset();
 
-		int count = 0;
+		String^ p;
 		try{
 			reader = fVerifyCredentialCmd->ExecuteReader();
 			this->fVerifyCredentialCmd->Parameters->Clear();
 
 			if (reader->HasRows){
 				reader->Read();
-				count = reader->GetInt32(0);
+				p = reader->GetString(0);
 			}
 			else{
 				reader->Close(); 
@@ -337,10 +338,10 @@ const bool TDBManagerMSDE::verifyUserCredentials(const string& aUser, const stri
 		}
 
 		transaction->Commit();
-		if (count == 1)
-			return true;
+		if (!String::IsNullOrEmpty(p))
+			return new_string_ptr(marshalString(p));
 		else
-			return false;
+			return nullptr;
 	}
 	else{
 		throw EDBException("No connection to DB!");
@@ -358,7 +359,7 @@ TVersion_ptr TDBManagerMSDE::getVersion(const string& aUser, int aVersion){
 			this->fSelectVersionCmd->Connection = this->fConnection;
 		}
 		this->fSelectVersionCmd->Parameters->Add("@verID", SqlDbType::Int)->Value = aVersion;
-		this->fSelectVersionCmd->Parameters->Add("@username", SqlDbType::NVarChar, 50)->Value = gcnew String(aUser.c_str());
+		this->fSelectVersionCmd->Parameters->Add("@username", SqlDbType::NVarChar, 50)->Value = unmarshalString(aUser);
 		SqlDataReader^ reader;
 		try{
 			reader = fSelectVersionCmd->ExecuteReader();
@@ -420,7 +421,7 @@ TVersion_ptr TDBManagerMSDE::getLastVersion(const string& aUser, bool aLoadFiles
 		}
 		
 		//Select user version
-		cmd->Parameters->Add("@username", SqlDbType::NVarChar, 50)->Value = gcnew String(aUser.c_str());
+		cmd->Parameters->Add("@username", SqlDbType::NVarChar, 50)->Value = unmarshalString(aUser);
 		SqlDataReader^ reader;
 		try{
 			reader = cmd->ExecuteReader();
@@ -470,7 +471,7 @@ TVersionList_ptr TDBManagerMSDE::getAllVersions(const string& aUser){
 			this->fSelectAllVersionsCmd->CommandType = CommandType::Text;
 			this->fSelectAllVersionsCmd->Connection = this->fConnection;
 		}
-		this->fSelectAllVersionsCmd->Parameters->Add("@username", SqlDbType::NVarChar, 50)->Value = gcnew String(aUser.c_str());
+		this->fSelectAllVersionsCmd->Parameters->Add("@username", SqlDbType::NVarChar, 50)->Value = unmarshalString(aUser);
 		SqlDataReader^ reader;
 		try{
 			reader = fSelectAllVersionsCmd->ExecuteReader();

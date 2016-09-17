@@ -148,12 +148,12 @@ const bool TStorageServer::userExists(const string& aUser){
 	}
 }
 
-const bool TStorageServer::checkUserCredential(const string& aUser, const string& aPass){
+string_ptr TStorageServer::checkUserCredential(const string& aUser, const string& aPass){
 	if (this->fDBManager != nullptr)
 		return this->fDBManager->verifyUserCredentials(aUser, aPass);
 	else{
 		this->onServerError("TStorageServer", "checkUserCredential", "DBManager is null!");
-		return false;
+		return nullptr;
 	}
 }
 
@@ -342,6 +342,7 @@ void TStorageServer::processRegistrationRequest(TConnectionHandle aConnection, T
 	if (aMsg != nullptr){
 		string u = aMsg->getUser();
 		string p = aMsg->getPass();
+		string path = aMsg->getPath();
 
 		try{
 			unique_lock<mutex> lock(this->fLogMutex);
@@ -354,6 +355,7 @@ void TStorageServer::processRegistrationRequest(TConnectionHandle aConnection, T
 			this->onServerLog("TStorageServer", "processRegistrationRequest", "<=  ");
 			this->onServerLog("TStorageServer", "processRegistrationRequest", "<=   user: " + u);
 			this->onServerLog("TStorageServer", "processRegistrationRequest", "<=   coded pass: " + p);
+			this->onServerLog("TStorageServer", "processRegistrationRequest", "<=   root path: " + path);
 			this->onServerLog("TStorageServer", "processRegistrationRequest", "<=  ");
 			this->onServerLog("TStorageServer", "processRegistrationRequest", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
 			this->onServerLog("TStorageServer", "processRegistrationRequest", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
@@ -366,7 +368,7 @@ void TStorageServer::processRegistrationRequest(TConnectionHandle aConnection, T
 			if (!userExists(u)) {
 				//store user in DB
 				if (this->fDBManager != nullptr){
-					this->fDBManager->insertNewUser(u, p);
+					this->fDBManager->insertNewUser(u, p, path);
 				}
 				else{
 					this->onServerError("TStorageServer", "processRegistrationRequest", "DBManager is null!");
@@ -1265,21 +1267,24 @@ void TStorageServer::processVerifyCred(TConnectionHandle aConnection, TVerifyCre
 
 		TBaseMessage_ptr reply = nullptr;
 		
+		string_ptr path = nullptr;
 		//check if username and password are valid
 		try{
-			if (!checkUserCredential(u, p)){
-				reply = new_TVerifyCredReplyMessage_ptr(false);
+			path = checkUserCredential(u, p);
+			if (path == nullptr){
+				reply = new_TVerifyCredReplyMessage_ptr(false, "");
 			}
 		}
 		catch (EDBException e){
 			this->onServerError("TStorageServer", "processGetLastVersion", "Unable to verify credentials: " + e.getMessage());
-			reply = new_TVerifyCredReplyMessage_ptr(false);
+			reply = new_TVerifyCredReplyMessage_ptr(false, "");
 		}
 
 		if (reply == nullptr){
 			//send back a positive response
-			reply = new_TVerifyCredReplyMessage_ptr(true);
+			reply = new_TVerifyCredReplyMessage_ptr(true, path->c_str());
 		}
+		path.reset();
 
 		TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr(move_TBaseMessage_ptr(reply), aConnection); //reply is moved
 		this->sendMessage(move_TMessageContainer_ptr(replyContainer)); //replyContainer is moved

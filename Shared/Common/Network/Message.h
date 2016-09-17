@@ -107,10 +107,11 @@ class TUserRegistrReqMessage : public TBaseMessage {
 private:
 	string_ptr fUser = nullptr;
 	string_ptr fPass = nullptr;
+	string_ptr fPath = nullptr;
 
 public:
 	TUserRegistrReqMessage(TBaseMessage_ptr& aBase);
-	TUserRegistrReqMessage(const string& aUser, const string& aPass);
+	TUserRegistrReqMessage(const string& aUser, const string& aPass, const string& aPath);
 	TUserRegistrReqMessage(const TUserRegistrReqMessage&) = delete;            // disable copying
 	TUserRegistrReqMessage& operator=(const TUserRegistrReqMessage&) = delete; // disable assignment
 	~TUserRegistrReqMessage();
@@ -121,9 +122,10 @@ public:
 	//getters
 	const string getUser(){ return *(this->fUser); }
 	const string getPass(){ return *(this->fPass); }
+	const string getPath(){ return *(this->fPath); }
 };
 typedef std::unique_ptr<TUserRegistrReqMessage> TUserRegistrReqMessage_ptr;
-#define new_TUserRegistrReqMessage_ptr(aUser, aPass) std::make_unique<TUserRegistrReqMessage>(aUser, aPass)
+#define new_TUserRegistrReqMessage_ptr(aUser, aPass, aPath) std::make_unique<TUserRegistrReqMessage>(aUser, aPass, aPath)
 #define make_TUserRegistrReqMessage_ptr(ptr) std::make_unique<TUserRegistrReqMessage>(ptr)
 
 
@@ -719,10 +721,11 @@ typedef std::unique_ptr<TVerifyCredReqMessage> TVerifyCredReqMessage_ptr;
 class TVerifyCredReplyMessage : public TBaseMessage {
 private:
 	bool fResp = false;
+	string_ptr fPath = nullptr;
 
 public:
 	TVerifyCredReplyMessage(TBaseMessage_ptr& aBase);
-	TVerifyCredReplyMessage(const bool aResp);
+	TVerifyCredReplyMessage(const bool aResp, const string& aPath);
 	TVerifyCredReplyMessage(const TVerifyCredReplyMessage&) = delete;            // disable copying
 	TVerifyCredReplyMessage& operator=(const TVerifyCredReplyMessage&) = delete; // disable assignment
 	~TVerifyCredReplyMessage() {};
@@ -731,10 +734,11 @@ public:
 	void decodeMessage();
 
 	//getters
-	const bool getResp(){ return this->fResp; }
+	const bool getResp() { return this->fResp; }
+	const string getPath() { return this->fPath->c_str(); }
 };
 typedef std::unique_ptr<TVerifyCredReplyMessage> TVerifyCredReplyMessage_ptr;
-#define new_TVerifyCredReplyMessage_ptr(aToken) std::make_unique<TVerifyCredReplyMessage>(aToken)
+#define new_TVerifyCredReplyMessage_ptr(aResp, aPath) std::make_unique<TVerifyCredReplyMessage>(aResp, aPath)
 #define make_TVerifyCredReplyMessage_ptr(ptr) std::make_unique<TVerifyCredReplyMessage>(ptr)
 
 

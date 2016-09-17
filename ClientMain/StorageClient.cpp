@@ -157,7 +157,7 @@ TStorageClient::~TStorageClient(){
 		this->fExecutor->join();
 }
 
-const bool TStorageClient::verifyUser(const string& aUser, const string& aPass){
+string_ptr TStorageClient::verifyUser(const string& aUser, const string& aPass){
 	if (aUser.empty() || aPass.empty())
 		return false;
 
@@ -174,7 +174,7 @@ const bool TStorageClient::verifyUser(const string& aUser, const string& aPass){
 	TVerifyCredReplyMessage_ptr verReply = nullptr;
 	try{
 		bm = new_TBaseMessage_ptr(msg);
-		verReply = new_TVerifyCredReplyMessage_ptr(bm);
+		verReply = make_TVerifyCredReplyMessage_ptr(bm);
 		bm.reset();
 	}
 	catch (EMessageException& e){
@@ -182,13 +182,15 @@ const bool TStorageClient::verifyUser(const string& aUser, const string& aPass){
 
 		bm.reset();
 		verReply.reset();
-		return false;
+		return nullptr;
 	}
 
-	bool resp = verReply->getResp();
+	string_ptr p = make_string_ptr(verReply->getPath());
 	verReply.reset();
-
-	return resp;
+	if (verReply->getResp())
+		return move_string_ptr(p);
+	else
+		return nullptr;
 }
 
 const bool TStorageClient::registerUser(const string& aUser, const string& aPass, const string& aRootPath){
@@ -201,7 +203,7 @@ const bool TStorageClient::registerUser(const string& aUser, const string& aPass
 	TSystemErrorMessage_ptr sysErr = nullptr;
 
 	logToFile("TStorageClient", "registerUser", "Try to register a new user " + aUser);
-	if (!this->sendMsg((TBaseMessage_ptr&)move_TBaseMessage_ptr(new_TUserRegistrReqMessage_ptr(aUser, aPass))))
+	if (!this->sendMsg((TBaseMessage_ptr&)move_TBaseMessage_ptr(new_TUserRegistrReqMessage_ptr(aUser, aPass, aRootPath))))
 		return false;
 	msg = this->readMsg();
 

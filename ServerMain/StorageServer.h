@@ -55,7 +55,7 @@ private:
 	void checkAndCleanSessions(const boost::system::error_code& aErr);
 
 	const bool userExists(const string& aUser);
-	const bool checkUserCredential(const string& aUser, const string& aPass);
+	string_ptr checkUserCredential(const string& aUser, const string& aPass);
 
 public:
 	TStorageServer(int AServerPort, IManagedServerController^ aCallbackObj); //throws EBaseException
