@@ -13,7 +13,10 @@
 #include "Message.h"
 #include "Session.h"
 #include "ClientController.h"
+#include "ClientRequests.h"
 #include <boost/asio.hpp>
+#include <boost/atomic.hpp>
+#include <boost/thread/thread.hpp>
 
 using namespace std;
 using namespace boost;
@@ -27,8 +30,11 @@ using namespace boost::asio::ip;
 class TStorageClient{
 private:
 	io_service fMainIoService;
-	tcp::socket fSock;
+	tcp::socket* fSock = nullptr;
+	boost::atomic<bool> fMustExit;
 	gcroot<StorageClientController^> fCallbackObj = nullptr;
+	RequestsQueue* fQueue = nullptr;
+	thread* fExecutor = nullptr;
 
 	void connect(const string& aHost, int aPort);
 	void disconnect();
@@ -43,10 +49,11 @@ private:
 	void restoreVersion(const string& aUser, const string& aPass, const int aVersion, const string& aDestPath);
 	//std::list<UserVersion> getAllVersions(const string& aUser, const string& aPass);
 
-	void processRequest(UserRequest^ aRequest);
+	void processRequest();
 
 public:
 	TStorageClient(StorageClientController^ aCallbackObj);
+	~TStorageClient();
 	TStorageClient(const TStorageClient&) = delete;            // disable copying
 	TStorageClient& operator=(const TStorageClient&) = delete; // disable assignment
 

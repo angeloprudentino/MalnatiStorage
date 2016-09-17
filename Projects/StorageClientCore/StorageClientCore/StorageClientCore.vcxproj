@@ -139,6 +139,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\ClientMain\ClientController.h" />
+    <ClInclude Include="..\..\..\ClientMain\ClientRequests.h" />
     <ClInclude Include="..\..\..\ClientMain\StorageClient.h" />
     <ClInclude Include="..\..\..\Shared\Common\Network\Message.h" />
     <ClInclude Include="..\..\..\Shared\Common\Session\Session.h" />
@@ -148,6 +149,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\ClientMain\ClientController.cpp" />
+    <ClCompile Include="..\..\..\ClientMain\ClientRequests.cpp" />
     <ClCompile Include="..\..\..\ClientMain\StorageClient.cpp" />
     <ClCompile Include="..\..\..\Shared\Common\Network\Message.cpp" />
     <ClCompile Include="..\..\..\Shared\Common\Session\Session.cpp" />

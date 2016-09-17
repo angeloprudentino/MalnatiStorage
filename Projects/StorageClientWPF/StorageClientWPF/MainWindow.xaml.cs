@@ -22,10 +22,14 @@ namespace StorageClientWPF
     {
         private string username;
         private string password;
+        private StorageClientCore core;
 
         public MainWindow()
         {
             InitializeComponent();
+
+            core = new StorageClientCore(this);
+
             this.user.Visibility = Visibility.Collapsed;
             this.user_label.Visibility = Visibility.Collapsed;
             this.pass.Visibility = Visibility.Collapsed;
@@ -67,54 +71,157 @@ namespace StorageClientWPF
             this.username = this.user.Text;
             this.password = this.pass.Password;
 
-            StorageClientCore core = new StorageClientCore(this);
-            core.issueRequest(new LoginRequest("pippo", "pippo"));
+            if (!this.core.issueRequest(new LoginRequest(username, password)))
+                this.onLoginError("not Called");
         }
 
         public void onGetVersionsError(string aMsg)
         {
+            if (this.Dispatcher.CheckAccess())
+            {
+                //update UI safely
 
+            }
+            else
+            {
+                Dispatcher.BeginInvoke((Action)(() => onGetVersionsError(aMsg)));
+            }
         }
-        public void onGetVersionsSuccess()
+
+        public void onGetVersionsSuccess(List<UserVersion> aVersionsList)
         {
+            if (this.Dispatcher.CheckAccess())
+            {
+                //update UI safely
 
+            }
+            else
+            {
+                Dispatcher.BeginInvoke((Action)(() => onGetVersionsSuccess(aVersionsList)));
+            }
         }
+
         public void onLoginError(string aMsg)
         {
-            this.text.Text = aMsg;
+            if (this.Dispatcher.CheckAccess())
+            {
+                //update UI safely
+                this.text.Text = aMsg;
+            }
+            else
+            {
+                Dispatcher.BeginInvoke((Action)(() => onLoginError(aMsg)));
+            }
         }
+
         public void onLoginSuccess()
         {
+            if (this.Dispatcher.CheckAccess())
+            {
+                //update UI safely
 
+            }
+            else
+            {
+                Dispatcher.BeginInvoke((Action)(() => onLoginSuccess()));
+            }
         }
+
         public void onRegistrationError(string aMsg)
         {
+            if (this.Dispatcher.CheckAccess())
+            {
+                //update UI safely
 
+            }
+            else
+            {
+                Dispatcher.BeginInvoke((Action)(() => onRegistrationError(aMsg)));
+            }
         }
+
         public void onRegistrationSucces()
         {
+            if (this.Dispatcher.CheckAccess())
+            {
+                //update UI safely
 
+            }
+            else
+            {
+                Dispatcher.BeginInvoke((Action)(() => onRegistrationSucces()));
+            }
         }
+
         public void onRestoreError(string aMsg)
         {
+            if (this.Dispatcher.CheckAccess())
+            {
+                //update UI safely
 
+            }
+            else
+            {
+                Dispatcher.BeginInvoke((Action)(() => onRestoreError(aMsg)));
+            }
         }
-        public void onRestoreSuccess()
+
+        public void onRestoreSuccess(int aVersion, string aVersionDate)
         {
+            if (this.Dispatcher.CheckAccess())
+            {
+                //update UI safely
 
+            }
+            else
+            {
+                Dispatcher.BeginInvoke((Action)(() => onRestoreSuccess(aVersion, aVersionDate)));
+            }
         }
+
         public void onUpdateError(string aMsg)
         {
+            if (this.Dispatcher.CheckAccess())
+            {
+                //update UI safely
 
+            }
+            else
+            {
+                Dispatcher.BeginInvoke((Action)(() => onUpdateError(aMsg)));
+            }
         }
+
         public void onUpdateStart()
         {
+            if (this.Dispatcher.CheckAccess())
+            {
+                //update UI safely
 
+            }
+            else
+            {
+                Dispatcher.BeginInvoke((Action)(() => onUpdateStart()));
+            }
         }
-        public void onUpdateSuccess()
+
+        public void onUpdateSuccess(List<UserFile> aFileList, int aVersion, string aVersionDate)
         {
+            if (this.Dispatcher.CheckAccess())
+            {
+                //update UI safely
 
+            }
+            else
+            {
+                Dispatcher.BeginInvoke((Action)(() => onUpdateSuccess(aFileList, aVersion, aVersionDate)));
+            }
         }
 
+        private void Window_Closed(object sender, EventArgs e)
+        {   
+            //do clean-up operations
+            this.core.Dispose();
+        }
     }
 }
