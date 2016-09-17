@@ -104,6 +104,7 @@ CREATE TABLE [dbo].[Users](
 	[Username] [nvarchar](50) NOT NULL,
 	[Password] [nvarchar](max) NOT NULL,
 	[Salt] [nvarchar](max) NOT NULL,
+	[Path] [nvarchar](max) NOT NULL,
  CONSTRAINT [PK_User_Prova] PRIMARY KEY CLUSTERED 
 (
 	[UserID] ASC

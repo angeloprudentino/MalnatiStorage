@@ -22,7 +22,7 @@ using namespace boost::filesystem;
 #define MSG_INVALID "invalid"
 
 //Message tokens
-#define USER_REG_REQ_TOK_NUM 4
+#define USER_REG_REQ_TOK_NUM 5
 #define USER_REG_REPLY_TOK_NUM 3
 #define UPDATE_START_REQ_TOK_NUM 4
 #define UPDATE_START_REPLY_TOK_NUM 4
@@ -211,10 +211,11 @@ TUserRegistrReqMessage::TUserRegistrReqMessage(TBaseMessage_ptr& aBase){
 	this->decodeMessage();
 }
 
-TUserRegistrReqMessage::TUserRegistrReqMessage(const string& aUser, const string& aPass){
+TUserRegistrReqMessage::TUserRegistrReqMessage(const string& aUser, const string& aPass, const string& aPath){
 	this->fID = USER_REG_REQ_ID;
 	this->fUser = make_string_ptr(aUser);
 	this->fPass = make_string_ptr(aPass);
+	this->fPath = make_string_ptr(aPath);
 }
 
 TUserRegistrReqMessage::~TUserRegistrReqMessage(){
@@ -224,14 +225,19 @@ TUserRegistrReqMessage::~TUserRegistrReqMessage(){
 	if (this->fPass != nullptr)
 		this->fPass.reset();
 
+	if (this->fPath != nullptr)
+		this->fPath.reset();
+
 	this->fUser = nullptr;
 	this->fPass = nullptr;
+	this->fPath = nullptr;
 }
 
 string_ptr TUserRegistrReqMessage::encodeMessage(){
 	this->fItems->push_back(make_string_ptr(getMessageName(this->fID)));
 	this->fItems->push_back(move_string_ptr(this->fUser));
 	this->fItems->push_back(move_string_ptr(this->fPass));
+	this->fItems->push_back(move_string_ptr(this->fPath));
 
 	return TBaseMessage::encodeMessage();
 }
@@ -241,6 +247,7 @@ void TUserRegistrReqMessage::decodeMessage(){
 	* item[0] -> msg name
 	* item[1] -> username
 	* item[2] -> password
+	* item[3] -> root path
 	*/
 	TBaseMessage::decodeMessage();
 
@@ -264,6 +271,11 @@ void TUserRegistrReqMessage::decodeMessage(){
 	if (*(this->fItems->at(2)) == EMPTY)
 		throw EMessageException("The password field cannot be empty");
 	this->fPass = move_string_ptr(this->fItems->at(2));
+
+	//path
+	if (*(this->fItems->at(3)) == EMPTY)
+		throw EMessageException("The path field cannot be empty");
+	this->fPath = move_string_ptr(this->fItems->at(3));
 }
 #pragma endregion
 
@@ -1992,9 +2004,10 @@ TVerifyCredReplyMessage::TVerifyCredReplyMessage(TBaseMessage_ptr& aBase){
 	this->decodeMessage();
 }
 
-TVerifyCredReplyMessage::TVerifyCredReplyMessage(const bool aResp){
+TVerifyCredReplyMessage::TVerifyCredReplyMessage(const bool aResp, const string& aPath){
 	this->fID = VERIFY_CRED_REPLY_ID;
 	this->fResp = aResp;
+	this->fPath = make_string_ptr(aPath);
 }
 
 string_ptr TVerifyCredReplyMessage::encodeMessage(){
@@ -2006,6 +2019,7 @@ string_ptr TVerifyCredReplyMessage::encodeMessage(){
 
 	this->fItems->push_back(make_string_ptr(getMessageName(this->fID)));
 	this->fItems->push_back(make_string_ptr(resp));
+	this->fItems->push_back(move_string_ptr(this->fPath));
 
 	return TBaseMessage::encodeMessage();
 }
@@ -2014,6 +2028,7 @@ void TVerifyCredReplyMessage::decodeMessage(){
 	/*
 	* item[0] -> msg name
 	* item[1] -> response
+	* item[2] -> root path
 	*/
 	TBaseMessage::decodeMessage();
 
@@ -2038,6 +2053,11 @@ void TVerifyCredReplyMessage::decodeMessage(){
 		this->fResp = true;
 	else
 		this->fResp = false;
+
+	//path
+	if (*(this->fItems->at(2)) == EMPTY)
+		throw EMessageException("The path field cannot be empty");
+	this->fPath = move_string_ptr(this->fItems->at(2));
 }
 #pragma endregion
 

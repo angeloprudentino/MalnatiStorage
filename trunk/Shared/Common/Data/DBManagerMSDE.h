@@ -51,11 +51,11 @@ public:
 	TDBManagerMSDE& operator=(const TDBManagerMSDE&) = delete; // disable assignment
 	~TDBManagerMSDE();
 	
-	void insertNewUser(const string& aUser, const string& aPass) override; // throws EDBException
+	void insertNewUser(const string& aUser, const string& aPass, const string& aPath) override; // throws EDBException
 	void InsertNewVersion(const string& aUser, TVersion_ptr& aVersion) override; // throws EDBException
 
 	const bool checkIfUserExists(const string& aUser) override; // throws EDBException
-	const bool verifyUserCredentials(const string& aUser, const string& aPass) override; // throws EDBException
+	string_ptr verifyUserCredentials(const string& aUser, const string& aPass) override; // throws EDBException
 	TVersion_ptr getVersion(const string& aUser, int aVersion) override; // throws EDBException
 	TVersion_ptr getLastVersion(const string& aUser, bool aLoadFiles) override; // throws EDBException
 	TVersionList_ptr getAllVersions(const string& aUser) override; // throws EDBException
