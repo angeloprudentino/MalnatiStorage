@@ -105,7 +105,16 @@ namespace StorageClientWPF
             this.status_label.Content = "Utente Loggato";
             this.SoWriteGrid.Visibility = Visibility.Visible;
             //PER PROVA
-            this.DrawFileBottons();
+
+            List<string> files = new List<string>();
+                        //files di prova
+            //prendere dal server
+            string path = "C:/Users/Daniele/Pictures/word_prova.docx";
+            string path2 = "C:/Users/Daniele/Pictures/prova/lab1allocazione.pdf";
+            files.Add(path);
+            files.Add(path2);
+
+            this.DrawFileBottons(files);
 
             //if (!this.core.issueRequest(new LoginRequest(username, password)))
             //    this.onLoginError("not Called");
@@ -379,69 +388,70 @@ namespace StorageClientWPF
 
         }
 
-        private void DrawFileBottons()
+        private void DrawFileBottons(List<string> list)
         {
             //prima pulisci tutto
             WriteGrid.RowDefinitions.Clear();
             WriteGrid.Children.Clear();
-            
-            
-            //file di prova
-            string path = "C:/Users/Daniele/Pictures/word_prova.docx";
-          
-            RowDefinition row = new RowDefinition();
-            row.Height = new GridLength(40);
-            //grid_files_versions.RowDefinitions.Add(row);
-            SoWriteGrid.RowDefinitions.Add(row);
-            int i = SoWriteGrid.RowDefinitions.Count;
-            System.Windows.Controls.Label lb = new System.Windows.Controls.Label();
-            lb.Content = path;
-            lb.MouseUp += lb_MouseUp;
-            lb.MouseEnter += lb_MouseEnter;
-            lb.MouseLeave += lb_MouseLeave;
-            //System.Windows.Controls.Button lb = new System.Windows.Controls.Button();
 
-            StackPanel sp = new StackPanel();
-            sp.Children.Clear();
-            sp.SetValue(Grid.RowProperty, i - 1);
-          
-            sp.Children.Add(lb);
+            foreach (string s in list)
+            {
 
-            //grid_files_versions.Children.Add(sp);
-            WriteGrid.Children.Add(sp);
+                RowDefinition row = new RowDefinition();
+                row.Height = new GridLength(40);
+                //grid_files_versions.RowDefinitions.Add(row);
+                WriteGrid.RowDefinitions.Add(row);
+                int i = WriteGrid.RowDefinitions.Count;
+                System.Windows.Controls.Label lb = new System.Windows.Controls.Label();
+                lb.Content = s;
+                lb.MouseUp += lb_MouseUp;
+                lb.MouseEnter += lb_MouseEnter;
+                lb.MouseLeave += lb_MouseLeave;
+                //System.Windows.Controls.Button lb = new System.Windows.Controls.Button();
+
+                StackPanel sp = new StackPanel();
+                sp.Children.Clear();
+                sp.SetValue(Grid.RowProperty, i - 1);
+
+                sp.Children.Add(lb);
+
+                //grid_files_versions.Children.Add(sp);
+                WriteGrid.Children.Add(sp);
+            }
      
         }
 
-        private void DrawVersionBottons()
+        private void DrawVersionBottons(Dictionary<string,string> list)
         {
             //prima pulisci tutto
             WriteGrid.RowDefinitions.Clear();
             WriteGrid.Children.Clear();
 
+            //ogni entry indica il numero di versione e la data
 
-            ////file di prova
-            //string path = "C:/Users/Daniele/Pictures/word_prova.docx";
+            foreach (string s in list.Keys)
+            {
+                RowDefinition row = new RowDefinition();
+                row.Height = new GridLength(40);
+                //grid_files_versions.RowDefinitions.Add(row);
+                WriteGrid.RowDefinitions.Add(row);
+                int i = WriteGrid.RowDefinitions.Count;
+                System.Windows.Controls.Label lb = new System.Windows.Controls.Label();
+                lb.Content = s + ": " + list[s];
+                lb.MouseUp += lb_MouseUp2;
+                lb.MouseEnter += lb_MouseEnter;
+                lb.MouseLeave += lb_MouseLeave;
 
-            //RowDefinition row = new RowDefinition();
-            //row.Height = new GridLength(40);
-            ////grid_files_versions.RowDefinitions.Add(row);
-            //SoWriteGrid.RowDefinitions.Add(row);
-            //int i = SoWriteGrid.RowDefinitions.Count;
-            //System.Windows.Controls.Label lb = new System.Windows.Controls.Label();
-            //lb.Content = path;
-            //lb.MouseUp += lb_MouseUp;
-            //lb.MouseEnter += lb_MouseEnter;
-            //lb.MouseLeave += lb_MouseLeave;
-            ////System.Windows.Controls.Button lb = new System.Windows.Controls.Button();
 
-            //StackPanel sp = new StackPanel();
-            //sp.Children.Clear();
-            //sp.SetValue(Grid.RowProperty, i - 1);
+                StackPanel sp = new StackPanel();
+                sp.Children.Clear();
+                sp.SetValue(Grid.RowProperty, i - 1);
 
-            //sp.Children.Add(lb);
+                sp.Children.Add(lb);
 
-            ////grid_files_versions.Children.Add(sp);
-            //WriteGrid.Children.Add(sp);
+                ////grid_files_versions.Children.Add(sp);
+                WriteGrid.Children.Add(sp);
+            }
 
         }
 
@@ -463,13 +473,42 @@ namespace StorageClientWPF
             System.Windows.Controls.Label lb = (System.Windows.Controls.Label)sender;
 
             String path = (String)lb.Content;
-            System.Diagnostics.Process.Start(path);
+            System.Diagnostics.Process.Start(path); 
+        }
+
+        void lb_MouseUp2(object sender, MouseButtonEventArgs e)
+        {
+
+            System.Windows.Controls.Label lb = (System.Windows.Controls.Label)sender;
+
+            String Version = (String)lb.Content;
+            //aprire un folder picker, per scegliere dove ripristinare 
+            FolderBrowserDialog folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
+            // Set the help text description for the FolderBrowserDialog.
+            folderBrowserDialog1.Description =
+                "Select the directory in which you want to restore the version";
+
+            // Do not allow the user to create new files via the FolderBrowserDialog.
+            folderBrowserDialog1.ShowNewFolderButton = false;
+            folderBrowserDialog1.ShowDialog();
+            //if (folderBrowserDialog1.ShowDialog() == DialogResult.HasValue)
+            //{
+            string path = folderBrowserDialog1.SelectedPath;
+            Debug.WriteLine("restore path: "+path);
+            this.status_label.Content = "Trying to restore version"+ Version + "in path:" + path;
         }
 
         private void RestoreButton_Click(object sender, RoutedEventArgs e)
         {
             //stampare le label per le versioni e gestire restore
-            this.DrawVersionBottons();
+
+            //versioni fasulle di prova
+            Dictionary<string, string> versions = new Dictionary<string, string>();
+            versions.Add("1", "ieri");
+            versions.Add("2", "martedì");
+            versions.Add("3", "1/1/1999");
+
+            this.DrawVersionBottons(versions);
         }
     }
 }
