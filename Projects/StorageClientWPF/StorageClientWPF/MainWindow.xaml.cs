@@ -16,6 +16,9 @@ using System.Diagnostics;
 using System.Windows.Forms;
 using System.Drawing;
 using System.IO;
+using MahApps.Metro.Controls;
+using MahApps.Metro.Controls.Dialogs;
+
 
 
 namespace StorageClientWPF
@@ -23,7 +26,7 @@ namespace StorageClientWPF
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window//, StorageClientController
+    public partial class MainWindow :  MetroWindow//, StorageClientController
     {
         private string username;
         private string password;
@@ -65,18 +68,6 @@ namespace StorageClientWPF
             this.Register_button.Visibility = Visibility.Visible;
         }
 
-        //private void Login_Click(object sender, RoutedEventArgs e)
-        //{
-        //    //Click on Login
-        //    this.user.Visibility = Visibility.Visible;
-        //    this.user_label.Visibility = Visibility.Visible;
-        //    this.pass.Visibility = Visibility.Visible;
-        //    this.pass_label.Visibility = Visibility.Visible;
-        //    this.LoginButton.Visibility = Visibility.Visible;
-        //    this.LogOut.Visibility = Visibility.Visible;
-        //    this.back_button.Visibility = Visibility.Collapsed;
-            
-        //}
 
         private void LoginButton_Click(object sender, RoutedEventArgs e)
         {
@@ -85,39 +76,12 @@ namespace StorageClientWPF
             this.username = this.user.Text;
             this.password = this.pass.Password;
 
-            //aggiornamento grafica
-            this.user_label.Visibility = Visibility.Collapsed;
-            this.user.Visibility = Visibility.Collapsed;
-            this.pass_label.Visibility = Visibility.Collapsed;
-            this.pass.Visibility = Visibility.Collapsed;
-            this.LoginButton.Visibility = Visibility.Collapsed;
-            this.label_reg.Visibility = Visibility.Collapsed;
-            this.second_pass_label.Visibility = Visibility.Collapsed;
-            this.repeat_pass.Visibility = Visibility.Collapsed;
-            this.Register_button.Visibility = Visibility.Collapsed;
-            this.back_button.Visibility = Visibility.Collapsed;
-            this.folder_label.Visibility = Visibility.Collapsed;
-            this.folder_picker.Visibility = Visibility.Collapsed;
-            this.folder_testbox.Visibility = Visibility.Collapsed;
-            this.LogOut.Visibility = Visibility.Visible;
-            this.RestoreButton.Visibility = Visibility.Visible;
+            ////aggiornamento grafica nel metodo richiamato dalla dll
 
-            this.status_label.Content = "Utente Loggato";
-            this.SoWriteGrid.Visibility = Visibility.Visible;
-            //PER PROVA
-
-            List<string> files = new List<string>();
-                        //files di prova
-            //prendere dal server
-            string path = "C:/Users/Daniele/Pictures/word_prova.docx";
-            string path2 = "C:/Users/Daniele/Pictures/prova/lab1allocazione.pdf";
-            files.Add(path);
-            files.Add(path2);
-
-            this.DrawFileBottons(files);
-
-            //if (!this.core.issueRequest(new LoginRequest(username, password)))
-            //    this.onLoginError("not Called");
+            //per prova, chiamo il metodo per il successo del login
+            this.onLoginSuccess();
+            //provo per login fallito
+            //this.onLoginError("err");
         }
 
         public void onGetVersionsError(string aMsg)
@@ -152,6 +116,7 @@ namespace StorageClientWPF
             {
                 //update UI safely
                 //this.text.Text = aMsg;
+                this.showErrorMessage("Invalid Credentials",aMsg);
             }
             else
             {
@@ -159,11 +124,50 @@ namespace StorageClientWPF
             }
         }
 
+        //per mostrare un errore all' utente
+        private async Task showErrorMessage(string title,string message)
+        {
+            await this.ShowMessageAsync(title,message);
+        }
+
         public void onLoginSuccess()
         {
             if (this.Dispatcher.CheckAccess())
             {
                 //update UI safely
+
+
+                //aggiornamento grafica
+                this.user_label.Visibility = Visibility.Collapsed;
+                this.user.Visibility = Visibility.Collapsed;
+                this.pass_label.Visibility = Visibility.Collapsed;
+                this.pass.Visibility = Visibility.Collapsed;
+                this.LoginButton.Visibility = Visibility.Collapsed;
+                this.label_reg.Visibility = Visibility.Collapsed;
+                this.second_pass_label.Visibility = Visibility.Collapsed;
+                this.repeat_pass.Visibility = Visibility.Collapsed;
+                this.Register_button.Visibility = Visibility.Collapsed;
+                this.back_button.Visibility = Visibility.Collapsed;
+                this.folder_label.Visibility = Visibility.Collapsed;
+                this.folder_picker.Visibility = Visibility.Collapsed;
+                this.folder_testbox.Visibility = Visibility.Collapsed;
+                this.LogOut.Visibility = Visibility.Visible;
+                this.RestoreButton.Visibility = Visibility.Visible;
+
+                this.status_label.Content = "Utente Loggato";
+                this.SoWriteGrid.Visibility = Visibility.Visible;
+
+                //disegno bottoni
+
+                List<string> files = new List<string>();
+                //files di prova
+                //prendere dal server
+                string path = "C:/Users/Daniele/Pictures/word_prova.docx";
+                string path2 = "C:/Users/Daniele/Pictures/prova/lab1allocazione.pdf";
+                files.Add(path);
+                files.Add(path2);
+
+                this.DrawFileBottons(files);
 
             }
             else
@@ -177,7 +181,7 @@ namespace StorageClientWPF
             if (this.Dispatcher.CheckAccess())
             {
                 //update UI safely
-
+                this.showErrorMessage("Registration Error", aMsg);
             }
             else
             {
@@ -190,6 +194,29 @@ namespace StorageClientWPF
             if (this.Dispatcher.CheckAccess())
             {
                 //update UI safely
+                //aggiorno la grafica
+                this.user.Visibility = Visibility.Collapsed;
+                this.user_label.Visibility = Visibility.Collapsed;
+                this.pass.Visibility = Visibility.Collapsed;
+                this.pass_label.Visibility = Visibility.Collapsed;
+                this.repeat_pass.Visibility = Visibility.Collapsed;
+                this.second_pass_label.Visibility = Visibility.Collapsed;
+                this.Register_button.Visibility = Visibility.Collapsed;
+                this.label_reg.Visibility = Visibility.Collapsed;
+                this.back_button.Visibility = Visibility.Collapsed;
+                this.LoginButton.Visibility = Visibility.Collapsed;
+                this.label_reg.Visibility = Visibility.Collapsed;
+                this.folder_label.Visibility = Visibility.Collapsed;
+                this.folder_picker.Visibility = Visibility.Collapsed;
+                this.folder_testbox.Visibility = Visibility.Collapsed;
+                this.LoginButton.Visibility = Visibility.Collapsed;
+                this.label_reg.Visibility = Visibility.Collapsed;
+                this.LogOut.Visibility = Visibility.Visible;
+                this.RestoreButton.Visibility = Visibility.Visible;
+
+                this.SoWriteGrid.Visibility = Visibility.Visible;
+                this.status_label.Content = "Utente registrato";
+
 
             }
             else
@@ -342,6 +369,8 @@ namespace StorageClientWPF
 
         private void LogOut_Click(object sender, RoutedEventArgs e)
         {
+            this.user_label.Text = "Username ";
+            
             this.user_label.Visibility = Visibility.Visible;
             this.user.Visibility = Visibility.Visible;
             this.pass_label.Visibility = Visibility.Visible;
@@ -361,30 +390,12 @@ namespace StorageClientWPF
 
         private void Register_button_Click(object sender, RoutedEventArgs e)
         {
-            //aggiorno la grafica
-            this.user.Visibility = Visibility.Collapsed;
-            this.user_label.Visibility = Visibility.Collapsed;
-            this.pass.Visibility = Visibility.Collapsed;
-            this.pass_label.Visibility = Visibility.Collapsed;
-            this.repeat_pass.Visibility = Visibility.Collapsed;
-            this.second_pass_label.Visibility = Visibility.Collapsed;
-            this.Register_button.Visibility = Visibility.Collapsed;
-            this.label_reg.Visibility = Visibility.Collapsed;
-            this.back_button.Visibility = Visibility.Collapsed;
-            this.LoginButton.Visibility = Visibility.Collapsed;
-            this.label_reg.Visibility = Visibility.Collapsed;
-            this.folder_label.Visibility = Visibility.Collapsed;
-            this.folder_picker.Visibility = Visibility.Collapsed;
-            this.folder_testbox.Visibility = Visibility.Collapsed;
-            this.LoginButton.Visibility = Visibility.Collapsed;
-            this.label_reg.Visibility = Visibility.Collapsed;
-            this.LogOut.Visibility = Visibility.Visible;
-            this.RestoreButton.Visibility = Visibility.Visible;
+            //aggiorno la grafica nel metodo richiamato dalla dll
+            //prova con registrazione ok
+            this.onRegistrationSucces();
 
-            this.SoWriteGrid.Visibility = Visibility.Visible;
-            this.status_label.Content = "Utente registrato";
-
-
+            //prova con registrazione fallita
+           // this.onRegistrationError("utente già registrato");
 
         }
 
@@ -393,6 +404,9 @@ namespace StorageClientWPF
             //prima pulisci tutto
             WriteGrid.RowDefinitions.Clear();
             WriteGrid.Children.Clear();
+
+            this.user_label.Text = "Files in folder: ";
+            this.user_label.Visibility = Visibility.Visible;
 
             foreach (string s in list)
             {
@@ -427,6 +441,8 @@ namespace StorageClientWPF
             WriteGrid.RowDefinitions.Clear();
             WriteGrid.Children.Clear();
 
+            this.user_label.Text = "Available versions ";
+            this.user_label.Visibility = Visibility.Visible;
             //ogni entry indica il numero di versione e la data
 
             foreach (string s in list.Keys)
@@ -438,7 +454,7 @@ namespace StorageClientWPF
                 int i = WriteGrid.RowDefinitions.Count;
                 System.Windows.Controls.Label lb = new System.Windows.Controls.Label();
                 lb.Content = s + ": " + list[s];
-                lb.MouseUp += lb_MouseUp2;
+                lb.MouseUp += lb_MouseUpVersion;
                 lb.MouseEnter += lb_MouseEnter;
                 lb.MouseLeave += lb_MouseLeave;
 
@@ -476,7 +492,7 @@ namespace StorageClientWPF
             System.Diagnostics.Process.Start(path); 
         }
 
-        void lb_MouseUp2(object sender, MouseButtonEventArgs e)
+        void lb_MouseUpVersion(object sender, MouseButtonEventArgs e)
         {
 
             System.Windows.Controls.Label lb = (System.Windows.Controls.Label)sender;
