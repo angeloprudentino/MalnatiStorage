@@ -49,7 +49,7 @@ namespace StorageClientWPF
             this.Register_button.Visibility = Visibility.Collapsed;
             this.back_button.Visibility = Visibility.Collapsed;
             this.folder_label.Visibility = Visibility.Collapsed;
-            this.folder_picker.Visibility = Visibility.Collapsed;
+           // this.folder_picker.Visibility = Visibility.Collapsed;
             this.folder_testbox.Visibility = Visibility.Collapsed;
             this.LogOut.Visibility = Visibility.Collapsed;
             this.SoWriteGrid.Visibility = Visibility.Collapsed;
@@ -149,7 +149,7 @@ namespace StorageClientWPF
                 this.Register_button.Visibility = Visibility.Collapsed;
                 this.back_button.Visibility = Visibility.Collapsed;
                 this.folder_label.Visibility = Visibility.Collapsed;
-                this.folder_picker.Visibility = Visibility.Collapsed;
+              //  this.folder_picker.Visibility = Visibility.Collapsed;
                 this.folder_testbox.Visibility = Visibility.Collapsed;
                 this.LogOut.Visibility = Visibility.Visible;
                 this.RestoreButton.Visibility = Visibility.Visible;
@@ -207,7 +207,7 @@ namespace StorageClientWPF
                 this.LoginButton.Visibility = Visibility.Collapsed;
                 this.label_reg.Visibility = Visibility.Collapsed;
                 this.folder_label.Visibility = Visibility.Collapsed;
-                this.folder_picker.Visibility = Visibility.Collapsed;
+              //  this.folder_picker.Visibility = Visibility.Collapsed;
                 this.folder_testbox.Visibility = Visibility.Collapsed;
                 this.LoginButton.Visibility = Visibility.Collapsed;
                 this.label_reg.Visibility = Visibility.Collapsed;
@@ -311,7 +311,7 @@ namespace StorageClientWPF
             this.LoginButton.Visibility = Visibility.Visible;
             this.label_reg.Visibility = Visibility.Visible;
             this.folder_label.Visibility = Visibility.Visible;
-            this.folder_picker.Visibility = Visibility.Visible;
+        //    this.folder_picker.Visibility = Visibility.Visible;
             this.folder_testbox.Visibility = Visibility.Visible;
             this.LoginButton.Visibility = Visibility.Collapsed;
             this.label_reg.Visibility = Visibility.Collapsed;
@@ -340,7 +340,7 @@ namespace StorageClientWPF
             this.second_pass_label.Visibility = Visibility.Collapsed;
             this.Register_button.Visibility = Visibility.Collapsed;
             this.folder_label.Visibility = Visibility.Collapsed;
-            this.folder_picker.Visibility = Visibility.Collapsed;
+        //    this.folder_picker.Visibility = Visibility.Collapsed;
             this.folder_testbox.Visibility = Visibility.Collapsed;
             this.LoginButton.Visibility = Visibility.Visible;
             this.label_reg.Visibility = Visibility.Visible;
@@ -349,23 +349,23 @@ namespace StorageClientWPF
             this.status_label.Content = "";
         }
 
-        private void folder_picker_Click(object sender, RoutedEventArgs e)
-        {
-            FolderBrowserDialog folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
-            // Set the help text description for the FolderBrowserDialog.
-            folderBrowserDialog1.Description =
-                "Select the directory that you want to use as the default.";
+        //private void folder_picker_Click(object sender, RoutedEventArgs e)
+        //{
+        //    FolderBrowserDialog folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
+        //    // Set the help text description for the FolderBrowserDialog.
+        //    folderBrowserDialog1.Description =
+        //        "Select the directory that you want to use as the default.";
 
-            // Do not allow the user to create new files via the FolderBrowserDialog.
-            folderBrowserDialog1.ShowNewFolderButton = false;
-            folderBrowserDialog1.ShowDialog();
-            //if (folderBrowserDialog1.ShowDialog() == DialogResult.HasValue)
-            //{
-            string path = folderBrowserDialog1.SelectedPath;
-            Debug.WriteLine(path);
-            this.folder_testbox.Text = path;
-            //}
-        }
+        //    // Do not allow the user to create new files via the FolderBrowserDialog.
+        //    folderBrowserDialog1.ShowNewFolderButton = false;
+        //    folderBrowserDialog1.ShowDialog();
+        //    //if (folderBrowserDialog1.ShowDialog() == DialogResult.HasValue)
+        //    //{
+        //    string path = folderBrowserDialog1.SelectedPath;
+        //    Debug.WriteLine(path);
+        //    this.folder_testbox.Text = path;
+        //    //}
+        //}
 
         private void LogOut_Click(object sender, RoutedEventArgs e)
         {
@@ -390,12 +390,35 @@ namespace StorageClientWPF
 
         private void Register_button_Click(object sender, RoutedEventArgs e)
         {
-            //aggiorno la grafica nel metodo richiamato dalla dll
-            //prova con registrazione ok
-            this.onRegistrationSucces();
+            //controllo che ci sia una cartella
+            string path = this.folder_testbox.Text;
 
-            //prova con registrazione fallita
-           // this.onRegistrationError("utente già registrato");
+            // get the file attributes for file or directory
+            try
+            {
+                FileAttributes attr = File.GetAttributes(path);
+
+                //detect whether its a directory or file
+                if ((attr & FileAttributes.Directory) == FileAttributes.Directory)
+                {
+                    //è una directory valida
+
+                    //aggiorno la grafica nel metodo richiamato dalla dll
+                    //prova con registrazione ok
+                    this.onRegistrationSucces();
+
+                    //prova con registrazione fallita
+                    // this.onRegistrationError("utente già registrato");
+                }
+                else
+                {
+                    this.showErrorMessage(" Error", "Insert a valid folder");
+                }
+            }
+            catch (Exception ex)
+            {
+                this.showErrorMessage(" Error", "Insert a valid folder");
+            }
 
         }
 
@@ -525,6 +548,24 @@ namespace StorageClientWPF
             versions.Add("3", "1/1/1999");
 
             this.DrawVersionBottons(versions);
+        }
+
+        private void folder_testbox_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            //se clicco nella text box mi apre il folder picker
+            FolderBrowserDialog folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
+            // Set the help text description for the FolderBrowserDialog.
+            folderBrowserDialog1.Description =
+                "Select the directory that you want to use as the default.";
+
+            // Do not allow the user to create new files via the FolderBrowserDialog.
+            folderBrowserDialog1.ShowNewFolderButton = false;
+            folderBrowserDialog1.ShowDialog();
+            //if (folderBrowserDialog1.ShowDialog() == DialogResult.HasValue)
+            //{
+            string path = folderBrowserDialog1.SelectedPath;
+            Debug.WriteLine(path);
+            this.folder_testbox.Text = path;
         }
     }
 }
