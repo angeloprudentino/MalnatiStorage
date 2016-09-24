@@ -235,6 +235,9 @@ public:
 	const string getFilePath(){ return *(this->fFilePath); }
 	const time_t getFileDate(){ return this->fFileDate; }
 	string_ptr getFileContent(){ return move_string_ptr(this->fFileContent); }
+
+	//setters
+	void setFilePath(const string& aFilePath){ this->fFilePath.reset(); this->fFilePath = make_string_ptr(aFilePath); }
 };
 typedef std::unique_ptr<TAddNewFileMessage> TAddNewFileMessage_ptr;
 #define new_TAddNewFileMessage_ptr(aToken, aFilePath) std::make_unique<TAddNewFileMessage>(aToken, aFilePath)
@@ -658,6 +661,7 @@ public:
 	const string getToken(){ return *(this->fToken); }
 };
 typedef std::unique_ptr<TPingReqMessage> TPingReqMessage_ptr;
+#define new_TPingReqMessage_ptr(aToken) std::make_unique<TPingReqMessage>(aToken)
 #define make_TPingReqMessage_ptr(ptr) std::make_unique<TPingReqMessage>(ptr)
 
 

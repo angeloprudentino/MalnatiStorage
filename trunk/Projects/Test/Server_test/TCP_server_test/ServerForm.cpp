@@ -28,10 +28,7 @@ void TServerForm::initTCPserver(Object^ data){
 		this->Log("TServerForm", "initTCPserver", "start creating TStorageServer object...");
 		this->serverEngine = new TStorageServer(port, this);
 		this->Log("TServerForm", "initTCPserver", "TStorageServer object created; starting the server...");
-		if (this->serverEngine->startServer())
-			afterStartServer();
-		else
-			afterStopServer();
+		this->serverEngine->startServer();
 	}
 	catch (EBaseException e){
 		this->onServerError("TServerForm", "initTCPserver", e.getMessage());
@@ -42,19 +39,27 @@ void TServerForm::initTCPserver(Object^ data){
 
 void TServerForm::dismissTCPserver(){
 	if (this->serverEngine != nullptr){
-		//this->Log("TServerForm", "dismissTCPserver", "stopping serverEngine object...");
-		//this->serverEngine->stopServer();
-		//this->Log("TServerForm", "dismissTCPserver", "serverEngine stopped");
 		beforeStopServer();
+
+		this->Log("TServerForm", "dismissTCPserver", "stopping serverEngine object...");
+		this->serverEngine->stopServer();
+		this->Log("TServerForm", "dismissTCPserver", "serverEngine stopped");
 
 		this->Log("TServerForm", "dismissTCPserver", "start deleting TStorageServer object...");
 		delete this->serverEngine;
-		this->Log("TServerForm", "dismissTCPserver", "TStorageServer object deleted");
 		this->serverEngine = nullptr;
+		this->Log("TServerForm", "dismissTCPserver", "TStorageServer object deleted");
 	}
 
 	//wait for all secondary threads to terminate
 	ServerThread->Join();
+}
+
+void TServerForm::onServerReady(const bool aReadyState){
+	if (aReadyState)
+		afterStartServer();
+	else
+		afterStopServer();
 }
 
 void TServerForm::onServerLog(const string& aClassName, const string& aFuncName, const string& aMsg){

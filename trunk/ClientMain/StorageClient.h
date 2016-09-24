@@ -32,23 +32,27 @@ private:
 	io_service fMainIoService;
 	tcp::socket* fSock = nullptr;
 	boost::atomic<bool> fMustExit;
+	boost::atomic<bool> fSessionOpen;
 	gcroot<StorageClientController^> fCallbackObj = nullptr;
 	RequestsQueue* fQueue = nullptr;
 	thread* fExecutor = nullptr;
+	deadline_timer* fUpdateTimer = nullptr;
+	deadline_timer* fPingTimer = nullptr;
 
 	void connect(const string& aHost, int aPort);
 	void disconnect();
 	const bool sendMsg(TBaseMessage_ptr& aMsg);
 	string_ptr readMsg();
-	void processDirectory(const string& aToken, const path& aDirPath);
-	void processFile(const string& aToken, const path& aFilePath);
-	const int getLastVersion(const string& aUser, const string& aPass);
-	string_ptr verifyUser(const string& aUser, const string& aPass);
-	const bool registerUser(const string& aUser, const string& aPass, const string& aRootPath);
-	void updateCurrentVersion(const string& aUser, const string& aPass);
+	const bool processDirectory(const string& aToken, const path& aRootPath, const path& aDirPath, List<UserFile^>^ aFileList);
+	const bool processFile(const string& aToken, const path& aRootPath, const path& aFilePath, List<UserFile^>^ aFileList);
+	void getLastVersion(const string& aUser, const string& aPass);
+	void verifyUser(const string& aUser, const string& aPass);
+	void registerUser(const string& aUser, const string& aPass, const string& aRootPath);
+	void updateCurrentVersion(const string& aUser, const string& aPass, const string& aRootPath);
 	void restoreVersion(const string& aUser, const string& aPass, const int aVersion, const string& aDestPath);
-	List<UserVersion^>^ getAllVersions(const string& aUser, const string& aPass);
-
+	void getAllVersions(const string& aUser, const string& aPass);
+	void pingServer(const string& aToken, const boost::system::error_code& aErr);
+	
 	void processRequest();
 
 public:

@@ -336,7 +336,8 @@ namespace Server_test {
 	private: void initTCPserver(Object^ data);
 	private: void dismissTCPserver();
 
-	//Server socket Callbacks 
+	//Server socket Callbacks
+	public: virtual void onServerReady(const bool aReadyState);
 	public: virtual void onServerLog(const string& aClassName, const string& aFuncName, const string& aMsg);
 	public: virtual void onServerWarning(const string& aClassName, const string& aFuncName, const string& aMsg);
 	public: virtual void onServerError(const string& aClassName, const string& aFuncName, const string& aMsg);

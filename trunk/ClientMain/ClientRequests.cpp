@@ -34,10 +34,11 @@ LoginRequest::LoginRequest(String^ aUser, String^ aPass){
 //////////////////////////////////
 //         UpdateRequest	    //
 //////////////////////////////////
-UpdateRequest::UpdateRequest(String^ aUser, String^ aPass){
+UpdateRequest::UpdateRequest(String^ aUser, String^ aPass, String^ aPath){
 	this->fID = UPDATE_REQ;
 	this->fUser = aUser;
 	this->fPass = aPass;
+	this->fPath = aPath;
 }
 
 
@@ -54,11 +55,12 @@ GetVerRequest::GetVerRequest(String^ aUser, String^ aPass){
 //////////////////////////////////
 //        RestoreRequest	    //
 //////////////////////////////////
-RestoreRequest::RestoreRequest(String^ aUser, String^ aPass, const int aVersion){
+RestoreRequest::RestoreRequest(String^ aUser, String^ aPass, const int aVersion, String^ aDestPath){
 	this->fID = RESTORE_REQ;
 	this->fUser = aUser;
 	this->fPass = aPass;
 	this->fVersion = aVersion;
+	this->fDestPath = aDestPath;
 }
 
 

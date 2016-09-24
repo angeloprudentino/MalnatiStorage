@@ -16,6 +16,7 @@ using namespace std;
 // Server controller interface used in managed code
 public interface class IManagedServerController{
 public:
+	void onServerReady(const bool aReadyState);
 	void onServerLog(const string& aClassName, const string& aFuncName, const string& aMsg);
 	void onServerWarning(const string& aClassName, const string& aFuncName, const string& aMsg);
 	void onServerError(const string& aClassName, const string& aFuncName, const string& aMsg);
@@ -28,6 +29,7 @@ public:
 //////////////////////////////////////
 class IServerBaseController{
 public:
+	virtual void onServerReady(const bool aReadyState) = 0;
 	virtual void onServerLog(const string& aClassName, const string& aFuncName, const string& aMsg) = 0;
 	virtual void onServerWarning(const string& aClassName, const string& aFuncName, const string& aMsg) = 0;
 	virtual void onServerError(const string& aClassName, const string& aFuncName, const string& aMsg) = 0;

@@ -21,11 +21,11 @@ private:
 	String^ fVersionDate = nullptr;
 
 public:
-	UserVersion(const String^ aVersionDate, const int aVersionID);
+	UserVersion(String^ aVersionDate, const int aVersionID);
 
 	//getters
 	const int getVersionID(){ return this->fVersionID; }
-	const String^ getVersionDate(){ return this->fVersionDate; }
+	String^ getVersionDate(){ return this->fVersionDate; }
 };
 
 
@@ -38,11 +38,11 @@ private :
 	String^ fFilePath;
 
 public:
-	UserFile(const String^ aFilePath);
+	UserFile(String^ aFilePath);
 
 	//getters
-	const String^ getFileName() { return this->fFileName; }
-	const String^ getFilePath() { return this->fFilePath; }
+	String^ getFileName() { return this->fFileName; }
+	String^ getFilePath() { return this->fFilePath; }
 };
 
 
@@ -51,7 +51,7 @@ public:
 //////////////////////////////////////
 public interface class StorageClientController{
 public:
-	void onLoginSuccess();
+	void onLoginSuccess(String^ aPath);
 	void onLoginError(String^ aMsg);
 	void onRegistrationSucces();
 	void onRegistrationError(String^ aMsg);

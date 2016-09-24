@@ -23,18 +23,18 @@
 class TMessageContainer{
 private:
 	TBaseMessage_ptr fMsg = nullptr;
-	TConnectionHandle fConnection;
+	TConnection_ptr fConnection = nullptr;
 
 public:
 	TMessageContainer() : fConnection(){};
-	TMessageContainer(TBaseMessage_ptr& aMsg, TConnectionHandle aConnection);
+	TMessageContainer(TBaseMessage_ptr& aMsg, TConnection_ptr& aConnection);
 	TMessageContainer(const TMessageContainer&) = delete;            // disable copying
 	TMessageContainer& operator=(const TMessageContainer&) = delete; // disable assignment
 	~TMessageContainer();
 	
 	//getters
 	TBaseMessage_ptr getMessage();
-	const TConnectionHandle getConnection();
+	TConnection_ptr getConnection();
 	const bool isEmpty();
 };
 typedef std::unique_ptr<TMessageContainer> TMessageContainer_ptr;
@@ -59,6 +59,8 @@ public:
 	~TMessageQueue();
 	TMessageQueue(const TMessageQueue&) = delete;            // disable copying
 	TMessageQueue& operator=(const TMessageQueue&) = delete; // disable assignment
+
+	void clear();
 
 	bool isEmpty();
 	TMessageContainer_ptr popMessage();

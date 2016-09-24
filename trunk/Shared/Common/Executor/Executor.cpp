@@ -39,7 +39,7 @@ TMessageExecutor::~TMessageExecutor(){
 	doServerLog(this->fCallbackObj, "TMessageExecutor", "destructor", "waiting for executor threads to terminate");
 	this->fThreadPool.join_all();
 
-	this->fMustExit.store(false, boost::memory_order_release);
+	//this->fMustExit.store(false, boost::memory_order_release);
 	this->fCallbackObj = nullptr;
 }
 
