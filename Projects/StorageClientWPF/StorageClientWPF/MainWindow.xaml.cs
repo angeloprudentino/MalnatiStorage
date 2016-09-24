@@ -396,6 +396,7 @@ namespace StorageClientWPF
             // get the file attributes for file or directory
             try
             {
+                //cerca di prendere gli attributi del path
                 FileAttributes attr = File.GetAttributes(path);
 
                 //detect whether its a directory or file
