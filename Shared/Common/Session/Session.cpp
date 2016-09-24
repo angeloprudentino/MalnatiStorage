@@ -55,8 +55,8 @@ TVersion::TVersion(const int aId, const time_t aVersionDate){
 }
 
 TVersion::~TVersion(){
-	for (TFile_list::iterator it = this->fFileList.begin(); it != this->fFileList.end(); it++)
-		it->reset();
+	//for (TFile_list::iterator it = this->fFileList.begin(); it != this->fFileList.end(); it++)
+	//	it->reset();
 	this->fFileList.clear();
 }
 

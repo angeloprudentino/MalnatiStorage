@@ -63,9 +63,10 @@ public:
 	TStorageServer& operator=(const TStorageServer&) = delete; // disable assignment
 	~TStorageServer();
 
-	const bool startServer();
-	//void stopServer();
+	void startServer();
+	void stopServer();
 
+	void onServerReady(const bool aReadyState) override;
 	void onServerLog(const string& aClassName, const string& aFuncName, const string& aMsg) override;
 	void onServerWarning(const string& aClassName, const string& aFuncName, const string& aMsg) override;
 	void onServerError(const string& aClassName, const string& aFuncName, const string& aMsg) override;
@@ -73,18 +74,18 @@ public:
 
 	bool isMessageQueueEmpty() override;
 	TMessageContainer_ptr getMessageToProcess() override;
-	void sendMessage(TMessageContainer_ptr& aMsg) override;
-	void processRegistrationRequest(TConnectionHandle aConnection, TUserRegistrReqMessage_ptr& aMsg) override;
-	void processUpdateStart(TConnectionHandle aConnection, TUpdateStartReqMessage_ptr& aMsg) override;
-	void processAddNewFile(TConnectionHandle aConnection, TAddNewFileMessage_ptr& aMsg) override;
-	void processUpdateFile(TConnectionHandle aConnection, TUpdateFileMessage_ptr& aMsg) override;
-	void processRemoveFile(TConnectionHandle aConnection, TRemoveFileMessage_ptr& aMsg) override;
-	void processUpdateStop(TConnectionHandle aConnection, TUpdateStopReqMessage_ptr& aMsg) override;
-	void processGetVersions(TConnectionHandle aConnection, TGetVersionsReqMessage_ptr& aMsg) override;
-	void processGetLastVersion(TConnectionHandle aConnection, TGetLastVerReqMessage_ptr& aMsg) override;
-	void processRestoreVersion(TConnectionHandle aConnection, TRestoreVerReqMessage_ptr& aMsg) override;
-	void processRestoreFileAck(TConnectionHandle aConnection, TRestoreFileAckMessage_ptr& aMsg) override;
-	void processPingRequest(TConnectionHandle aConnection, TPingReqMessage_ptr& aMsg) override;
-	void processVerifyCred(TConnectionHandle aConnection, TVerifyCredReqMessage_ptr& aMsg) override;
+	void sendMessage(TMessageContainer_ptr& aMsg, const bool aCloseAfterSend) override;
+	void processRegistrationRequest(TConnection_ptr& aConnection, TUserRegistrReqMessage_ptr& aMsg) override;
+	void processUpdateStart(TConnection_ptr& aConnection, TUpdateStartReqMessage_ptr& aMsg) override;
+	void processAddNewFile(TConnection_ptr& aConnection, TAddNewFileMessage_ptr& aMsg) override;
+	void processUpdateFile(TConnection_ptr& aConnection, TUpdateFileMessage_ptr& aMsg) override;
+	void processRemoveFile(TConnection_ptr& aConnection, TRemoveFileMessage_ptr& aMsg) override;
+	void processUpdateStop(TConnection_ptr& aConnection, TUpdateStopReqMessage_ptr& aMsg) override;
+	void processGetVersions(TConnection_ptr& aConnection, TGetVersionsReqMessage_ptr& aMsg) override;
+	void processGetLastVersion(TConnection_ptr& aConnection, TGetLastVerReqMessage_ptr& aMsg) override;
+	void processRestoreVersion(TConnection_ptr& aConnection, TRestoreVerReqMessage_ptr& aMsg) override;
+	void processRestoreFileAck(TConnection_ptr& aConnection, TRestoreFileAckMessage_ptr& aMsg) override;
+	void processPingRequest(TConnection_ptr& aConnection, TPingReqMessage_ptr& aMsg) override;
+	void processVerifyCred(TConnection_ptr& aConnection, TVerifyCredReqMessage_ptr& aMsg) override;
 };
 

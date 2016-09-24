@@ -16,16 +16,16 @@ using namespace boost::filesystem;
 //////////////////////////////////
 //         UserVersion	        //
 //////////////////////////////////
-UserVersion::UserVersion(const String^ aVersionDate, const int aVersionID){
+UserVersion::UserVersion(String^ aVersionDate, const int aVersionID){
 	this->fVersionID = aVersionID; 
-	this->fVersionDate = (String^)aVersionDate; 
+	this->fVersionDate = aVersionDate; 
 }
 
 ///////////////////////////////
 //          UserFile         //
 ///////////////////////////////
-UserFile::UserFile(const String^ aFilePath){
-	std::string fp = marshalString((String^)aFilePath);
+UserFile::UserFile(String^ aFilePath){
+	std::string fp = marshalString(aFilePath);
 	path p(fp);
 
 	this->fFilePath = unmarshalString(p.string());

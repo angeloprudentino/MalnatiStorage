@@ -85,13 +85,15 @@ public ref class UpdateRequest : public UserRequest{
 private:
 	String^ fUser;
 	String^ fPass;
+	String^ fPath;
 
 public:
-	UpdateRequest(String^ aUser, String^ aPass);
+	UpdateRequest(String^ aUser, String^ aPass, String^ aPath);
 
 	//getters
 	String^ getUser() { return this->fUser; }
 	String^ getPass() { return this->fPass; }
+	String^ getPath() { return this->fPath; }
 };
 
 
@@ -120,14 +122,16 @@ private:
 	String^ fUser;
 	String^ fPass;
 	int fVersion;
+	String^ fDestPath;
 
 public:
-	RestoreRequest(String^ aUser, String^ aPass, const int aVersion);
+	RestoreRequest(String^ aUser, String^ aPass, const int aVersion, String^ aDestPath);
 
 	//getters
 	String^ getUser() { return this->fUser; }
 	String^ getPass() { return this->fPass; }
 	const int getVersion() { return this->fVersion; }
+	String^ getDestPath() { return this->fDestPath; }
 };
 
 

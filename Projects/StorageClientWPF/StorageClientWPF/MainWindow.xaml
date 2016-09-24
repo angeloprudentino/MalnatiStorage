@@ -32,13 +32,13 @@
 
 
 
-      <!--  <Button x:Name="folder_picker"  HorizontalAlignment="Left" Margin="244,150,0,0" VerticalAlignment="Top" Width="17" Height="20" Click="folder_picker_Click">
+        <!--  <Button x:Name="folder_picker"  HorizontalAlignment="Left" Margin="244,150,0,0" VerticalAlignment="Top" Width="17" Height="20" Click="folder_picker_Click">
             <StackPanel>
                 <Image Source="Pictures/folder.png" />
             </StackPanel>
         </Button>
-       --> 
-        
+       -->
+
 
 
         <Button x:Name="back_button" Content="Back" HorizontalAlignment="Left" Margin="30,431,0,0" VerticalAlignment="Top" Width="74" Height="20" Click="back_button_Click"/>
@@ -47,8 +47,8 @@
 
 
 
-        <Grid Name="SoWriteGrid" ScrollViewer.VerticalScrollBarVisibility="Auto" HorizontalAlignment="Left" Height="188" Margin="10,225,0,0" VerticalAlignment="Top" Width="353">
-            <ScrollViewer Name="scroll" Visibility="Visible" Margin="0,-179,0,10">
+        <Grid Name="SoWriteGrid" ScrollViewer.VerticalScrollBarVisibility="Auto" HorizontalAlignment="Left" Height="185" Margin="12,223,0,0" VerticalAlignment="Top" Width="353">
+            <ScrollViewer Name="scroll" Visibility="Visible" Margin="0,-212,0,108">
                 <Grid Name="WriteGrid" HorizontalAlignment="Left" Height="854" VerticalAlignment="Top" Width="366"/>
             </ScrollViewer>
         </Grid>
@@ -57,6 +57,10 @@
 
         <Button x:Name="LogOut"  Content="LogOut" HorizontalAlignment="Left" Margin="30,431,0,0" VerticalAlignment="Top" Width="75" Click="LogOut_Click"/>
         <Button x:Name="RestoreButton" Content="Restore" HorizontalAlignment="Left" Margin="137,431,0,0" VerticalAlignment="Top" Width="75" Click="RestoreButton_Click"/>
+        <Grid x:Name="control" HorizontalAlignment="Left" Height="141" Margin="65,265,0,0" VerticalAlignment="Top" Width="247">
+            
+            <Controls:ProgressRing x:Name="progressRing" Margin="94,62,93,19"></Controls:ProgressRing>
+        </Grid>
 
 
 

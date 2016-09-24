@@ -281,7 +281,6 @@ string_ptr TDBManagerMSDE::verifyUserCredentials(const string& aUser, const stri
 			else{
 				reader->Close();
 				transaction->Rollback();
-				throw EDBException("User " + aUser + " not found!");
 			}
 
 			this->fSelectUserSaltCmd->Parameters->Clear();
@@ -291,6 +290,9 @@ string_ptr TDBManagerMSDE::verifyUserCredentials(const string& aUser, const stri
 			this->fSelectUserSaltCmd->Parameters->Clear();
 			throw EDBException("Error during SelectUserSaltCmd: " + marshalString(e->Message));
 		}
+
+		if (salt == "")
+			throw EDBException("User " + aUser + " not found!");
 
 		//verify user credentials
 		if (System::Object::ReferenceEquals(this->fVerifyCredentialCmd, nullptr)){
@@ -314,7 +316,7 @@ string_ptr TDBManagerMSDE::verifyUserCredentials(const string& aUser, const stri
 		this->fVerifyCredentialCmd->Parameters->Add("@password", SqlDbType::NVarChar)->Value = unmarshalString(saltedPass->c_str());
 		saltedPass.reset();
 
-		String^ p;
+		String^ p = "";
 		try{
 			reader = fVerifyCredentialCmd->ExecuteReader();
 			this->fVerifyCredentialCmd->Parameters->Clear();
@@ -326,7 +328,6 @@ string_ptr TDBManagerMSDE::verifyUserCredentials(const string& aUser, const stri
 			else{
 				reader->Close(); 
 				transaction->Rollback();
-				throw EDBException("Passed credentials are not valid!");
 			}
 
 			reader->Close();
@@ -337,9 +338,12 @@ string_ptr TDBManagerMSDE::verifyUserCredentials(const string& aUser, const stri
 			throw EDBException("Error during VerifyCredentialCmd: " + marshalString(e->Message));
 		}
 
+		if (p->Equals(""))
+			throw EDBException("Passed credentials are not valid!");
+
 		transaction->Commit();
 		if (!String::IsNullOrEmpty(p))
-			return new_string_ptr(marshalString(p));
+			return make_string_ptr(marshalString(p));
 		else
 			return nullptr;
 	}

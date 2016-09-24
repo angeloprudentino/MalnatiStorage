@@ -17,138 +17,191 @@ using namespace boost::asio;
 using namespace boost::asio::ip;
 using namespace boost::filesystem;
 
+#define PING_INTERVAL 60
+
 
 //////////////////////////////////
 //       TStorageClient	        //
 //////////////////////////////////
 #pragma region "TStorageClient"
 void TStorageClient::connect(const string& aHost, int aPort){
-	if (this->fSock == nullptr)
-		this->fSock = new tcp::socket(this->fMainIoService);
+	try{
+		if (this->fSock == nullptr)
+			this->fSock = new tcp::socket(this->fMainIoService);
 
-	if (!this->fSock->is_open()){
 		tcp::endpoint ep(ip::address::from_string(aHost), aPort);
 		this->fSock->connect(ep);
+	}
+	catch (...){
+
 	}
 }
 
 void TStorageClient::disconnect(){
 	if (this->fSock != nullptr){
-		if (this->fSock->is_open()){
+		try{
 			this->fSock->shutdown(socket_base::shutdown_both);
 			this->fSock->close();
 		}
-		delete this->fSock;
+		catch (...){
+
+		}
 	}
 }
 
 const bool TStorageClient::sendMsg(TBaseMessage_ptr& aMsg){
-	if (this->fSock == nullptr){
-		errorToFile("TStorageClient", "sendMsg", "socket is null!");
-		return false;
-	}
-
 	if (aMsg == nullptr){
 		errorToFile("TStorageClient", "sendMsg", "msg to send is null!");
 		return false;
 	}
 
 	string_ptr msg = aMsg->encodeMessage();
-	msg->append("\n");
-	boost::asio::write(*(this->fSock), boost::asio::buffer(*msg));
+	msg->append("\n"); 
+
+	int count = 2;
+	bool result = true;
+	while (count > 0){
+		try{
+			this->connect(DEFAULT_HOST, DEFAULT_PORT);
+			boost::asio::write(*(this->fSock), boost::asio::buffer(*msg));
+			break;
+		}
+		catch (...){
+			this->disconnect();
+			count--;
+			if (count == 0){
+				result = false;
+			}
+		}
+	}
+
 	msg.reset();
 	aMsg.reset();
+	return result;
+}
+
+string_ptr TStorageClient::readMsg(){
+	boost::asio::streambuf* buf = new boost::asio::streambuf();
+	istream* is = new istream(buf);
+	string_ptr msg = new_string_ptr();
+
+	int count = 2;
+	while (count > 0){
+		try{
+			this->connect(DEFAULT_HOST, DEFAULT_PORT);
+			boost::asio::read_until(*(this->fSock), *buf, END_MSG + string("\n"));
+			getline(*is, *msg);
+			break;
+		}
+		catch (...){
+			this->disconnect();
+			count--;
+			if (count == 0){
+				msg.reset();
+			}
+		}
+	}
+
+	delete buf;
+	delete is;
+	return move_string_ptr(msg);
+}
+
+const bool TStorageClient::processDirectory(const string& aToken, const path& aRootPath, const path& aDirPath, List<UserFile^>^ aFileList){
+	bool is_ok = true;
+	for (directory_entry& x : directory_iterator(aDirPath)){
+		path f = x.path();
+		if (is_regular_file(f)){
+			is_ok = this->processFile(aToken, aRootPath, f, aFileList);
+		}
+		else if (is_directory(f))
+			is_ok = this->processDirectory(aToken, aRootPath, f, aFileList);
+
+		if (!is_ok)
+			return false;
+	}
 
 	return true;
 }
 
-string_ptr TStorageClient::readMsg(){
-	if (this->fSock == nullptr){
-		errorToFile("TStorageClient", "readMsg", "socket is null!");
-		return false;
-	}
-
-	boost::asio::streambuf* buf = new boost::asio::streambuf();
-	boost::asio::read_until(*(this->fSock), *buf, END_MSG + string("\n"));
-	istream*is = new istream(buf);
-	string_ptr msg = new_string_ptr();
-	getline(*is, *msg);
-	delete buf;
-	delete is;
-
-	return move_string_ptr(msg);
-}
-
-void TStorageClient::processDirectory(const string& aToken, const path& aDirPath){
-	for (directory_entry& x : directory_iterator(aDirPath)){
-		path f = x.path().relative_path();
-		if (is_regular_file(f)){
-			this->processFile(aToken, f);
-		}
-		else if (is_directory(f))
-			this->processDirectory(aToken, f);
-	}
-}
-
-void TStorageClient::processFile(const string& aToken, const path& aFilePath){
+const bool TStorageClient::processFile(const string& aToken, const path& aRootPath, const path& aFilePath, List<UserFile^>^ aFileList){
 	string_ptr msg = nullptr;
 	TBaseMessage_ptr bm = nullptr;
 	TSystemErrorMessage_ptr sysErr = nullptr;
 	TFileAckMessage_ptr ack = nullptr;
 	bool ackResp = false;
+	bool isAckExpected = false;
+	bool is_ok = true;
 
 	logToFile("TStorageClient", "processFile", "Sending file: " + aFilePath.string());
 	try{
-		if (!this->sendMsg((TBaseMessage_ptr&)move_TBaseMessage_ptr(new_TAddNewFileMessage_ptr(aToken, aFilePath.string()))))
-			return;
-		msg = this->readMsg();
+		do{
+			TAddNewFileMessage_ptr m = new_TAddNewFileMessage_ptr(aToken, aFilePath.string());
+			string relPath = aFilePath.string().substr(aRootPath.string().length());
+			m->setFilePath(relPath);
+			if (!this->sendMsg((TBaseMessage_ptr&)move_TBaseMessage_ptr(m)))
+				return false;
 
-		bm = new_TBaseMessage_ptr(msg);
-		int kind = bm->getID();
-		if (kind == SYSTEM_ERR_ID){
-			sysErr = new_TSystemErrorMessage_ptr(bm);
-			errorToFile("TStorageClient", "processFile", sysErr->getDetail());
-			sysErr.reset();
-			ackResp = false;
-		}
-		else if (kind == FILE_ACK_ID){
-			ack = make_TFileAckMessage_ptr(bm);
-			ackResp = ack->getResp();
-			string file = ack->getFilePath();
-			ack.reset();
-			if (!ackResp)
-				logToFile("TStorageClient", "processFile", "Received bad ack for file: " + file);
-		}
-		else{
-			errorToFile("TStorageClient", "processFile", getMessageName(kind) + " is invalid!");
-			ackResp = false;
-		}
+			msg = this->readMsg();
+			if (msg == nullptr)
+				return false;
 
-		bm.reset();
+			bm = new_TBaseMessage_ptr(msg);
+			int kind = bm->getID();
+			if (kind == SYSTEM_ERR_ID){
+				sysErr = new_TSystemErrorMessage_ptr(bm);
+				errorToFile("TStorageClient", "processFile", sysErr->getDetail());
+				sysErr.reset();
+				is_ok = false;
+			}
+			else if (kind == FILE_ACK_ID){
+				ack = make_TFileAckMessage_ptr(bm);
+				ackResp = ack->getResp();
+				string file = ack->getFilePath();
+				isAckExpected = relPath == file;
+				ack.reset();
+				if (isAckExpected){
+					if (ackResp){
+						aFileList->Add(gcnew UserFile(unmarshalString(aFilePath.string())));
+					}
+					else
+						warningToFile("TStorageClient", "processFile", "Received bad ack for file: " + file);
+				}
+				else
+					warningToFile("TStorageClient", "processFile", "Received ack for file: " + file + "but expected for file: " + relPath);
+			}
+			else{
+				errorToFile("TStorageClient", "processFile", getMessageName(kind) + " is invalid!");
+				is_ok = false;
+			}
+
+			bm.reset();
+		} while ((!ackResp || !isAckExpected) && is_ok);
 	}
 	catch (EMessageException& e){
 		errorToFile("TStorageClient", "processFile", e.getMessage());
-
+		is_ok = false;
 		bm.reset();
 		sysErr.reset();
 		ack.reset();
 	}
+
+	return is_ok;
 }
 
 TStorageClient::TStorageClient(StorageClientController^ aCallbackObj) : fMainIoService(){
 	this->fCallbackObj = aCallbackObj;
-	this->connect("127.0.0.1", 4700);
-
 	this->fMustExit.store(false, boost::memory_order_release);
 	this->fQueue = new RequestsQueue();
-
 	this->fExecutor = new thread(bind(&TStorageClient::processRequest, this));
 }
 
 TStorageClient::~TStorageClient(){
 	this->fMustExit.store(true, boost::memory_order_release);
 	
-	this->disconnect();
+	//this->disconnect();
+	if (this->fSock != nullptr)
+		delete this->fSock;
 
 	if (this->fQueue != nullptr)
 		delete this->fQueue;
@@ -157,9 +210,15 @@ TStorageClient::~TStorageClient(){
 		this->fExecutor->join();
 }
 
-string_ptr TStorageClient::verifyUser(const string& aUser, const string& aPass){
-	if (aUser.empty() || aPass.empty())
-		return false;
+void TStorageClient::verifyUser(const string& aUser, const string& aPass){
+	if (aUser.empty()){
+		this->fCallbackObj->onLoginError("Username cannot be empty!");
+		return;
+	}
+	if (aPass.empty()){
+		this->fCallbackObj->onLoginError("Password cannot be empty!");
+		return;
+	}
 
 	string_ptr msg = nullptr;
 	TBaseMessage_ptr bm = nullptr;
@@ -167,9 +226,15 @@ string_ptr TStorageClient::verifyUser(const string& aUser, const string& aPass){
 
 	//verify if user exists
 	logToFile("TStorageClient", "verifyUser", "Verify if user " + aUser + " is valid");
-	if (!this->sendMsg((TBaseMessage_ptr&)move_TBaseMessage_ptr(new_TVerifyCredReqMessage_ptr(aUser, aPass))))
-		return false;
+	if (!this->sendMsg((TBaseMessage_ptr&)move_TBaseMessage_ptr(new_TVerifyCredReqMessage_ptr(aUser, aPass)))){
+		this->fCallbackObj->onLoginError("Temporary error! Try again.");
+		return;
+	}
 	msg = this->readMsg();
+	if (msg == nullptr){
+		this->fCallbackObj->onLoginError("Temporary error! Try again.");
+		return;
+	}
 
 	TVerifyCredReplyMessage_ptr verReply = nullptr;
 	try{
@@ -182,20 +247,32 @@ string_ptr TStorageClient::verifyUser(const string& aUser, const string& aPass){
 
 		bm.reset();
 		verReply.reset();
-		return nullptr;
+		this->fCallbackObj->onLoginError("Temporary error! Try again.");
+		return;
 	}
 
-	string_ptr p = make_string_ptr(verReply->getPath());
-	verReply.reset();
+	string p = verReply->getPath();
 	if (verReply->getResp())
-		return move_string_ptr(p);
+		this->fCallbackObj->onLoginSuccess(unmarshalString(p));
 	else
-		return nullptr;
+		this->fCallbackObj->onLoginError("Login failed! Try again.");
+	
+	verReply.reset();
 }
 
-const bool TStorageClient::registerUser(const string& aUser, const string& aPass, const string& aRootPath){
-	if (aUser.empty() || aPass.empty())
-		return false;
+void TStorageClient::registerUser(const string& aUser, const string& aPass, const string& aRootPath){
+	if (aUser.empty()){
+		this->fCallbackObj->onRegistrationError("Username cannot be empty!");
+		return;
+	}
+	if (aPass.empty()){
+		this->fCallbackObj->onRegistrationError("Password cannot be empty!");
+		return;
+	}
+	if (aRootPath.empty()){
+		this->fCallbackObj->onRegistrationError("Directory to be synchronized cannot be empty!");
+		return;
+	}
 
 	bool result = false;
 	string_ptr msg = nullptr;
@@ -203,9 +280,15 @@ const bool TStorageClient::registerUser(const string& aUser, const string& aPass
 	TSystemErrorMessage_ptr sysErr = nullptr;
 
 	logToFile("TStorageClient", "registerUser", "Try to register a new user " + aUser);
-	if (!this->sendMsg((TBaseMessage_ptr&)move_TBaseMessage_ptr(new_TUserRegistrReqMessage_ptr(aUser, aPass, aRootPath))))
-		return false;
+	if (!this->sendMsg((TBaseMessage_ptr&)move_TBaseMessage_ptr(new_TUserRegistrReqMessage_ptr(aUser, aPass, aRootPath)))){
+		this->fCallbackObj->onRegistrationError("Temporary error! Try again.");
+		return;
+	}
 	msg = this->readMsg();
+	if (msg == nullptr){
+		this->fCallbackObj->onRegistrationError("Temporary error! Try again.");
+		return;
+	}
 
 	TUserRegistrReplyMessage_ptr regReply = nullptr;
 	try{
@@ -214,6 +297,7 @@ const bool TStorageClient::registerUser(const string& aUser, const string& aPass
 		if (kind == SYSTEM_ERR_ID){
 			sysErr = new_TSystemErrorMessage_ptr(bm);
 			errorToFile("TStorageClient", "registerUser", sysErr->getDetail());
+			this->fCallbackObj->onRegistrationError("Temporary error! Try again.");
 			result = false;
 			sysErr.reset();
 		}
@@ -224,43 +308,67 @@ const bool TStorageClient::registerUser(const string& aUser, const string& aPass
 		}
 		else{
 			errorToFile("TStorageClient", "registerUser", getMessageName(kind) + " is invalid");
+			this->fCallbackObj->onRegistrationError("Temporary error! Try again.");
 			result = false;
 		}
 	}
 	catch (EMessageException& e){
 		errorToFile("TStorageClient", "registerUser", e.getMessage());
+		this->fCallbackObj->onRegistrationError("Temporary error! Try again.");
 
 		bm.reset();
 		sysErr.reset();
 		regReply.reset();
-		return false;
+		return;
 	}
 
 	bm.reset();
 
-	if (result)
-		logToFile("TStorageClient", "registerUser", "User " + aUser + " registered");
-	else
-		warningToFile("TStorageClient", "registerUser", "User " + aUser + " cannot be registered");
-
-
 	if (result){
-		//register current user in db with user, pass, dir
+		logToFile("TStorageClient", "registerUser", "User " + aUser + " registered");
+		this->fCallbackObj->onRegistrationSucces();
+		this->issueRequest(gcnew UpdateRequest(unmarshalString(aUser), unmarshalString(aPass), unmarshalString(aRootPath)));
 	}
-
-	return result;
+	else{
+		warningToFile("TStorageClient", "registerUser", "User " + aUser + " cannot be registered");
+		this->fCallbackObj->onRegistrationError("Registration failed! Try again.");
+	}
 }
 
-void TStorageClient::updateCurrentVersion(const string& aUser, const string& aPass){
+void TStorageClient::updateCurrentVersion(const string& aUser, const string& aPass, const string& aRootPath){
+	if (aUser.empty()){
+		this->fCallbackObj->onUpdateError("Username cannot be empty!");
+		return;
+	}
+	if (aPass.empty()){
+		this->fCallbackObj->onUpdateError("Password cannot be empty!");
+		return;
+	}
+	if (aRootPath.empty()){
+		this->fCallbackObj->onUpdateError("Directory to be synchronized cannot be empty!");
+		return;
+	}
+	path p(aRootPath);
+	if (!exists(p)){
+		this->fCallbackObj->onUpdateError("Directory to be synchronized must exist!");
+		return;
+	}
+
 	string_ptr msg = nullptr;
 	TBaseMessage_ptr bm = nullptr;
 	TSystemErrorMessage_ptr sysErr = nullptr;
 
 	//verify if an update session could be started
 	logToFile("TStorageClient", "updateCurrentVersion", "Verify if an update session could be started for user " + aUser);
-	if (!this->sendMsg((TBaseMessage_ptr&)move_TBaseMessage_ptr(new_TUpdateStartReqMessage_ptr(aUser, aPass))))
+	if (!this->sendMsg((TBaseMessage_ptr&)move_TBaseMessage_ptr(new_TUpdateStartReqMessage_ptr(aUser, aPass)))){
+		this->fCallbackObj->onUpdateError("Temporary error; Update session cannot be started.");
 		return;
+	}
 	msg = this->readMsg();
+	if (msg == nullptr){
+		this->fCallbackObj->onUpdateError("Temporary error; Update session cannot be started.");
+		return;
+	}
 
 	TUpdateStartReplyMessage_ptr updReply = nullptr;
 	bool result = false;
@@ -293,84 +401,138 @@ void TStorageClient::updateCurrentVersion(const string& aUser, const string& aPa
 
 	string token = "";
 	if (result){
+		this->fCallbackObj->onUpdateStart();
 		token = updReply->getToken();
 		updReply.reset();
 
+		//init ping timer
+		if (this->fPingTimer != nullptr)
+			delete this->fPingTimer;
+		this->fPingTimer = new deadline_timer(this->fMainIoService, boost::posix_time::seconds(PING_INTERVAL));
+		this->fPingTimer->async_wait(bind(&TStorageClient::pingServer, this, token, boost::asio::placeholders::error));
+
 		logToFile("TStorageClient", "updateCurrentVersion", "Start sending files");
 
-		path p("testDir");
+		bool is_ok = true;
+		List<UserFile^>^ flist = gcnew List<UserFile^>();
 		try{
-			if (exists(p)){
-				if (is_regular_file(p)){
-					this->processFile(token, p);
+			if (is_regular_file(p)){
+				is_ok = this->processFile(token, p, p, flist);
+			}
+			else if (is_directory(p)){
+				is_ok = this->processDirectory(token, p, p, flist);
+			}
+
+			if (!is_ok){
+				this->fCallbackObj->onUpdateError("Temporary error; Update session interrupted.");
+				return;
+			}
+
+			//update is finished; send stop
+			if (!this->sendMsg((TBaseMessage_ptr&)move_TBaseMessage_ptr(new_TUpdateStopReqMessage_ptr(token)))){
+				this->fCallbackObj->onUpdateError("Temporary error; Update session interrupted.");
+				return;
+			}
+			msg = this->readMsg();
+			if (msg == nullptr){
+				this->fCallbackObj->onUpdateError("Temporary error; Update session interrupted.");
+				return;
+			}
+
+			TUpdateStopReplyMessage_ptr updstopReply = nullptr;
+			try{
+				is_ok = true;
+				bm = new_TBaseMessage_ptr(msg);
+				int kind = bm->getID();
+				if (kind == SYSTEM_ERR_ID){
+					sysErr = new_TSystemErrorMessage_ptr(bm);
+					errorToFile("TStorageClient", "updateCurrentVersion", sysErr->getDetail());
+					sysErr.reset();
+					is_ok = false;
 				}
-				else if (is_directory(p)){
-					this->processDirectory(token, p);
-				}
-
-				//update is finished; send stop
-				if (!this->sendMsg((TBaseMessage_ptr&)move_TBaseMessage_ptr(new_TUpdateStopReqMessage_ptr(token))))
-					return;
-				msg = this->readMsg();
-
-				TUpdateStopReplyMessage_ptr updstopReply = nullptr;
-				try{
-					bm = new_TBaseMessage_ptr(msg);
-					int kind = bm->getID();
-					if (kind == SYSTEM_ERR_ID){
-						sysErr = new_TSystemErrorMessage_ptr(bm);
-						errorToFile("TStorageClient", "updateCurrentVersion", sysErr->getDetail());
-						sysErr.reset();
-					}
-					else if (kind == UPDATE_STOP_REPLY_ID){
-						updstopReply = make_TUpdateStopReplyMessage_ptr(bm);
-						if (updstopReply->getResp()){
-							logToFile("TStorageClient", "updateCurrentVersion", "Version " + to_string(updstopReply->getVersion()) + " at " + formatFileDate(updstopReply->getTime()));
-						}
-						else
-							errorToFile("TStorageClient", "updateCurrentVersion", "Update session aborted by the server!");
-
-						updstopReply.reset();
+				else if (kind == UPDATE_STOP_REPLY_ID){
+					updstopReply = make_TUpdateStopReplyMessage_ptr(bm);
+					if (updstopReply->getResp()){
+						string vdate = formatFileDate(updstopReply->getTime());
+						int v = updstopReply->getVersion();
+						logToFile("TStorageClient", "updateCurrentVersion", "Version " + to_string(v) + " at " + vdate);
+						this->fCallbackObj->onUpdateSuccess(flist, v, unmarshalString(vdate));
 					}
 					else{
-						errorToFile("TStorageClient", "updateCurrentVersion", getMessageName(kind) + " is invalid");
+						errorToFile("TStorageClient", "updateCurrentVersion", "Update session aborted by the server!");
+						this->fCallbackObj->onUpdateError("Temporary error; Update session interrupted.");
 					}
-				}
-				catch (EMessageException& e){
-					errorToFile("TStorageClient", "updateCurrentVersion", e.getMessage());
-					bm.reset();
-					sysErr.reset();
+
 					updstopReply.reset();
 				}
-				bm.reset();
+				else{
+					errorToFile("TStorageClient", "updateCurrentVersion", getMessageName(kind) + " is invalid");
+					this->fCallbackObj->onUpdateError("Temporary error; Update session interrupted.");
+					is_ok = false;
+				}
 			}
-			else
-				errorToFile("TStorageClient", "updateCurrentVersion", p.string() + " does not exist");
+			catch (EMessageException& e){
+				errorToFile("TStorageClient", "updateCurrentVersion", e.getMessage());
+				this->fCallbackObj->onUpdateError("Temporary error; Update session interrupted.");
+				bm.reset();
+				sysErr.reset();
+				updstopReply.reset();
+			}
+			bm.reset();
 		}
 		catch (const filesystem_error& e){
 			errorToFile("TStorageClient", "updateCurrentVersion", e.what());
+			this->fCallbackObj->onUpdateError("Temporary error; Update session interrupted.");
 		}
 	}
-	else
+	else{
 		errorToFile("TStorageClient", "updateCurrentVersion", "User " + aUser + " cannot start an update session.");
+		this->fCallbackObj->onUpdateError("Temporary error; Update session cannot be started.");
+	}
+
+	////init session cleaner timer if necessary
+	//if (this->fUpdateTimer == nullptr){
+	//	this->fUpdateTimer = new deadline_timer(this->fMainIoService, boost::posix_time::seconds(10));
+	//	this->fUpdateTimer->async_wait(bind(&TStorageClient::updateCurrentVersion, this, aUser, aPass, path(aRootPath), boost::asio::placeholders::error));
+	//}
 }
 
 void TStorageClient::restoreVersion(const string& aUser, const string& aPass, const int aVersion, const string& aDestPath){
 	path root(aDestPath);
+	bool is_err = false;
 	string_ptr msg = nullptr;
 	TBaseMessage_ptr bm = nullptr;
 	TSystemErrorMessage_ptr sysErr = nullptr;
 
+	if (aUser.empty()){
+		this->fCallbackObj->onRestoreError("Username cannot be empty!");
+		return;
+	}
+	if (aPass.empty()){
+		this->fCallbackObj->onRestoreError("Password cannot be empty!");
+		return;
+	}
+	if (aDestPath.empty()){
+		this->fCallbackObj->onRestoreError("Destination directory cannot be empty!");
+		return;
+	}
 	if (aVersion <= 0){
-		errorToFile("TStorageClient", "restoreVersion", "required version cannot be lower than 0");
+		errorToFile("TStorageClient", "restoreVersion", "Required version cannot be lower than 0");
+		this->fCallbackObj->onRestoreError("Required version cannot be lower than 0");
 		return;
 	}
 
 	//verify if an update session could be started
 	logToFile("TStorageClient", "restoreVersion", "Verify if a restore session could be started for user " + aUser);
-	if (!this->sendMsg((TBaseMessage_ptr&)move_TBaseMessage_ptr(new_TRestoreVerReqMessage_ptr(aUser, aPass, aVersion))))
+	if (!this->sendMsg((TBaseMessage_ptr&)move_TBaseMessage_ptr(new_TRestoreVerReqMessage_ptr(aUser, aPass, aVersion)))){
+		this->fCallbackObj->onRestoreError("Temporary error; Restore of version " + aVersion + " cannot be started.");
 		return;
+	}
 	msg = this->readMsg();
+	if (msg == nullptr){
+		this->fCallbackObj->onRestoreError("Temporary error; Restore of version " + aVersion + " cannot be started.");
+		return;
+	}
 
 	TRestoreVerReplyMessage_ptr restReply = nullptr;
 	bool result = false;
@@ -405,10 +567,20 @@ void TStorageClient::restoreVersion(const string& aUser, const string& aPass, co
 		token = restReply->getToken();
 		restReply.reset();
 
+		//init ping timer
+		if (this->fPingTimer != nullptr)
+			delete this->fPingTimer;
+		this->fPingTimer = new deadline_timer(this->fMainIoService, boost::posix_time::seconds(PING_INTERVAL));
+		this->fPingTimer->async_wait(bind(&TStorageClient::pingServer, this, token, boost::asio::placeholders::error));
+
 		logToFile("TStorageClient", "restoreVersion", "Start receiving files");
 		bool exit = false;
 		while (!exit){
 			msg = this->readMsg();
+			if (msg == nullptr){
+				is_err = true;
+				break;
+			}
 
 			TRestoreFileMessage_ptr restFile = nullptr;
 			TRestoreStopMessage_ptr restStop = nullptr;
@@ -419,7 +591,7 @@ void TStorageClient::restoreVersion(const string& aUser, const string& aPass, co
 				if (kind == SYSTEM_ERR_ID){
 					sysErr = new_TSystemErrorMessage_ptr(bm);
 					errorToFile("TStorageClient", "restoreVersion", sysErr->getDetail());
-					exit = true;
+					exit = is_err = true;
 				}
 				else if (kind == RESTORE_FILE_ID){
 					restFile = make_TRestoreFileMessage_ptr(bm);
@@ -429,12 +601,12 @@ void TStorageClient::restoreVersion(const string& aUser, const string& aPass, co
 					try{
 						storeFile(root / f, restFile->getFileContent());
 						if (!this->sendMsg((TBaseMessage_ptr&)move_TBaseMessage_ptr(new_TRestoreFileAckMessage_ptr(true, token, f.string()))))
-							exit = true;
+							exit = is_err = true;
 					}
 					catch (EFilesystemException& e){
 						errorToFile("TStorageClient", "restoreVersion", e.getMessage());
 						if (!this->sendMsg((TBaseMessage_ptr&)move_TBaseMessage_ptr(new_TRestoreFileAckMessage_ptr(false, token, f.string()))))
-							exit = true;
+							exit = is_err = true;
 					}
 				}
 				else if (kind == RESTORE_STOP_ID){
@@ -444,31 +616,38 @@ void TStorageClient::restoreVersion(const string& aUser, const string& aPass, co
 				}
 				else{
 					errorToFile("TStorageClient", "restoreVersion", getMessageName(kind) + " is invalid");
-					exit = true;
+					exit = is_err = true;
 				}
 			}
 			catch (EMessageException& e){
 				errorToFile("TStorageClient", "restoreVersion", e.getMessage());
-				exit = true;
+				exit = is_err = true;
 			}
 
 			bm.reset();
 			restFile.reset();
 			restStop.reset();
 		}
+
+		if (is_err){
+			this->fCallbackObj->onRestoreError("Temporary error; Restore of version " + aVersion + " interrupted!");
+			removeDir(root);
+		}
 	}
-	else
+	else{
 		errorToFile("TStorageClient", "restoreVersion", "User " + aUser + " cannot start a restore session.");
+		this->fCallbackObj->onRestoreError("Temporary error; Restore of version " + aVersion + " cannot start.");
+	}
 }
 
-const int TStorageClient::getLastVersion(const string& aUser, const string& aPass){
+void TStorageClient::getLastVersion(const string& aUser, const string& aPass){
 	string_ptr msg = nullptr;
 	TBaseMessage_ptr bm = nullptr;
 	TSystemErrorMessage_ptr sysErr = nullptr;
 
 	int version = 0;
 	if (!this->sendMsg((TBaseMessage_ptr&)move_TBaseMessage_ptr(new_TGetLastVerReqMessage_ptr(aUser, aPass))))
-		return version;
+		return;
 	msg = this->readMsg();
 
 	TGetLastVerReplyMessage_ptr lastVer = nullptr;
@@ -496,8 +675,6 @@ const int TStorageClient::getLastVersion(const string& aUser, const string& aPas
 
 	if (version == 0)
 		warningToFile("TStorageClient", "getLastVersion", "User " + aUser + " has no version to restore");
-
-	return version;
 }
 
 //std::list<UserVersion> TStorageClient::getAllVersions(const string& aUser, const string& aPass){
@@ -550,6 +727,32 @@ const int TStorageClient::getLastVersion(const string& aUser, const string& aPas
 //	return result;
 //}
 
+void TStorageClient::pingServer(const string& aToken, const boost::system::error_code& aErr){
+	if (!aErr){
+		if (this->fSessionOpen.load(boost::memory_order_acquire)){
+			//send ping to server
+			logToFile("TStorageClient", "pingServer", "Send ping to server fo token " + aToken);
+			if (this->sendMsg((TBaseMessage_ptr&)move_TBaseMessage_ptr(new_TPingReqMessage_ptr(aToken)))){
+				string_ptr msg = this->readMsg();
+				if (msg == nullptr){
+					errorToFile("TStorageClient", "pingServer", "Error receiving ping message from server.");
+				}
+			}
+			else
+				errorToFile("TStorageClient", "pingServer", "Unable to send ping message.");
+		}
+	}
+	else
+		errorToFile("TStorageClient", "pingServer", aErr.message());
+
+	delete this->fPingTimer;
+	if (this->fSessionOpen.load(boost::memory_order_acquire)){
+		//re-init session cleaner timer
+		this->fPingTimer = new deadline_timer(this->fMainIoService, boost::posix_time::seconds(PING_INTERVAL));
+		this->fPingTimer->async_wait(bind(&TStorageClient::pingServer, this, aToken, boost::asio::placeholders::error));
+	}
+}
+
 void TStorageClient::processRequest(){
 	while (!this->fMustExit.load(boost::memory_order_acquire) && !System::Object::ReferenceEquals(this->fCallbackObj, nullptr) && this->fQueue != nullptr){
 		UserRequest^ req = this->fQueue->popRequest();
@@ -557,27 +760,27 @@ void TStorageClient::processRequest(){
 		switch (kind){
 			case REGISTR_REQ:{
 				RegistrRequest^ rr = (RegistrRequest^)req;
-				if (this->registerUser(marshalString(rr->getUser()), marshalString(rr->getPass()), marshalString(rr->getPath())))
-					this->fCallbackObj->onRegistrationSucces();
-				else
-					this->fCallbackObj->onRegistrationError("Error during registration process! Try again.");
+				this->registerUser(marshalString(rr->getUser()), marshalString(rr->getPass()), marshalString(rr->getPath()));
 				break;
 			}
 			case LOGIN_REQ:{
 				LoginRequest^ lr = (LoginRequest^)req;
-				if (this->verifyUser(marshalString(lr->getUser()), marshalString(lr->getPass())))
-					this->fCallbackObj->onLoginSuccess();
-				else
-					this->fCallbackObj->onLoginError("Error doing log-in! Try again.");
+				this->verifyUser(marshalString(lr->getUser()), marshalString(lr->getPass()));
 				break;
 			}
 			case UPDATE_REQ:{
+				UpdateRequest^ ur = (UpdateRequest^)req;
+				this->updateCurrentVersion(marshalString(ur->getUser()), marshalString(ur->getPass()), marshalString(ur->getPath()));
 				break;
 			}
 			case GET_VERSIONS_REQ:{
+				//GetVerRequest^ gvr = (GetVerRequest^)req;
+				//this->getAllVersions(marshalString(gvr->getUser()), marshalString(gvr->getPass()));
 				break;
 			}
 			case RESTORE_REQ:{
+				RestoreRequest^ rr = (RestoreRequest^)req;
+				this->restoreVersion(marshalString(rr->getUser()), marshalString(rr->getPass()), rr->getVersion(), marshalString(rr->getDestPath()));
 				break;
 			}
 			default:{

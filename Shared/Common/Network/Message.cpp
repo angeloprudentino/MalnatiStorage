@@ -43,7 +43,7 @@ using namespace boost::filesystem;
 #define RESTORE_STOP_TOK_NUM 4
 #define PING_TOK_NUM 4
 #define VERIFY_CRED_REQ_TOK_NUM 4
-#define VERIFY_CRED_REPLY_TOK_NUM 3
+#define VERIFY_CRED_REPLY_TOK_NUM 4
 #define SYSTEM_ERR_TOK_NUM 3
 
 //Message names
@@ -136,8 +136,8 @@ TBaseMessage::TBaseMessage(string_ptr& aMsg){
 
 TBaseMessage::~TBaseMessage() {
 	if (this->fItems != nullptr){
-		for (string_vector::iterator it = this->fItems->begin(); it != this->fItems->end(); it++)
-			it->reset();
+		//for (string_vector::iterator it = this->fItems->begin(); it != this->fItems->end(); it++)
+		//	it->reset();
 		this->fItems->clear();
 		this->fItems.reset();
 		this->fItems = nullptr;
@@ -168,7 +168,7 @@ string_ptr TBaseMessage::encodeMessage(){
 	int i = 0;
 	for (i = 0; i < len; i++){
 		if (this->fItems->at(i) == nullptr)
-			throw new EMessageException("item " + to_string(i) + " is nullptr");
+			throw EMessageException("item " + to_string(i) + " is nullptr");
 
 		escape(this->fItems->at(i));
 		*msg += *(this->fItems->at(i)) + MSG_SEP;
@@ -506,19 +506,19 @@ TAddNewFileMessage::TAddNewFileMessage(const string& aToken, const string& aFile
 	this->fToken = make_string_ptr(aToken);
 	this->fFilePath = make_string_ptr(aFilePath);
 
-	////read file, encode it and calculate checksum
-	//try{
-	//this->fFileContent = readFile(path(this->fFilePath->c_str()));
-	//	this->fChecksum = opensslB64FileChecksum(*(this->fFileContent));
-	//}
-	//catch (EOpensslException e){
-	//	throw EMessageException("TAddNewFileMessage: " + e.getMessage());
-	//}
-	//path p(*(this->fFilePath));
-	//boost::system::error_code ec;
-	//this->fFileDate = last_write_time(p, ec);
-	//if (ec)
-	//	this->fFileDate = time(nullptr);
+	//read file, encode it and calculate checksum
+	try{
+		this->fFileContent = readFile(path(this->fFilePath->c_str()));
+		this->fChecksum = opensslB64FileChecksum(*(this->fFileContent));
+	}
+	catch (EOpensslException e){
+		throw EMessageException("TAddNewFileMessage: " + e.getMessage());
+	}
+	path p(*(this->fFilePath));
+	boost::system::error_code ec;
+	this->fFileDate = last_write_time(p, ec);
+	if (ec)
+		this->fFileDate = time(nullptr);
 }
 
 TAddNewFileMessage::~TAddNewFileMessage(){
@@ -541,20 +541,6 @@ TAddNewFileMessage::~TAddNewFileMessage(){
 }
 
 string_ptr TAddNewFileMessage::encodeMessage(){
-	//read file, encode it and calculate checksum
-	try{
-		this->fFileContent = readFile(path(this->fFilePath->c_str()));
-		this->fChecksum = opensslB64FileChecksum(*(this->fFileContent));
-	}
-	catch (EOpensslException e){
-		throw EMessageException("TAddNewFileMessage: " + e.getMessage());
-	}
-	path p(*(this->fFilePath));
-	boost::system::error_code ec;
-	this->fFileDate = last_write_time(p, ec);
-	if (ec)
-		this->fFileDate = time(nullptr);
-
 	this->fItems->push_back(make_string_ptr(getMessageName(this->fID)));
 	this->fItems->push_back(move_string_ptr(this->fToken));
 	this->fItems->push_back(move_string_ptr(this->fFilePath));
@@ -1151,8 +1137,8 @@ TGetVersionsReplyMessage::TGetVersionsReplyMessage(const unsigned int aTotVersio
 
 TGetVersionsReplyMessage::~TGetVersionsReplyMessage(){
 	if (this->fVersions != nullptr){
-		for (TVersionList::iterator it = this->fVersions->begin(); it != this->fVersions->end(); it++)
-			it->reset();
+		//for (TVersionList::iterator it = this->fVersions->begin(); it != this->fVersions->end(); it++)
+		//	it->reset();
 		this->fVersions->clear();
 		this->fVersions.reset();
 		this->fVersions = nullptr;
@@ -2055,8 +2041,10 @@ void TVerifyCredReplyMessage::decodeMessage(){
 		this->fResp = false;
 
 	//path
-	if (*(this->fItems->at(2)) == EMPTY)
-		throw EMessageException("The path field cannot be empty");
+	if (this->fResp == true){
+		if (*(this->fItems->at(2)) == EMPTY)
+			throw EMessageException("The path field cannot be empty");
+	}
 	this->fPath = move_string_ptr(this->fItems->at(2));
 }
 #pragma endregion

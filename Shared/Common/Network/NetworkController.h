@@ -17,25 +17,35 @@ using namespace boost;
 using namespace boost::asio;
 using namespace boost::asio::ip;
 
-// Struct representing a single connection
-typedef struct Connection{
+/////////////////////////////////
+//         TConnection	       //
+/////////////////////////////////
+class TConnection{
+private:
 	tcp::socket fSocket;
 	tcp::endpoint fPeer;
 	boost::asio::streambuf fReadBuffer;
-	Connection(io_service *aIoService) : fSocket(*aIoService), fPeer(), fReadBuffer() { }
-	Connection(io_service *aIoService, size_t aMaxBuffSize) : fSocket(*aIoService), fPeer(), fReadBuffer(aMaxBuffSize) { }
-} TConnection;
-typedef list<TConnection> TConnectionList;
-typedef TConnectionList::iterator TConnectionHandle;
+public:
+	TConnection(io_service *aIoService) : fSocket(*aIoService), fPeer(), fReadBuffer() { }
+
+	const bool isEqualTo(const TConnection& aConnection){ return ((this->fPeer.address() == aConnection.fPeer.address()) && (this->fPeer.port() == aConnection.fPeer.port())); }
+	
+	//live getters
+	tcp::socket& getSocket() { return this->fSocket; }
+	tcp::endpoint& getPeer() { return this->fPeer; }
+	boost::asio::streambuf& getBuff() { return this->fReadBuffer; }
+};
+typedef std::shared_ptr<TConnection> TConnection_ptr;
+typedef list<TConnection_ptr> TConnections;
+#define new_TConnection_ptr(aIoService) std::make_shared<TConnection>(aIoService)
 
 
 //////////////////////////////////////
 //      IServerSockController	    //
 //////////////////////////////////////
-// Standard server socket controller interface
 class IServerSockController : public IServerBaseController{
 public:
-	virtual void onServerSockAccept(TConnectionHandle aConnection) = 0;
-	virtual void onServerSockRead(TConnectionHandle aConnection, string_ptr& aMsg) = 0;
+	virtual void onServerSockAccept(TConnection_ptr& aConnection) = 0;
+	virtual void onServerSockRead(TConnection_ptr& aConnection, string_ptr& aMsg) = 0;
 	virtual void onServerSockWrite() = 0;
 };

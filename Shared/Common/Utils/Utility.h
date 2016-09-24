@@ -18,6 +18,7 @@ using namespace boost::filesystem;
 #define EMPTY ""
 #define TRUE_STR "true"
 #define FALSE_STR "false"
+#define DEFAULT_HOST "127.0.0.1"
 #define DEFAULT_PORT 4700
 
 //typedef std::shared_ptr<string> string_ptr;
@@ -38,7 +39,7 @@ typedef struct{
 //////////////////////////////////////
 //        EBaseException	        //
 //////////////////////////////////////
-class EBaseException : public std::exception {
+public class EBaseException : public std::exception {
 private:
 	string fMessage;
 public:

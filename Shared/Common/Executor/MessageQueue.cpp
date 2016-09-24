@@ -13,7 +13,7 @@
 //       TMessageContainer          //
 //////////////////////////////////////
 #pragma region "TMessageContainer"
-TMessageContainer::TMessageContainer(TBaseMessage_ptr& aMsg, TConnectionHandle aConnection){
+TMessageContainer::TMessageContainer(TBaseMessage_ptr& aMsg, TConnection_ptr& aConnection){
 	this->fMsg = move_TMessageContainer_ptr(aMsg);
 	this->fConnection = aConnection;
 }
@@ -32,7 +32,7 @@ TBaseMessage_ptr TMessageContainer::getMessage(){
 		return nullptr;
 }
 
-const TConnectionHandle TMessageContainer::getConnection(){
+TConnection_ptr TMessageContainer::getConnection(){
 	return this->fConnection; 
 }
 
@@ -55,16 +55,20 @@ TMessageQueue::TMessageQueue() {
 
 TMessageQueue::~TMessageQueue(){
 	this->fMustExit.store(true, boost::memory_order_release);
+}
+
+void TMessageQueue::clear(){
+	unique_lock<mutex> lock(this->fMutex);
+
+	int size = (int)this->fQueue.size();
+	for (int i = 0; i < size; i++){
+		TMessageContainer_ptr temp = move_TMessageContainer_ptr(this->fQueue.front());
+		this->fQueue.pop();
+		temp.reset();
+	}
+
+	this->fMustExit.store(true, boost::memory_order_release);
 	this->fCond.notify_all();
-
-	//unique_lock<mutex> lock(this->fMutex);
-
-	//int size = (int)this->fQueue.size();
-	//for (int i = 0; i < size; i++){
-	//	TMessageContainer_ptr temp = move_TMessageContainer_ptr(this->fQueue.front());
-	//	this->fQueue.pop();
-	//	temp.reset();
-	//}
 }
 
 bool TMessageQueue::isEmpty(){
@@ -80,17 +84,8 @@ TMessageContainer_ptr TMessageQueue::popMessage(){
 	}
 
 	//return null object if should exit
-	if (this->fMustExit.load(boost::memory_order_acquire)){
-		//empty queue before leaving
-		int size = (int)this->fQueue.size();
-		for (int i = 0; i < size; i++){
-			TMessageContainer_ptr temp = move_TMessageContainer_ptr(this->fQueue.front());
-			this->fQueue.pop();
-			temp.reset();
-		}
-
+	if (this->fMustExit.load(boost::memory_order_acquire))
 		return nullptr;
-	}
 
 	TMessageContainer_ptr res = move_TMessageContainer_ptr(this->fQueue.front());
 	this->fQueue.pop();
