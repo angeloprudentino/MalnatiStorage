@@ -970,7 +970,7 @@ const bool TStorageClient::restoreVersion(const string& aUser, const string& aPa
 							exit = true;
 						}
 						catch (ESqliteDBException& e){
-							this->onRestoreError("Unable to store information on local SQLite DB: " + e.getMessage(), aStoreOnLocalDB);
+							this->onRestoreError("Unable to store information on local SQLite DB: " + unmarshalString(e.getMessage()), aStoreOnLocalDB);
 							if (fl != nullptr){
 								fl->clear();
 								fl.reset();
