@@ -635,7 +635,7 @@ void TStorageClient::updateCurrentVersion(const string& aUser, const string& aPa
 			lastLocal = this->fSqliteDB->getLastVersion(aUser);
 		}
 		catch (ESqliteDBException& e){
-			this->onUpdateError("Unable to get last version stored locally!");
+			this->onUpdateError("Unable to get last version stored locally: " + unmarshalString(e.getMessage()));
 			return;
 		}
 
@@ -773,7 +773,7 @@ void TStorageClient::updateCurrentVersion(const string& aUser, const string& aPa
 							}
 						}
 						catch (ESqliteDBException& e){
-							errorToFile("TStorageClient", "updateCurrentVersion", "Unable to store information on local SQLite DB!");
+							errorToFile("TStorageClient", "updateCurrentVersion", "Unable to store information on local SQLite DB: " + e.getMessage());
 							if (fl != nullptr){
 								fl->clear();
 								fl.reset();
@@ -970,7 +970,7 @@ const bool TStorageClient::restoreVersion(const string& aUser, const string& aPa
 							exit = true;
 						}
 						catch (ESqliteDBException& e){
-							this->onRestoreError("Unable to store information on local SQLite DB!", aStoreOnLocalDB);
+							this->onRestoreError("Unable to store information on local SQLite DB: " + e.getMessage(), aStoreOnLocalDB);
 							if (fl != nullptr){
 								fl->clear();
 								fl.reset();
