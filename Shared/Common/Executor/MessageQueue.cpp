@@ -100,7 +100,6 @@ void TMessageQueue::pushMessage(TMessageContainer_ptr& aMsg){
 
 	try{
 		unique_lock<mutex> lock(this->fMutex);
-
 		this->fQueue.push(move_TMessageContainer_ptr(aMsg));
 	}
 	catch (...){

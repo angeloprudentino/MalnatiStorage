@@ -25,16 +25,19 @@ namespace StorageClientWPF
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : MetroWindow//StorageClientController
+    public partial class MainWindow : MetroWindow, StorageClientController
     {
         private const int UPDATE_INTERVAL = 300 * 1000;
+        private const int PING_INTERVAL = 60 * 1000;
 
         private string username;
         private string password;
         private string path;
+        private string token;
 
         private StorageClientCore core;
-        private Timer timer;
+        private Timer updateTimer;
+        private Timer pingTimer;
 
         public MainWindow()
         {
@@ -44,88 +47,12 @@ namespace StorageClientWPF
             this.Register_button.Visibility = Visibility.Collapsed;
             this.back_button.Visibility = Visibility.Collapsed;
             this.folder_label.Visibility = Visibility.Collapsed;
-           // this.folder_picker.Visibility = Visibility.Collapsed;
+            // this.folder_picker.Visibility = Visibility.Collapsed;
             this.folder_testbox.Visibility = Visibility.Collapsed;
             this.LogOut.Visibility = Visibility.Collapsed;
             this.SoWriteGrid.Visibility = Visibility.Collapsed;
             this.RestoreButton.Visibility = Visibility.Collapsed;
             this.progressRing.IsActive = false;
-
-        }
-
-        private void Button_Click_1(object sender, RoutedEventArgs e)
-        {
-            //Click on Register            
-            this.user.Visibility = Visibility.Visible;
-            this.user_label.Visibility = Visibility.Visible;
-            this.pass.Visibility = Visibility.Visible;
-            this.pass_label.Visibility = Visibility.Visible;
-            this.repeat_pass.Visibility = Visibility.Visible;
-            this.second_pass_label.Visibility = Visibility.Visible;
-            this.Register_button.Visibility = Visibility.Visible;
-        }
-
-
-        private void LoginButton_Click(object sender, RoutedEventArgs e)
-        {
-            //ha fatto login,
-            //eliminare tutto ciò che è visualizzato e stampare la grid
-            this.username = this.user.Text;
-            this.password = this.pass.Password;
-
-            this.onLoginSuccess("blabla");
-
-            ////disegno dei file come prova
-            //List<UserFile> l = new List<UserFile>();
-            //string name1 = "‪C:\\Users\\Daniele\\Pictures\\maxresdefault.jpg";
-            //UserFile f1 = new UserFile(name1);
-            //l.Add(f1);
-            //this.DrawFileBottons(l);
-
-            //if (this.core == null)
-            //    this.core = new StorageClientCore(this);
-
-            //if (!this.core.issueRequest(new LoginRequest(this.username, this.password)))
-            //    this.onLoginError("Login temporary not available! Try later.");
-            //else
-            //    this.progressRing.IsActive = true;
-        }
-
-        private void relaunchUpdate()
-        {
-            //if (timer == null)
-            //{
-            //    timer = new Timer();
-            //    timer.Tick += new EventHandler(startUpdate);
-            //    timer.Interval = UPDATE_INTERVAL;
-            //    timer.Start();
-            //}
-
-            if (this.timer == null)
-            {
-                this.timer = new Timer();
-                this.timer.Tick += new EventHandler(startUpdate);
-                this.timer.Interval = UPDATE_INTERVAL;
-            }
-            this.timer.Start();
-        }
-
-        private void startUpdate(object sender, EventArgs e)
-        {
-            if (this.timer != null)
-            {
-                this.timer.Stop();
-                //timer.Dispose();
-                //timer = null;
-            }
-
-            //if (this.core == null)
-            //    this.core = new StorageClientCore(this);
-
-            //if (!this.core.issueRequest(new UpdateRequest(this.username, this.password, this.path)))
-            //    this.onUpdateError("Update temporary not available! Try later.");
-            //else
-            //    this.progressRing.IsActive = true;
         }
 
         public void onGetVersionsError(string aMsg)
@@ -133,7 +60,8 @@ namespace StorageClientWPF
             if (this.Dispatcher.CheckAccess())
             {
                 //update UI safely
-                this.status_label.Content = aMsg;
+                this.showErrorMessage("Unexpected Error", aMsg);
+                this.progressRing.IsActive = false;
             }
             else
             {
@@ -147,6 +75,7 @@ namespace StorageClientWPF
             {
                 //update UI safely
                 this.DrawVersionBottons(aVersionsList);
+                this.progressRing.IsActive = false;
             }
             else
             {
@@ -159,8 +88,9 @@ namespace StorageClientWPF
             if (this.Dispatcher.CheckAccess())
             {
                 //update UI safely
-                this.status_label.Content = aMsg;
-                this.showErrorMessage("Invalid Credentials", aMsg);
+                this.showErrorMessage("Unexpected Error", aMsg);
+                this.progressRing.IsActive = false;
+                this.LoginButton.IsEnabled = true;
             }
             else
             {
@@ -168,22 +98,16 @@ namespace StorageClientWPF
             }
         }
 
-        //per mostrare un errore all' utente
-        private async Task showErrorMessage(string title,string message)
-        {
-            await this.ShowMessageAsync(title,message);
-        }
-
         public void onLoginSuccess(string aPath)
         {
             if (this.Dispatcher.CheckAccess())
             {
                 //update UI safely
-                //this.path = aPath;                
+                this.path = aPath;
                 this.startUpdate(this, null);
 
                 this.progressRing.IsActive = false;
-                //aggiornamento grafica
+                this.LoginButton.IsEnabled = true;
                 this.user_label.Visibility = Visibility.Collapsed;
                 this.user.Visibility = Visibility.Collapsed;
                 this.pass_label.Visibility = Visibility.Collapsed;
@@ -198,11 +122,7 @@ namespace StorageClientWPF
                 this.folder_testbox.Visibility = Visibility.Collapsed;
                 this.LogOut.Visibility = Visibility.Visible;
                 this.RestoreButton.Visibility = Visibility.Visible;
-
-                this.status_label.Content = "Utente Loggato";
                 this.SoWriteGrid.Visibility = Visibility.Visible;
-
-
             }
             else
             {
@@ -215,7 +135,9 @@ namespace StorageClientWPF
             if (this.Dispatcher.CheckAccess())
             {
                 //update UI safely
-                this.showErrorMessage("Registration Error", aMsg);
+                this.showErrorMessage("Unexpected Error", aMsg);
+                this.progressRing.IsActive = false;
+                this.Register_button.IsEnabled = true;
             }
             else
             {
@@ -228,7 +150,9 @@ namespace StorageClientWPF
             if (this.Dispatcher.CheckAccess())
             {
                 //update UI safely
-                this.status_label.Content = "Registered";
+                this.progressRing.IsActive = false;
+                this.Register_button.IsEnabled = true;
+
                 this.startUpdate(this, null);
 
                 //aggiorno la grafica
@@ -249,14 +173,35 @@ namespace StorageClientWPF
                 this.label_reg.Visibility = Visibility.Collapsed;
                 this.LogOut.Visibility = Visibility.Visible;
                 this.RestoreButton.Visibility = Visibility.Visible;
-
                 this.SoWriteGrid.Visibility = Visibility.Visible;
-                this.status_label.Content = "Utente registrato";
-
             }
             else
             {
                 Dispatcher.BeginInvoke((Action)(() => onRegistrationSucces()));
+            }
+        }
+
+        public void onRestoreStart(string aToken)
+        {
+            if (this.Dispatcher.CheckAccess())
+            {
+                //update UI safely
+                this.status_label.Content = "Restore started";
+                this.status_label.ToolTip = this.status_label.Content;
+                this.progressRing.IsActive = true;
+                this.token = aToken;
+
+                if (this.pingTimer == null)
+                {
+                    this.pingTimer = new Timer();
+                    this.pingTimer.Tick += new EventHandler(pingSession);
+                    this.pingTimer.Interval = PING_INTERVAL;
+                }
+                this.pingTimer.Start();
+            }
+            else
+            {
+                Dispatcher.BeginInvoke((Action)(() => onRestoreStart(aToken)));
             }
         }
 
@@ -265,7 +210,11 @@ namespace StorageClientWPF
             if (this.Dispatcher.CheckAccess())
             {
                 //update UI safely
-
+                this.status_label.Content = aMsg;
+                this.status_label.ToolTip = this.status_label.Content;
+                this.progressRing.IsActive = false;
+                if (this.pingTimer != null)
+                    this.pingTimer.Stop();
             }
             else
             {
@@ -278,7 +227,11 @@ namespace StorageClientWPF
             if (this.Dispatcher.CheckAccess())
             {
                 //update UI safely
-
+                this.status_label.Content = "Restore of version " + aVersion + " [" + aVersionDate + "] completed";
+                this.status_label.ToolTip = this.status_label.Content;
+                this.progressRing.IsActive = false;
+                if (this.pingTimer != null)
+                    this.pingTimer.Stop();
             }
             else
             {
@@ -292,12 +245,15 @@ namespace StorageClientWPF
             {
                 //update UI safely
                 this.status_label.Content = aMsg;
+                this.status_label.ToolTip = this.status_label.Content;
                 this.relaunchUpdate();
                 this.progressRing.IsActive = false;
+                if (this.pingTimer != null)
+                    this.pingTimer.Stop();
 
-                //               //riabilito i bottoni
                 this.RestoreButton.IsEnabled = true;
                 this.LogOut.IsEnabled = true;
+
             }
             else
             {
@@ -305,13 +261,23 @@ namespace StorageClientWPF
             }
         }
 
-        public void onUpdateStart()
+        public void onUpdateStart(string aToken)
         {
             if (this.Dispatcher.CheckAccess())
             {
                 //update UI safely
                 this.status_label.Content = "Update started";
+                this.status_label.ToolTip = this.status_label.Content;
                 this.progressRing.IsActive = true;
+                this.token = aToken;
+
+                if (this.pingTimer == null)
+                {
+                    this.pingTimer = new Timer();
+                    this.pingTimer.Tick += new EventHandler(pingSession);
+                    this.pingTimer.Interval = PING_INTERVAL;
+                }
+                this.pingTimer.Start();
 
                 //disabilito i bottoni
                 this.RestoreButton.IsEnabled = false;
@@ -320,7 +286,7 @@ namespace StorageClientWPF
             }
             else
             {
-                Dispatcher.BeginInvoke((Action)(() => onUpdateStart()));
+                Dispatcher.BeginInvoke((Action)(() => onUpdateStart(aToken)));
             }
         }
 
@@ -328,11 +294,13 @@ namespace StorageClientWPF
         {
             if (this.Dispatcher.CheckAccess())
             {
-
                 //update UI safely
-                this.status_label.Content = "Update finished: vesion " + aVersion + " [" + aVersionDate + "]";
+                this.status_label.Content = "Update finished: stored vesion " + aVersion + " at " + aVersionDate;
+                this.status_label.ToolTip = this.status_label.Content;
                 this.relaunchUpdate();
                 this.progressRing.IsActive = false;
+                if (this.pingTimer != null)
+                    this.pingTimer.Stop();
 
                 this.DrawFileBottons(aFileList);
                 //riabilito i bottoni
@@ -345,14 +313,62 @@ namespace StorageClientWPF
             }
         }
 
+        private void LoginButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.username = this.user.Text;
+            this.password = this.pass.Password;
+
+            if (this.core == null)
+                this.core = new StorageClientCore(this);
+
+            if (!this.core.issueRequest(new LoginRequest(this.username, this.password)))
+                this.onLoginError("Login temporarly not available! Try later.");
+            else
+            {
+                this.progressRing.IsActive = true;
+                this.LoginButton.IsEnabled = false;
+            }
+        }
+
+        private void relaunchUpdate()
+        {
+            if (this.updateTimer == null)
+            {
+                this.updateTimer = new Timer();
+                this.updateTimer.Tick += new EventHandler(startUpdate);
+                this.updateTimer.Interval = UPDATE_INTERVAL;
+            }
+            this.updateTimer.Start();
+        }
+
+        private void startUpdate(object sender, EventArgs e)
+        {
+            if (this.updateTimer != null)
+                this.updateTimer.Stop();
+
+            if (this.core != null)
+            {
+                if (!this.core.issueRequest(new UpdateRequest(this.username, this.password, this.path)))
+                    this.onUpdateError("Update temporarly not available! Try later.");
+                else
+                    this.progressRing.IsActive = true;
+            }
+        }
+
+        private void pingSession(object sender, EventArgs e)
+        {
+            if (this.core != null)
+                this.core.issueRequest(new PingRequest(this.token));
+        }
+
         private void Window_Closed(object sender, EventArgs e)
-        {   
+        {
             //do clean-up operations
-            if(this.core != null)
+            if (this.core != null)
                 this.core.Dispose();
 
-            if(this.timer != null)
-                this.timer.Dispose();
+            if (this.updateTimer != null)
+                this.updateTimer.Dispose();
         }
 
         //gestri eventi per la label "register" vicino al Login
@@ -371,11 +387,12 @@ namespace StorageClientWPF
             this.LoginButton.Visibility = Visibility.Visible;
             this.label_reg.Visibility = Visibility.Visible;
             this.folder_label.Visibility = Visibility.Visible;
-        //    this.folder_picker.Visibility = Visibility.Visible;
+            //    this.folder_picker.Visibility = Visibility.Visible;
             this.folder_testbox.Visibility = Visibility.Visible;
             this.LoginButton.Visibility = Visibility.Collapsed;
             this.label_reg.Visibility = Visibility.Collapsed;
             this.status_label.Content = " ";
+            this.status_label.ToolTip = this.status_label.Content;
 
             //sistemare le textbox, svuotarle e settare a false il tasto cancella
             this.user.Text = "";
@@ -409,7 +426,7 @@ namespace StorageClientWPF
             this.second_pass_label.Visibility = Visibility.Collapsed;
             this.Register_button.Visibility = Visibility.Collapsed;
             this.folder_label.Visibility = Visibility.Collapsed;
-        //    this.folder_picker.Visibility = Visibility.Collapsed;
+            //    this.folder_picker.Visibility = Visibility.Collapsed;
             this.folder_testbox.Visibility = Visibility.Collapsed;
             this.LoginButton.Visibility = Visibility.Visible;
             this.label_reg.Visibility = Visibility.Visible;
@@ -424,13 +441,12 @@ namespace StorageClientWPF
             this.repeat_pass.SetValue(TextBoxHelper.ClearTextButtonProperty, false);
 
             this.status_label.Content = "";
+            this.status_label.ToolTip = this.status_label.Content;
+            this.progressRing.IsActive = false;
         }
-
 
         private void LogOut_Click(object sender, RoutedEventArgs e)
         {
-            this.user_label.Text = "Username ";
-            
             this.user_label.Visibility = Visibility.Visible;
             this.user.Visibility = Visibility.Visible;
             this.pass_label.Visibility = Visibility.Visible;
@@ -438,14 +454,22 @@ namespace StorageClientWPF
             this.LoginButton.Visibility = Visibility.Visible;
             this.label_reg.Visibility = Visibility.Visible;
             this.LogOut.Visibility = Visibility.Collapsed;
-            this.status_label.Content = "Utente LogOut";
             this.RestoreButton.Visibility = Visibility.Collapsed;
-
             WriteGrid.RowDefinitions.Clear();
             WriteGrid.Children.Clear();
-            
-
             this.SoWriteGrid.Visibility = Visibility.Collapsed;
+            this.status_label.Content = "";
+            this.status_label.ToolTip = this.status_label.Content;
+            this.progressRing.IsActive = false;
+
+            if (this.updateTimer != null)
+                this.updateTimer.Stop();
+
+            if (this.core != null)
+                this.core.issueRequest(new LogoutRequest());
+
+            core.Dispose();
+            core = null;
         }
 
         private void Register_button_Click(object sender, RoutedEventArgs e)
@@ -467,22 +491,36 @@ namespace StorageClientWPF
                     this.password = this.pass.Password;
                     this.path = this.folder_testbox.Text;
 
-                    //if (core == null)
-                    //    core = new StorageClientCore(this);
+                    if (core == null)
+                        core = new StorageClientCore(this);
 
-                    //if (!this.core.issueRequest(new RegistrRequest(username, password, path)))
-                    //    this.onRegistrationError("Registration temporary not available! Try later.");
+                    if (!this.core.issueRequest(new RegistrRequest(username, password, path)))
+                        this.onRegistrationError("Registration temporary not available! Try later.");
+                    else
+                    {
+                        this.progressRing.IsActive = true;
+                        this.Register_button.IsEnabled = false;
+                    }
                 }
                 else
                 {
-                    this.showErrorMessage(" Error", "Insert a valid folder");
+                    this.showErrorMessage("Unexpected Error", "Please select a valid folder");
                 }
             }
             catch (Exception ex)
             {
-                this.showErrorMessage(" Error", "Insert a valid folder");
+                this.showErrorMessage("Unexpected Error", "Please select a valid folder");
             }
 
+        }
+
+        private void RestoreButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (this.core == null)
+                this.core = new StorageClientCore(this);
+
+            if (!this.core.issueRequest(new GetVerRequest(this.username, this.password)))
+                this.onRestoreError("Restore temporary not available! Try later.");
         }
 
         private void DrawFileBottons(List<UserFile> aList)
@@ -519,7 +557,7 @@ namespace StorageClientWPF
                 //grid_files_versions.Children.Add(sp);
                 WriteGrid.Children.Add(sp);
             }
-     
+
         }
 
         private void DrawVersionBottons(List<UserVersion> aVersionsList)
@@ -528,7 +566,7 @@ namespace StorageClientWPF
             WriteGrid.RowDefinitions.Clear();
             WriteGrid.Children.Clear();
 
-            this.user_label.Text = "Available versions ";
+            this.user_label.Text = "Available versions: ";
             this.user_label.Visibility = Visibility.Visible;
             //ogni entry indica il numero di versione e la data
 
@@ -540,7 +578,8 @@ namespace StorageClientWPF
                 WriteGrid.RowDefinitions.Add(row);
                 int i = WriteGrid.RowDefinitions.Count;
                 System.Windows.Controls.Label lb = new System.Windows.Controls.Label();
-                lb.Content = v.getVersionID() + ": " + v.getVersionDate();
+                lb.ToolTip = v.getVersionID().ToString();
+                lb.Content = "Version " + v.getVersionID() + ": " + v.getVersionDate();
                 lb.MouseUp += lb_MouseUpVersion;
                 lb.MouseEnter += lb_MouseEnter;
                 lb.MouseLeave += lb_MouseLeave;
@@ -558,19 +597,19 @@ namespace StorageClientWPF
 
         }
 
-        void lb_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+        private void lb_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
         {
             System.Windows.Controls.Label lb = (System.Windows.Controls.Label)sender;
             lb.Background = new SolidColorBrush(Colors.White);
         }
 
-        void lb_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
+        private void lb_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
         {
             System.Windows.Controls.Label lb = (System.Windows.Controls.Label)sender;
             lb.Background = this.progressRing.Foreground;
         }
 
-        void lb_MouseUp(object sender, MouseButtonEventArgs e)
+        private void lb_MouseUp(object sender, MouseButtonEventArgs e)
         {
             //evento per gestire l' apertura del file
             System.Windows.Controls.Label lb = (System.Windows.Controls.Label)sender;
@@ -582,16 +621,17 @@ namespace StorageClientWPF
             }
             catch (Exception ex)
             {
-                this.showErrorMessage("Error", ex.Message);
+                this.showErrorMessage("Unexpected Error", "Cannot open the selected file");
             }
         }
 
-        void lb_MouseUpVersion(object sender, MouseButtonEventArgs e)
+        private void lb_MouseUpVersion(object sender, MouseButtonEventArgs e)
         {
 
             System.Windows.Controls.Label lb = (System.Windows.Controls.Label)sender;
 
             String Version = (String)lb.Content;
+            int ver = Int32.Parse((String)lb.ToolTip);
             //aprire un folder picker, per scegliere dove ripristinare 
             FolderBrowserDialog folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
             // Set the help text description for the FolderBrowserDialog.
@@ -601,23 +641,16 @@ namespace StorageClientWPF
             // Do not allow the user to create new files via the FolderBrowserDialog.
             folderBrowserDialog1.ShowNewFolderButton = false;
             folderBrowserDialog1.ShowDialog();
-            //if (folderBrowserDialog1.ShowDialog() == DialogResult.HasValue)
-            //{
             string path = folderBrowserDialog1.SelectedPath;
-            Debug.WriteLine("restore path: "+path);
-            this.status_label.Content = "Trying to restore version"+ Version + "in path:" + path;
-        }
+            Debug.WriteLine("restore path: " + path);
+            this.status_label.Content = "Trying to restore version " + Version + " in path:" + path;
+            this.status_label.ToolTip = this.status_label.Content;
 
-        private void RestoreButton_Click(object sender, RoutedEventArgs e)
-        {
-            System.Windows.Controls.Button b = (System.Windows.Controls.Button)sender;
-            //QUI
-            
-            //if (core == null)
-            //    core = new StorageClientCore(this);
+            if (core == null)
+                core = new StorageClientCore(this);
 
-            //if (!this.core.issueRequest(new GetVerRequest(this.username, this.password)))
-            //    this.onRestoreError("Restore temporary not available! Try later.");
+            if (!this.core.issueRequest(new RestoreRequest(this.username, this.password, ver, path)))
+                this.onRestoreError("Restore temporary not available! Try later.");
         }
 
         private void folder_testbox_MouseUp(object sender, MouseButtonEventArgs e)
@@ -631,16 +664,15 @@ namespace StorageClientWPF
             // Do not allow the user to create new files via the FolderBrowserDialog.
             folderBrowserDialog1.ShowNewFolderButton = false;
             folderBrowserDialog1.ShowDialog();
-            //if (folderBrowserDialog1.ShowDialog() == DialogResult.HasValue)
-            //{
             string path = folderBrowserDialog1.SelectedPath;
             Debug.WriteLine(path);
             this.folder_testbox.Text = path;
         }
 
-        private void ProgressBar_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        //per mostrare un errore all' utente
+        private async Task showErrorMessage(string title, string message)
         {
-
+            await this.ShowMessageAsync(title, message);
         }
 
         private void user_TextChanged(object sender, TextChangedEventArgs e)
@@ -681,6 +713,5 @@ namespace StorageClientWPF
             }
             Debug.WriteLine("password cambiato");
         }
-
     }
 }

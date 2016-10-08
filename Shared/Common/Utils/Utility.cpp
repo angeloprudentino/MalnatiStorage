@@ -26,8 +26,13 @@
 #define RAND_LEN 20
 #define SEP '$'
 #define SEP_ESC "&#36"
+#ifdef _DEBUG
 #define LOG_PATH "Log"
-#define STORAGE_ROOT_PATH "StoragePoint\\"
+#define STORAGE_ROOT_PATH "StoragePoint"
+#else
+#define LOG_PATH "C:\\StorageServer\\Log"
+#define STORAGE_ROOT_PATH "C:\\StorageServer\\StoragePoint"
+#endif
 
 using namespace System;
 using namespace std;
@@ -570,9 +575,8 @@ string_ptr readFile(const path& aPath){
 			throw EFilesystemException("an error is occurred closing file " + aPath.string());
 	}
 
-#ifdef _DEBUG
 	string_ptr res = nullptr;
-
+#ifdef _DEBUG
 	if (contents != nullptr){
 		try{
 			res = opensslB64Encode((char*)contents->c_str(), (int)contents->length());
@@ -583,13 +587,13 @@ string_ptr readFile(const path& aPath){
 			throw EFilesystemException("Error encoding " + aPath.string() + ": " + e.getMessage());
 		}
 	}
-	return move_string_ptr(res);
 #else
-	if (contents != nullptr)
-		res = make_string_ptr(contents)
-
-	return move_string_ptr(contents);
+	if (contents != nullptr){
+		res = make_string_ptr(contents->c_str());
+		delete contents;
+	}
 #endif
+	return move_string_ptr(res);
 }
 
 void removeDir(const path& aPath){
@@ -604,43 +608,38 @@ void removeDir(const path& aPath){
 }
 
 string buildServerPathPrefix(const string& aUser, const int aVersion){
-	string res = STORAGE_ROOT_PATH;
-
 	if (aUser.empty())
 		throw EFilesystemException("error in buildServerPathPrefix(): aUser is empty!");
 
 	if(aVersion <= 0)
 		throw EFilesystemException("error in buildServerPathPrefix(): aVersion is lower than 1!");
 
-#ifdef _DEBUG
-	res += aUser + "\\" + to_string(aVersion);
-#else
-	string_ptr coded_u = nullptr;
-	string_ptr coded_v = nullptr;
-	try{
-		coded_u = opensslB64PathChecksum(aUser);
-		if (coded_u != nullptr)
-			throw EFilesystemException("error in buildServerPathPrefix(): coded_u is NULL!");
-
-		coded_v = opensslB64PathChecksum(to_string(aVersion));
-		if (coded_v != nullptr){
-			if (coded_u != nullptr)
-				coded_u.reset();
-			throw EFilesystemException("error in buildServerPathPrefix(): coded_v is NULL!");
-		}
-
-		res += *coded_u + "\\" + *coded_v;
-	}
-	catch (EOpensslException e){
-		throw EFilesystemException("error in buildServerPathPrefix(): " + e.getMessage());
-	}
-
-	if (coded_u != nullptr)
-		coded_u.reset();
-	if (coded_v != nullptr)
-		coded_v.reset();
-#endif
-
+	string res = STORAGE_ROOT_PATH + string("\\") + aUser + string("\\") + to_string(aVersion);
 	return res;
+}
+
+void moveAllFiles(const path& aSrc, const path& aDst){
+	boost::system::error_code ec;
+
+	if (exists(aSrc)){
+		if (is_regular_file(aSrc)){
+			path parent = aDst.parent_path();
+			if (!exists(parent)){
+				create_directories(parent, ec);
+				if (ec)
+					throw EFilesystemException("Error creating directory path: " + parent.string() + " -> " + ec.message());
+			}
+
+			rename(aSrc, aDst, ec);
+			if (ec)
+				throw EFilesystemException("Error renaming path: " + aSrc.string() + " into:" + aDst.string() + " -> " + ec.message());
+		}
+		else if (is_directory(aSrc)){
+			for (directory_entry& x : directory_iterator(aSrc)){
+				path fName = path(x.path().string().substr(aSrc.string().length()));
+				moveAllFiles(x.path(), aDst / fName);
+			}
+		}
+	}
 }
 #pragma endregion

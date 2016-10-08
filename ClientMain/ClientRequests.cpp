@@ -64,6 +64,15 @@ RestoreRequest::RestoreRequest(String^ aUser, String^ aPass, const int aVersion,
 }
 
 
+//////////////////////////////////
+//         PingRequest	        //
+//////////////////////////////////
+PingRequest::PingRequest(String^ aToken){
+	this->fID = PING_REQ;
+	this->fToken = aToken;
+}
+
+
 /////////////////////////////////////
 //         RequestsQueue           //
 /////////////////////////////////////

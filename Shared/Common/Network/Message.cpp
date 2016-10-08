@@ -48,7 +48,7 @@ using namespace boost::filesystem;
 
 //Message names
 #define MSG_NUM 24
-std::string messageNames[] = {
+static string messageNames[] = {
 	/*  0*/ "USER_REG_REQ",
 	/*  1*/ "USER_REG_REPLY",
 	/*  2*/ "UPDATE_START_REQ",
@@ -214,7 +214,12 @@ TUserRegistrReqMessage::TUserRegistrReqMessage(TBaseMessage_ptr& aBase){
 TUserRegistrReqMessage::TUserRegistrReqMessage(const string& aUser, const string& aPass, const string& aPath){
 	this->fID = USER_REG_REQ_ID;
 	this->fUser = make_string_ptr(aUser);
-	this->fPass = make_string_ptr(aPass);
+	try{
+		this->fPass = opensslB64Checksum(aPass, true);
+	}
+	catch (EOpensslException& e){
+		throw EMessageException("Error encrypting password: " + e.getMessage());
+	}
 	this->fPath = make_string_ptr(aPath);
 }
 
@@ -357,7 +362,12 @@ TUpdateStartReqMessage::TUpdateStartReqMessage(TBaseMessage_ptr& aBase){
 TUpdateStartReqMessage::TUpdateStartReqMessage(const string& aUser, const string& aPass){
 	this->fID = UPDATE_START_REQ_ID;
 	this->fUser = make_string_ptr(aUser);
-	this->fPass = make_string_ptr(aPass);
+	try{
+		this->fPass = opensslB64Checksum(aPass, true);
+	}
+	catch (EOpensslException& e){
+		throw EMessageException("Error encrypting password: " + e.getMessage());
+	}
 }
 
 TUpdateStartReqMessage::~TUpdateStartReqMessage(){
@@ -600,7 +610,7 @@ void TAddNewFileMessage::decodeMessage(){
 	this->fFileContent = move_string_ptr(this->fItems->at(5));
 }
 
-bool TAddNewFileMessage::verifyChecksum(){
+const bool TAddNewFileMessage::verifyChecksum(){
 	bool checksumMatches = false;
 	string_ptr myChecksum = nullptr;
 	try{
@@ -742,7 +752,7 @@ void TUpdateFileMessage::decodeMessage(){
 	this->fFileContent = move_string_ptr(this->fItems->at(5));
 }
 
-bool TUpdateFileMessage::verifyChecksum(){
+const bool TUpdateFileMessage::verifyChecksum(){
 	bool checksumMatches = false;
 	string_ptr myChecksum = nullptr;
 	try{
@@ -1061,7 +1071,12 @@ TGetVersionsReqMessage::TGetVersionsReqMessage(TBaseMessage_ptr& aBase){
 TGetVersionsReqMessage::TGetVersionsReqMessage(const string& aUser, const string& aPass){
 	this->fID = GET_VERSIONS_REQ_ID;
 	this->fUser = make_string_ptr(aUser);
-	this->fPass = make_string_ptr(aPass);
+	try{
+		this->fPass = opensslB64Checksum(aPass, true);
+	}
+	catch (EOpensslException& e){
+		throw EMessageException("Error encrypting password: " + e.getMessage());
+	}
 }
 
 TGetVersionsReqMessage::~TGetVersionsReqMessage(){
@@ -1246,7 +1261,12 @@ TGetLastVerReqMessage::TGetLastVerReqMessage(TBaseMessage_ptr& aBase){
 TGetLastVerReqMessage::TGetLastVerReqMessage(const string& aUser, const string& aPass){
 	this->fID = GET_LAST_VERSION_REQ_ID;
 	this->fUser = make_string_ptr(aUser);
-	this->fPass = make_string_ptr(aPass);
+	try{
+		this->fPass = opensslB64Checksum(aPass, true);
+	}
+	catch (EOpensslException& e){
+		throw EMessageException("Error encrypting password: " + e.getMessage());
+	}
 }
 
 TGetLastVerReqMessage::~TGetLastVerReqMessage(){
@@ -1379,7 +1399,12 @@ TRestoreVerReqMessage::TRestoreVerReqMessage(TBaseMessage_ptr& aBase){
 TRestoreVerReqMessage::TRestoreVerReqMessage(const string& aUser, const string& aPass, const unsigned int aVersion){
 	this->fID = RESTORE_VER_REQ_ID;
 	this->fUser = make_string_ptr(aUser);
-	this->fPass = make_string_ptr(aPass);
+	try{
+		this->fPass = opensslB64Checksum(aPass, true);
+	}
+	catch (EOpensslException& e){
+		throw EMessageException("Error encrypting password: " + e.getMessage());
+	}
 	this->fVersion = aVersion;
 }
 
@@ -1550,7 +1575,6 @@ TRestoreFileMessage::TRestoreFileMessage(const string& aBasePath, const string& 
 		throw EMessageException("TRestoreFileMessage: " + e.getMessage());
 	}
 
-
 	this->fFileDate = aFileDate;
 }
 
@@ -1622,7 +1646,7 @@ void TRestoreFileMessage::decodeMessage(){
 	this->fFileContent = move_string_ptr(this->fItems->at(4));
 }
 
-bool TRestoreFileMessage::verifyChecksum(){
+const bool TRestoreFileMessage::verifyChecksum(){
 	bool checksumMatches = false;
 	string_ptr myChecksum = nullptr;
 	try{
@@ -1924,7 +1948,12 @@ TVerifyCredReqMessage::TVerifyCredReqMessage(TBaseMessage_ptr& aBase){
 TVerifyCredReqMessage::TVerifyCredReqMessage(const string& aUser, const string& aPass){
 	this->fID = VERIFY_CRED_REQ_ID;
 	this->fUser = make_string_ptr(aUser);
-	this->fPass = make_string_ptr(aPass);
+	try{
+		this->fPass = opensslB64Checksum(aPass, true);
+	}
+	catch (EOpensslException& e){
+		throw EMessageException("Error encrypting password: " + e.getMessage());
+	}
 }
 
 TVerifyCredReqMessage::~TVerifyCredReqMessage(){

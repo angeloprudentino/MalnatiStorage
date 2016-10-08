@@ -39,7 +39,7 @@ typedef struct{
 //////////////////////////////////////
 //        EBaseException	        //
 //////////////////////////////////////
-public class EBaseException : public std::exception {
+class EBaseException : public std::exception {
 private:
 	string fMessage;
 public:
@@ -100,3 +100,4 @@ void storeFile(const path& aPath, string_ptr& aFileContent); //throws EFilesyste
 string_ptr readFile(const path& aPath); //throws EFilesystemException
 void removeDir(const path& aPath); //throws EFilesystemException
 string buildServerPathPrefix(const string& aUser, const int aVersion); //throws EFilesystemException
+void moveAllFiles(const path& aSrc, const path& aDst); //throws EFilesystemException

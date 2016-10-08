@@ -39,15 +39,6 @@ private:
 
 	const bool checkMessageToSend(const string& aClassName, const string& aFuncName, TBaseMessage_ptr& aBMsg);
 
-public:
-	TServerSockController(int AServerPort, io_service* aMainIoService, IServerBaseController* aCallback);
-	TServerSockController(const TServerSockController&) = delete;            // disable copying
-	TServerSockController& operator=(const TServerSockController&) = delete; // disable assignment
-	virtual ~TServerSockController();
-
-	const bool startSocket();
-	void stopSocket();
-	
 	void onServerReady(const bool aReadyState) override;
 	void onServerLog(const string& aClassName, const string& aFuncName, const string& aMsg) override;
 	void onServerWarning(const string& aClassName, const string& aFuncName, const string& aMsg) override;
@@ -60,6 +51,15 @@ public:
 	bool isMessageQueueEmpty() override;
 	TMessageContainer_ptr getMessageToProcess() override;
 	void sendMessage(TMessageContainer_ptr& aMsg, const bool aCloseAfterSend) override;
+
+public:
+	TServerSockController(int AServerPort, io_service* aMainIoService, IServerBaseController* aCallback);
+	TServerSockController(const TServerSockController&) = delete;            // disable copying
+	TServerSockController& operator=(const TServerSockController&) = delete; // disable assignment
+	virtual ~TServerSockController();
+
+	const bool startSocket();
+	void stopSocket();
 };
 
 

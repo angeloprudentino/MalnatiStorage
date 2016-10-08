@@ -55,9 +55,10 @@ public:
 	void onLoginError(String^ aMsg);
 	void onRegistrationSucces();
 	void onRegistrationError(String^ aMsg);
-	void onUpdateStart();
+	void onUpdateStart(String^ aToken);
 	void onUpdateSuccess(List<UserFile^>^ aFileList, const int aVersion, String^ aVersionDate);
 	void onUpdateError(String^ aMsg);
+	void onRestoreStart(String^ aToken);
 	void onRestoreSuccess(const int aVersion, String^ aVersionDate);
 	void onRestoreError(String^ aMsg);
 	void onGetVersionsSuccess(List<UserVersion^>^ aVersionsList);

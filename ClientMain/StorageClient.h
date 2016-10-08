@@ -10,13 +10,14 @@
 #pragma once
 #include <vcclr.h>
 #include "Utility.h"
+#include <boost/asio.hpp>
+#include <boost/atomic.hpp>
+#include <boost/thread/thread.hpp>
 #include "Message.h"
 #include "Session.h"
 #include "ClientController.h"
 #include "ClientRequests.h"
-#include <boost/asio.hpp>
-#include <boost/atomic.hpp>
-#include <boost/thread/thread.hpp>
+#include "SqliteClientDB.h"
 
 using namespace std;
 using namespace boost;
@@ -32,26 +33,39 @@ private:
 	io_service fMainIoService;
 	tcp::socket* fSock = nullptr;
 	boost::atomic<bool> fMustExit;
-	boost::atomic<bool> fSessionOpen;
+	//boost::atomic<bool> fLoggedIn;
 	gcroot<StorageClientController^> fCallbackObj = nullptr;
 	RequestsQueue* fQueue = nullptr;
 	thread* fExecutor = nullptr;
-	deadline_timer* fUpdateTimer = nullptr;
-	deadline_timer* fPingTimer = nullptr;
+	TSqliteDB* fSqliteDB = nullptr;
+
+	// Wrapper methods for UI callbacks invocators
+	void onLoginSuccess(String^ aPath);
+	void onLoginError(String^ aMsg);
+	void onRegistrationSucces();
+	void onRegistrationError(String^ aMsg);
+	void onUpdateStart(String^ aToken);
+	void onUpdateSuccess(List<UserFile^>^ aFileList, const int aVersion, String^ aVersionDate);
+	void onUpdateError(String^ aMsg);
+	void onRestoreStart(String^ aToken, const bool aStoreOnLocalDB);
+	void onRestoreSuccess(const int aVersion, String^ aVersionDate, const bool aStoreOnLocalDB, List<UserFile^>^ aFileList);
+	void onRestoreError(String^ aMsg, const bool aStoreOnLocalDB);
+	void onGetVersionsSuccess(List<UserVersion^>^ aVersionsList);
+	void onGetVersionsError(String^ aMsg);
 
 	void connect(const string& aHost, int aPort);
 	void disconnect();
 	const bool sendMsg(TBaseMessage_ptr& aMsg);
 	string_ptr readMsg();
-	const bool processDirectory(const string& aToken, const path& aRootPath, const path& aDirPath, List<UserFile^>^ aFileList);
-	const bool processFile(const string& aToken, const path& aRootPath, const path& aFilePath, List<UserFile^>^ aFileList);
-	void getLastVersion(const string& aUser, const string& aPass);
+	const bool processDirectory(const int aVersion, const string& aToken, const path& aRootPath, const path& aDirPath, List<UserFile^>^ aFileList, TUserFileList_ptr& aSqliteFileList);
+	const bool processFile(const int aVersion, const string& aToken, const path& aRootPath, const path& aFilePath, List<UserFile^>^ aFileList, TUserFileList_ptr& aSqliteFileList);
 	void verifyUser(const string& aUser, const string& aPass);
 	void registerUser(const string& aUser, const string& aPass, const string& aRootPath);
+	int getLastVersion(const string& aUser, const string& aPass);
 	void updateCurrentVersion(const string& aUser, const string& aPass, const string& aRootPath);
-	void restoreVersion(const string& aUser, const string& aPass, const int aVersion, const string& aDestPath);
+	const bool restoreVersion(const string& aUser, const string& aPass, const int aVersion, const string& aDestPath, const bool aStoreOnLocalDB);
 	void getAllVersions(const string& aUser, const string& aPass);
-	void pingServer(const string& aToken, const boost::system::error_code& aErr);
+	const bool pingServer(const string& aToken);
 	
 	void processRequest();
 
