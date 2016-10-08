@@ -1,0 +1,3 @@
+#ifndef SQLITE_RESOURCE_VERSION 
+#define SQLITE_RESOURCE_VERSION 1,0,2g 
+#endif 
