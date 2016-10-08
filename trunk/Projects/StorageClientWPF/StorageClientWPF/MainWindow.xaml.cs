@@ -25,7 +25,7 @@ namespace StorageClientWPF
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : MetroWindow, StorageClientController
+    public partial class MainWindow : MetroWindow//StorageClientController
     {
         private const int UPDATE_INTERVAL = 300 * 1000;
 
@@ -50,6 +50,7 @@ namespace StorageClientWPF
             this.SoWriteGrid.Visibility = Visibility.Collapsed;
             this.RestoreButton.Visibility = Visibility.Collapsed;
             this.progressRing.IsActive = false;
+
         }
 
         private void Button_Click_1(object sender, RoutedEventArgs e)
@@ -72,13 +73,22 @@ namespace StorageClientWPF
             this.username = this.user.Text;
             this.password = this.pass.Password;
 
-            if (this.core == null)
-                this.core = new StorageClientCore(this);
+            this.onLoginSuccess("blabla");
 
-            if (!this.core.issueRequest(new LoginRequest(this.username, this.password)))
-                this.onLoginError("Login temporary not available! Try later.");
-            else
-                this.progressRing.IsActive = true;
+            ////disegno dei file come prova
+            //List<UserFile> l = new List<UserFile>();
+            //string name1 = "‪C:\\Users\\Daniele\\Pictures\\maxresdefault.jpg";
+            //UserFile f1 = new UserFile(name1);
+            //l.Add(f1);
+            //this.DrawFileBottons(l);
+
+            //if (this.core == null)
+            //    this.core = new StorageClientCore(this);
+
+            //if (!this.core.issueRequest(new LoginRequest(this.username, this.password)))
+            //    this.onLoginError("Login temporary not available! Try later.");
+            //else
+            //    this.progressRing.IsActive = true;
         }
 
         private void relaunchUpdate()
@@ -109,13 +119,13 @@ namespace StorageClientWPF
                 //timer = null;
             }
 
-            if (this.core == null)
-                this.core = new StorageClientCore(this);
+            //if (this.core == null)
+            //    this.core = new StorageClientCore(this);
 
-            if (!this.core.issueRequest(new UpdateRequest(this.username, this.password, this.path)))
-                this.onUpdateError("Update temporary not available! Try later.");
-            else
-                this.progressRing.IsActive = true;
+            //if (!this.core.issueRequest(new UpdateRequest(this.username, this.password, this.path)))
+            //    this.onUpdateError("Update temporary not available! Try later.");
+            //else
+            //    this.progressRing.IsActive = true;
         }
 
         public void onGetVersionsError(string aMsg)
@@ -169,7 +179,7 @@ namespace StorageClientWPF
             if (this.Dispatcher.CheckAccess())
             {
                 //update UI safely
-                this.path = aPath;                
+                //this.path = aPath;                
                 this.startUpdate(this, null);
 
                 this.progressRing.IsActive = false;
@@ -191,6 +201,8 @@ namespace StorageClientWPF
 
                 this.status_label.Content = "Utente Loggato";
                 this.SoWriteGrid.Visibility = Visibility.Visible;
+
+
             }
             else
             {
@@ -282,6 +294,10 @@ namespace StorageClientWPF
                 this.status_label.Content = aMsg;
                 this.relaunchUpdate();
                 this.progressRing.IsActive = false;
+
+                //               //riabilito i bottoni
+                this.RestoreButton.IsEnabled = true;
+                this.LogOut.IsEnabled = true;
             }
             else
             {
@@ -296,6 +312,11 @@ namespace StorageClientWPF
                 //update UI safely
                 this.status_label.Content = "Update started";
                 this.progressRing.IsActive = true;
+
+                //disabilito i bottoni
+                this.RestoreButton.IsEnabled = false;
+                this.LogOut.IsEnabled = false;
+
             }
             else
             {
@@ -307,12 +328,16 @@ namespace StorageClientWPF
         {
             if (this.Dispatcher.CheckAccess())
             {
+
                 //update UI safely
                 this.status_label.Content = "Update finished: vesion " + aVersion + " [" + aVersionDate + "]";
                 this.relaunchUpdate();
                 this.progressRing.IsActive = false;
 
                 this.DrawFileBottons(aFileList);
+                //riabilito i bottoni
+                this.RestoreButton.IsEnabled = true;
+                this.LogOut.IsEnabled = true;
             }
             else
             {
@@ -330,6 +355,7 @@ namespace StorageClientWPF
                 this.timer.Dispose();
         }
 
+        //gestri eventi per la label "register" vicino al Login
         private void cl_MouseUp(object sender, MouseButtonEventArgs e)
         {
             //selezionata la register
@@ -351,11 +377,21 @@ namespace StorageClientWPF
             this.label_reg.Visibility = Visibility.Collapsed;
             this.status_label.Content = " ";
 
+            //sistemare le textbox, svuotarle e settare a false il tasto cancella
+            this.user.Text = "";
+            this.user.SetValue(TextBoxHelper.ClearTextButtonProperty, false);
+            this.pass.Password = "";
+            this.pass.SetValue(TextBoxHelper.ClearTextButtonProperty, false);
+            this.repeat_pass.Password = "";
+            this.repeat_pass.SetValue(TextBoxHelper.ClearTextButtonProperty, false);
+
         }
 
+        //si evidenzia la label quando ci finisci sopra
         private void cl_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            this.label_reg.Foreground = new SolidColorBrush(Colors.Violet);
+            this.label_reg.Foreground = this.progressRing.Foreground;
+            //this.label_reg.Foreground = this.Resources["Color_023"] as SolidColorBrush;
         }
 
         private void cl_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
@@ -378,6 +414,14 @@ namespace StorageClientWPF
             this.LoginButton.Visibility = Visibility.Visible;
             this.label_reg.Visibility = Visibility.Visible;
             this.back_button.Visibility = Visibility.Collapsed;
+
+            //sistemare le textbox, svuotarle e settare a false il tasto cancella
+            this.user.Text = "";
+            this.user.SetValue(TextBoxHelper.ClearTextButtonProperty, false);
+            this.pass.Password = "";
+            this.pass.SetValue(TextBoxHelper.ClearTextButtonProperty, false);
+            this.repeat_pass.Password = "";
+            this.repeat_pass.SetValue(TextBoxHelper.ClearTextButtonProperty, false);
 
             this.status_label.Content = "";
         }
@@ -423,11 +467,11 @@ namespace StorageClientWPF
                     this.password = this.pass.Password;
                     this.path = this.folder_testbox.Text;
 
-                    if (core == null)
-                        core = new StorageClientCore(this);
+                    //if (core == null)
+                    //    core = new StorageClientCore(this);
 
-                    if (!this.core.issueRequest(new RegistrRequest(username, password, path)))
-                        this.onRegistrationError("Registration temporary not available! Try later.");
+                    //if (!this.core.issueRequest(new RegistrRequest(username, password, path)))
+                    //    this.onRegistrationError("Registration temporary not available! Try later.");
                 }
                 else
                 {
@@ -523,7 +567,7 @@ namespace StorageClientWPF
         void lb_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
         {
             System.Windows.Controls.Label lb = (System.Windows.Controls.Label)sender;
-            lb.Background = new SolidColorBrush(Colors.Beige);
+            lb.Background = this.progressRing.Foreground;
         }
 
         void lb_MouseUp(object sender, MouseButtonEventArgs e)
@@ -566,11 +610,14 @@ namespace StorageClientWPF
 
         private void RestoreButton_Click(object sender, RoutedEventArgs e)
         {
-            if (core == null)
-                core = new StorageClientCore(this);
+            System.Windows.Controls.Button b = (System.Windows.Controls.Button)sender;
+            //QUI
+            
+            //if (core == null)
+            //    core = new StorageClientCore(this);
 
-            if (!this.core.issueRequest(new GetVerRequest(this.username, this.password)))
-                this.onRestoreError("Restore temporary not available! Try later.");
+            //if (!this.core.issueRequest(new GetVerRequest(this.username, this.password)))
+            //    this.onRestoreError("Restore temporary not available! Try later.");
         }
 
         private void folder_testbox_MouseUp(object sender, MouseButtonEventArgs e)
@@ -594,6 +641,45 @@ namespace StorageClientWPF
         private void ProgressBar_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
 
+        }
+
+        private void user_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            try
+            {
+                this.user.SetValue(TextBoxHelper.ClearTextButtonProperty, true);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
+            Debug.WriteLine("testo cambiato");
+        }
+
+        private void repeat_pass_PasswordChanged(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                this.repeat_pass.SetValue(TextBoxHelper.ClearTextButtonProperty, true);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
+            Debug.WriteLine("password cambiato");
+        }
+
+        private void pass_PasswordChanged(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                this.pass.SetValue(TextBoxHelper.ClearTextButtonProperty, true);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
+            Debug.WriteLine("password cambiato");
         }
 
     }
