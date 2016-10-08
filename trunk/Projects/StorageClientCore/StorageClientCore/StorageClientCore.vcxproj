@@ -74,9 +74,9 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)\..\..\Shared\Libraries\include;$(SolutionDir)\..\..\Shared\Common\Session;$(SolutionDir)\..\..\Shared\Common\Utils;$(SolutionDir)\..\..\Shared\Common\Network;$(SolutionDir)\..\..\ClientMain;$(IncludePath)</IncludePath>
-    <ReferencePath>$(VC_ReferencesPath_x64);$(SolutionDir)\..\..\Shared\Libraries\x86_64\debug\boost\static;$(SolutionDir)\..\..\Shared\Libraries\x86_64\debug\boost</ReferencePath>
-    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(SolutionDir)\..\..\Shared\Libraries\x86_64\debug\openssl\static;$(SolutionDir)\..\..\Shared\Libraries\x86_64\debug\openssl;$(SolutionDir)\..\..\Shared\Libraries\x86_64\debug\boost\;$(SolutionDir)\..\..\Shared\Libraries\x86_64\debug\boost\static;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)\..\..\Shared\Libraries\include;$(SolutionDir)\..\..\Shared\Common\Session;$(SolutionDir)\..\..\Shared\Common\Data;$(SolutionDir)\..\..\Shared\Common\Utils;$(SolutionDir)\..\..\Shared\Common\Network;$(SolutionDir)\..\..\ClientMain;$(IncludePath)</IncludePath>
+    <ReferencePath>$(VC_ReferencesPath_x64);$(SolutionDir)\..\..\Shared\Libraries\x86_64\debug\sqlite\static;$(SolutionDir)\..\..\Shared\Libraries\x86_64\debug\sqlite;$(SolutionDir)\..\..\Shared\Libraries\x86_64\debug\boost\static;$(SolutionDir)\..\..\Shared\Libraries\x86_64\debug\boost</ReferencePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(SolutionDir)\..\..\Shared\Libraries\x86_64\debug\openssl\static;$(SolutionDir)\..\..\Shared\Libraries\x86_64\debug\openssl;$(SolutionDir)\..\..\Shared\Libraries\x86_64\debug\sqlite\static;$(SolutionDir)\..\..\Shared\Libraries\x86_64\debug\sqlite;$(SolutionDir)\..\..\Shared\Libraries\x86_64\debug\boost\;$(SolutionDir)\..\..\Shared\Libraries\x86_64\debug\boost\static;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -100,13 +100,14 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;BOOST_ALL_DYN_LINK;BOOST_THREAD_USE_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CRT_SECURE_NO_WARNINGS;_WIN32_WINNT=0x0501;BOOST_ALL_DYN_LINK;BOOST_THREAD_USE_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <CompileAsManaged>true</CompileAsManaged>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>libeay32.lib;ssleay32.lib;</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)\..\..\Shared\Libraries\x86_64\debug\boost\static;$(SolutionDir)\..\..\Shared\Libraries\x86_64\debug\boost;$(SolutionDir)\..\..\Shared\Libraries\x86_64\debug\openssl;$(SolutionDir)\..\..\Shared\Libraries\x86_64\debug\openssl\static</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libeay32.lib;ssleay32.lib;sqlite3.lib;</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)\..\..\Shared\Libraries\x86_64\debug\sqlite\static;$(SolutionDir)\..\..\Shared\Libraries\x86_64\debug\sqlite;$(SolutionDir)\..\..\Shared\Libraries\x86_64\debug\boost\static;$(SolutionDir)\..\..\Shared\Libraries\x86_64\debug\boost;$(SolutionDir)\..\..\Shared\Libraries\x86_64\debug\openssl;$(SolutionDir)\..\..\Shared\Libraries\x86_64\debug\openssl\static</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -123,7 +124,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CRT_SECURE_NO_WARNINGS;_WIN32_WINNT=0x0501;BOOST_ALL_DYN_LINK;BOOST_THREAD_USE_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
     <Link>
@@ -141,6 +142,7 @@
     <ClInclude Include="..\..\..\ClientMain\ClientController.h" />
     <ClInclude Include="..\..\..\ClientMain\ClientRequests.h" />
     <ClInclude Include="..\..\..\ClientMain\StorageClient.h" />
+    <ClInclude Include="..\..\..\Shared\Common\Data\SqliteClientDB.h" />
     <ClInclude Include="..\..\..\Shared\Common\Network\Message.h" />
     <ClInclude Include="..\..\..\Shared\Common\Session\Session.h" />
     <ClInclude Include="..\..\..\Shared\Common\Utils\Utility.h" />
@@ -151,6 +153,7 @@
     <ClCompile Include="..\..\..\ClientMain\ClientController.cpp" />
     <ClCompile Include="..\..\..\ClientMain\ClientRequests.cpp" />
     <ClCompile Include="..\..\..\ClientMain\StorageClient.cpp" />
+    <ClCompile Include="..\..\..\Shared\Common\Data\SqliteClientDB.cpp" />
     <ClCompile Include="..\..\..\Shared\Common\Network\Message.cpp" />
     <ClCompile Include="..\..\..\Shared\Common\Session\Session.cpp" />
     <ClCompile Include="..\..\..\Shared\Common\Utils\Utility.cpp" />

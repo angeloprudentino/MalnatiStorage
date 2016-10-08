@@ -17,7 +17,9 @@ void TServerForm::LogDelegateMethod(String^ strToLog){
 		this->Invoke(d, strToLog);
 	}
 	else{
+		System::Threading::Monitor::Enter(rtbLog);
 		this->rtbLog->AppendText(strToLog);
+		System::Threading::Monitor::Exit(rtbLog);
 	}
 }
 

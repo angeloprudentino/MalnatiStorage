@@ -228,11 +228,12 @@ public:
 
 	string_ptr encodeMessage();
 	void decodeMessage();
-	bool verifyChecksum();
+	const bool verifyChecksum(); //throws EMessageException
 
 	//getters
 	const string getToken(){ return *(this->fToken); }
 	const string getFilePath(){ return *(this->fFilePath); }
+	const string getFileChecksum(){ return this->fChecksum->c_str(); }
 	const time_t getFileDate(){ return this->fFileDate; }
 	string_ptr getFileContent(){ return move_string_ptr(this->fFileContent); }
 
@@ -264,11 +265,12 @@ public:
 
 	string_ptr encodeMessage();
 	void decodeMessage();
-	bool verifyChecksum();
+	const bool verifyChecksum(); //throws EMessageException
 
 	//getters
 	const string getToken(){ return *(this->fToken); }
 	const string getFilePath(){ return *(this->fFilePath); }
+	const string getFileChecksum(){ return this->fChecksum->c_str(); }
 	const time_t getFileDate(){ return this->fFileDate; }
 	string_ptr getFileContent(){ return move_string_ptr(this->fFileContent); }
 };
@@ -570,11 +572,12 @@ public:
 
 	string_ptr encodeMessage();
 	void decodeMessage();
-	bool verifyChecksum();
+	const bool verifyChecksum(); //throws EMessageException
 
 	//getters
 	const string getFilePath(){ return *(this->fFilePath); }
 	const time_t getFileDate(){ return this->fFileDate; }
+	const string getFileChecksum(){ return this->fChecksum->c_str(); }
 	string_ptr getFileContent(){ return move_string_ptr(this->fFileContent); }
 };
 typedef std::unique_ptr<TRestoreFileMessage> TRestoreFileMessage_ptr;

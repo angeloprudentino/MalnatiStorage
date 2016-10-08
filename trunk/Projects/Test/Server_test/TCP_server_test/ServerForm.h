@@ -318,11 +318,9 @@ namespace Server_test {
 	}
 
 	private: void Log(const string& className, const string& funcName, const string& msg){
-		System::Threading::Monitor::Enter(rtbLog);
 		std::string toLog = currentDateTime();
 		toLog.append(" ").append(className).append("::").append(funcName).append(": ").append(msg).append("\n");
 		this->LogDelegateMethod(gcnew String(toLog.c_str()));
-		System::Threading::Monitor::Exit(rtbLog);
 	}
 	
 	private: System::Void clearLog_Click(System::Object^  sender, System::EventArgs^  e) {

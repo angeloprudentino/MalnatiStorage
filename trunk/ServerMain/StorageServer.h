@@ -47,7 +47,7 @@ private:
 	TMessageExecutor* fExecutor = nullptr;
 	IDBManagerInterface* fDBManager = nullptr;
 
-	const bool newSession(const string& aUser, const string& aToken, const int aSessionType);
+	string_ptr newSession(const string& aUser, const int aSessionType, const int aVersion); //throws EOpensslException
 	TSession_ptr isThereASessionFor(const string& aUser);
 	TSession_ptr isThereAnUpdateSessionFor(const string& aUser);
 	TSession_ptr isThereARestoreSessionFor(const string& aUser);
@@ -56,15 +56,6 @@ private:
 
 	const bool userExists(const string& aUser);
 	string_ptr checkUserCredential(const string& aUser, const string& aPass);
-
-public:
-	TStorageServer(int AServerPort, IManagedServerController^ aCallbackObj); //throws EBaseException
-	TStorageServer(const TStorageServer&) = delete;            // disable copying
-	TStorageServer& operator=(const TStorageServer&) = delete; // disable assignment
-	~TStorageServer();
-
-	void startServer();
-	void stopServer();
 
 	void onServerReady(const bool aReadyState) override;
 	void onServerLog(const string& aClassName, const string& aFuncName, const string& aMsg) override;
@@ -87,5 +78,14 @@ public:
 	void processRestoreFileAck(TConnection_ptr& aConnection, TRestoreFileAckMessage_ptr& aMsg) override;
 	void processPingRequest(TConnection_ptr& aConnection, TPingReqMessage_ptr& aMsg) override;
 	void processVerifyCred(TConnection_ptr& aConnection, TVerifyCredReqMessage_ptr& aMsg) override;
+
+public:
+	TStorageServer(int AServerPort, IManagedServerController^ aCallbackObj); //throws EBaseException
+	TStorageServer(const TStorageServer&) = delete;            // disable copying
+	TStorageServer& operator=(const TStorageServer&) = delete; // disable assignment
+	~TStorageServer();
+
+	void startServer();
+	void stopServer();
 };
 

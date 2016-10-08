@@ -22,9 +22,11 @@ using namespace System::Collections::Generic;
 #define NO_ID -1
 #define REGISTR_REQ 0
 #define LOGIN_REQ 1
-#define UPDATE_REQ 2
-#define GET_VERSIONS_REQ 3
-#define RESTORE_REQ 4
+#define LOGOUT_REQ 2
+#define UPDATE_REQ 3
+#define GET_VERSIONS_REQ 4
+#define RESTORE_REQ 5
+#define PING_REQ 6
 
 
 //////////////////////////////////
@@ -75,6 +77,15 @@ public:
 	//getters
 	String^ getUser() { return this->fUser; }
 	String^ getPass() { return this->fPass; }
+};
+
+
+//////////////////////////////////
+//        LogoutRequest	        //
+//////////////////////////////////
+public ref class LogoutRequest : public UserRequest{
+public:
+	LogoutRequest() { this->fID = LOGOUT_REQ; }
 };
 
 
@@ -132,6 +143,21 @@ public:
 	String^ getPass() { return this->fPass; }
 	const int getVersion() { return this->fVersion; }
 	String^ getDestPath() { return this->fDestPath; }
+};
+
+
+//////////////////////////////////
+//         PingRequest	        //
+//////////////////////////////////
+public ref class PingRequest : public UserRequest{
+private:
+	String^ fToken;
+
+public:
+	PingRequest(String^ aToken);
+
+	//getters
+	String^ getToken() { return this->fToken; }
 };
 
 

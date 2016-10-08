@@ -15,7 +15,7 @@
 #define UPDATE_FILE 1
 #define REMOVE_FILE 2
 
-#define DEADLINE 300
+#define DEADLINE 240
 #define MILLI 1000
 
 
@@ -23,47 +23,67 @@
 //        TStorageServer	      //
 ////////////////////////////////////
 #pragma region "TStorageServer"
-const bool TStorageServer::newSession(const string& aUser, const string& aToken, const int aSessionType){
+string_ptr TStorageServer::newSession(const string& aUser, const int aSessionType, const int aVersion){
+	//access map in mutual exclusion to avoid 2 thread inserting the same session in the table
+	unique_lock<mutex> lock(this->fSessionsMutex);
+
+	//check if no session for this user is already active
+	auto pos = this->fSessions->find(aUser);
+	TSession_ptr res = nullptr;
+	if (pos != this->fSessions->end()){
+		this->onServerError("TStorageServer", "newSession", "A session is already active for user: " + aUser);
+		return nullptr;
+	}
+
+	//generate a new token and start a new session
+	string_ptr token_ptr = getUniqueToken(aUser);
+
 	TSession_ptr s = nullptr;
 	if (aSessionType == UPDATE_SESSION)
-		s = new_TSession_ptr(UPDATE_SESSION, aToken);
+		s = new_TSession_ptr(UPDATE_SESSION, token_ptr->c_str());
 	else if (aSessionType == RESTORE_SESSION)
-		s = new_TSession_ptr(RESTORE_SESSION, aToken);
+		s = new_TSession_ptr(RESTORE_SESSION, token_ptr->c_str());
 	else{
 		this->onServerError("TStorageServer", "newSession", "Invalid session type!");
-		return false;
+		token_ptr.reset();
+		return nullptr;
 	}
 
 	//load initial data abaout the session from DB
 	if (this->fDBManager != nullptr){
 		try{
-			TVersion_ptr v = this->fDBManager->getLastVersion(aUser, true);
+			TVersion_ptr v = nullptr;
+			if (aVersion <= 0)
+				v = this->fDBManager->getLastVersion(aUser, true);
+			else
+				v = this->fDBManager->getVersion(aUser, aVersion);
+
 			if (v != nullptr)
 				s->setVersion(move_TVersion_ptr(v));
 		}
 		catch (EDBException e){
 			this->onServerError("TStorageServer", "newSession", "Unable to load last version for " + aUser + ": " + e.getMessage());
-			return false;
+			token_ptr.reset();
+			return nullptr;
 		}
 	}
 	else{
 		this->onServerError("TStorageServer", "newSession", "DBManager is null!");
-		return false;
+		token_ptr.reset();
+		return nullptr;
 	}
 
-	//access map in mutual exclusion to avoid 2 thread inserting the same session in the table
-	unique_lock<mutex> lock(this->fSessionsMutex);
 	this->fSessions->emplace(aUser, s);
 
-	////init session cleaner timer if necessary
-	//if (this->fSessionsCleaner == nullptr){
-	//	this->onServerLog("TStorageServer", "newSession", "creating sessions cleaner timer...");
-	//	this->fSessionsCleaner = new deadline_timer(this->fMainIoService, boost::posix_time::seconds(DEADLINE));
-	//	this->fSessionsCleaner->async_wait(bind(&TStorageServer::checkAndCleanSessions, this, boost::asio::placeholders::error));
-	//	this->onServerLog("TStorageServer", "newSession", "sessions cleaner timer created");
-	//}
+	//init session cleaner timer if necessary
+	if (this->fSessionsCleaner == nullptr){
+		this->onServerLog("TStorageServer", "newSession", "creating sessions cleaner timer...");
+		this->fSessionsCleaner = new deadline_timer(this->fMainIoService, boost::posix_time::seconds(DEADLINE));
+		this->fSessionsCleaner->async_wait(bind(&TStorageServer::checkAndCleanSessions, this, boost::asio::placeholders::error));
+		this->onServerLog("TStorageServer", "newSession", "sessions cleaner timer created");
+	}
 
-	return true;
+	return move_string_ptr(token_ptr);
 }
 
 TSession_ptr TStorageServer::isThereASessionFor(const string& aUser){
@@ -118,9 +138,19 @@ void TStorageServer::checkAndCleanSessions(const boost::system::error_code& aErr
 			TSessions::iterator it = this->fSessions->begin();
 			while (it != this->fSessions->end()){
 				if (time(nullptr) - it->second->getLastPing() > SESSION_TIMEOUT){
-					this->onServerWarning("TStorageServer", "checkAndCleanSessions", it->first + "'s session was pending so it has been cleaned");
-					this->removeSession(it->first);
-					//TODO: remove files on disk
+					string user = it->first;
+					this->onServerWarning("TStorageServer", "checkAndCleanSessions", user + "'s session was pending so it has been cleaned");
+					TSession_ptr sess = it->second;
+					if (sess->getKind() == UPDATE_SESSION){
+						int v = sess->getVersion()+1;
+						try{
+							removeDir(path(buildServerPathPrefix(user, v)));
+						}
+						catch (EFilesystemException e){
+							this->onServerError("TStorageServer", "checkAndCleanSessions", e.getMessage());
+						}
+					}
+					this->removeSession(user);
 				}
 				else
 					it++;
@@ -241,7 +271,14 @@ TStorageServer::~TStorageServer(){
 		this->fDBManager = nullptr;
 		this->onServerLog("TStorageServer", "destructor", "TDBManager object deleted");
 	}
-	//this->fMainIoService.stop();
+
+	this->onServerLog("TStorageServer", "destructor", "########################################");
+	this->onServerLog("TStorageServer", "destructor", "########################################");
+	this->onServerLog("TStorageServer", "destructor", "## ");
+	this->onServerLog("TStorageServer", "destructor", "##             SERVER STOPPED");
+	this->onServerLog("TStorageServer", "destructor", "##");
+	this->onServerLog("TStorageServer", "destructor", "########################################");
+	this->onServerLog("TStorageServer", "destructor", "########################################");
 
 	this->fCallbackObj = nullptr;
 }
@@ -447,45 +484,29 @@ void TStorageServer::processUpdateStart(TConnection_ptr& aConnection, TUpdateSta
 			return;
 		}
 
-		//check if no session for this user is already active
-		TSession_ptr session = this->isThereASessionFor(u);
-		if (session != nullptr){
-			this->onServerError("TStorageServer", "processUpdateStart", "A session is already active for user: " + u);
-
-			//send back negative response
-			reply = new_TUpdateStartReplyMessage_ptr(false, "");
-			replyContainer = new_TMessageContainer_ptr(move_TBaseMessage_ptr(reply), aConnection); //reply is moved
-			this->sendMessage(move_TMessageContainer_ptr(replyContainer), true); //replyContainer is moved
-			return;
-		}
-
 		//generate a new token and start a new session
-		string_ptr token_ptr;
+		bool close = false;
 		try{
-			token_ptr = getUniqueToken(u);
+			string_ptr token_ptr = this->newSession(u, UPDATE_SESSION, -1);
+			if (token_ptr != nullptr){
+				//send back positive response
+				reply = new_TUpdateStartReplyMessage_ptr(true, token_ptr->c_str());
+				token_ptr.reset();
+			}
+			else{
+				//send back negative response
+				close = true;
+				reply = new_TUpdateStartReplyMessage_ptr(false, "");
+			}
 		}
 		catch (EOpensslException e){
-			this->onServerError("TStorageServer", "processUpdateStart", "EOpensslException creating a new token: " + e.getMessage() + " ; skipped.");
-			token_ptr.reset();
+			this->onServerError("TStorageServer", "processUpdateStart", "EOpensslException creating a new sesion: " + e.getMessage());
 
-			//system failure
-			reply = new_TSystemErrorMessage_ptr("Unexpected System Error. Try later");
-			replyContainer = new_TMessageContainer_ptr(move_TBaseMessage_ptr(reply), aConnection); //reply is moved
-			this->sendMessage(move_TMessageContainer_ptr(replyContainer), true); //replyContainer is moved
-			return;
-		}
-
-		bool close = false;
-		if (this->newSession(u, token_ptr->c_str(), UPDATE_SESSION)){
-			//send back positive response
-			reply = new_TUpdateStartReplyMessage_ptr(true, token_ptr->c_str());
-			token_ptr.reset();
-		}
-		else{
 			//system failure
 			close = true;
 			reply = new_TSystemErrorMessage_ptr("Unexpected System Error. Try later");
 		}
+
 		replyContainer = new_TMessageContainer_ptr(move_TBaseMessage_ptr(reply), aConnection); //reply is moved
 		this->sendMessage(move_TMessageContainer_ptr(replyContainer), close); //replyContainer is moved
 	}
@@ -1015,7 +1036,7 @@ void TStorageServer::processGetLastVersion(TConnection_ptr& aConnection, TGetLas
 			}
 			else {
 				//empty response
-				reply = new_TGetLastVerReplyMessage_ptr(-1, time(NULL));
+				reply = new_TGetLastVerReplyMessage_ptr(0, time(NULL));
 			}
 		}
 
@@ -1071,82 +1092,61 @@ void TStorageServer::processRestoreVersion(TConnection_ptr& aConnection, TRestor
 			return;
 		}
 
-		//check if no session for this user is already active
-		TSession_ptr session = this->isThereASessionFor(u);
-		if (session != nullptr){
-			this->onServerError("TStorageServer", "processRestoreVersion", "A session is already active for user: " + u);
-
-			reply = new_TSystemErrorMessage_ptr("Unexpected System Error. Try later");
-			TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr(move_TBaseMessage_ptr(reply), aConnection); //reply is moved
-			this->sendMessage(move_TMessageContainer_ptr(replyContainer), true); //replyContainer is moved
-			return;
-		}
-
-		//check if required version is available
-		TVersion_ptr ver;
+		//generate a new token and start a new session
+		bool close = false;
+		TVersion_ptr ver = nullptr;
 		try{
-			if (this->fDBManager != nullptr)
-				ver = this->fDBManager->getVersion(u, v);
-			else{
-				reply = new_TSystemErrorMessage_ptr("Unexpected System Error. Try later");
-				this->onServerError("TStorageServer", "processRestoreVersion", "DBManager is null!");
-			}
-		}
-		catch (EDBException& e){
-			this->onServerError("TStorageServer", "processRestoreVersion", "required version for user " + u + " is not available: " + e.getMessage());
-			reply = new_TSystemErrorMessage_ptr("Unexpected System Error. Try later");
-		}
-
-		if (ver != nullptr && reply == nullptr){
-			ver.reset();
-
-			//generate a new token and start a new session
-			string_ptr token_ptr;
-			try{
-				token_ptr = getUniqueToken(u);
-			}
-			catch (EOpensslException e){
-				this->onServerError("TStorageServer", "processRestoreVersion", "EOpensslException creating a new token: " + e.getMessage() + " ; skipped.");
-				reply = new_TSystemErrorMessage_ptr("Unexpected System Error. Try later");
-			}
-
-			bool close = true;
-			bool newSess = false;
-			if (reply == nullptr){
-				newSess = this->newSession(u, token_ptr->c_str(), RESTORE_SESSION);
-				if (newSess){
-					//send back positive response
-					reply = new_TRestoreVerReplyMessage_ptr(true, token_ptr->c_str());
-					token_ptr.reset();
-					close = false;
+			string_ptr token_ptr = this->newSession(u, RESTORE_SESSION, v);
+			if (token_ptr != nullptr){
+				//check if required version is available
+				try{
+					if (this->fDBManager != nullptr)
+						ver = this->fDBManager->getVersion(u, v);
+					else{
+						this->onServerError("TStorageServer", "processRestoreVersion", "DBManager is null!");
+						close = true; 
+						reply = new_TSystemErrorMessage_ptr("Unexpected System Error. Try later");
+					}
 				}
-				else{
-					//send back negative response
+				catch (EDBException& e){
+					this->onServerError("TStorageServer", "processRestoreVersion", "required version for user " + u + " is not available: " + e.getMessage());
+					close = true; 
 					reply = new_TSystemErrorMessage_ptr("Unexpected System Error. Try later");
 				}
+
+				if (reply == nullptr)
+					reply = new_TRestoreVerReplyMessage_ptr(true, token_ptr->c_str());
+
+				token_ptr.reset();
 			}
-
-			TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr(move_TBaseMessage_ptr(reply), aConnection); //reply is moved
-			this->sendMessage(move_TMessageContainer_ptr(replyContainer), close); //replyContainer is moved
-
-			if (newSess){
-				session = this->isThereARestoreSessionFor(u);
-				//send the first file of the required version
-				TFile_ptr f = session->getNextFileToSend();
-				if (f != nullptr){
-					TRestoreFileMessage_ptr first = new_TRestoreFileMessage_ptr(f->getServerPathPrefix(), f->getClientRelativePath(), f->getLastMod());
-					TMessageContainer_ptr firstContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(first), aConnection);
-					this->sendMessage(move_TMessageContainer_ptr(firstContainer), false);
-				}
+			else{
+				//send back negative response
+				close = true;
+				reply = new_TRestoreVerReplyMessage_ptr(false, "");
 			}
 		}
-		else{
-			ver.reset();
-			if (reply == nullptr) //it means no version for the user
-				reply = new_TRestoreVerReplyMessage_ptr(false, "");
+		catch (EOpensslException e){
+			this->onServerError("TStorageServer", "processUpdateStart", "EOpensslException creating a new sesion: " + e.getMessage());
+			close = true;
+			reply = new_TSystemErrorMessage_ptr("Unexpected System Error. Try later");
+		}
 
-			replyContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(reply), aConnection); //reply is moved
-			this->sendMessage(move_TMessageContainer_ptr(replyContainer), true); //replyContainer is moved
+		replyContainer = new_TMessageContainer_ptr(move_TBaseMessage_ptr(reply), aConnection); //reply is moved
+		this->sendMessage(move_TMessageContainer_ptr(replyContainer), close); //replyContainer is moved
+		if (close)
+			return;
+
+		if (ver != nullptr){
+			ver.reset();
+
+			TSession_ptr session = this->isThereARestoreSessionFor(u);
+			//send the first file of the required version
+			TFile_ptr f = session->getNextFileToSend();
+			if (f != nullptr){
+				TRestoreFileMessage_ptr first = new_TRestoreFileMessage_ptr(f->getServerPathPrefix(), f->getClientRelativePath(), f->getLastMod());
+				TMessageContainer_ptr firstContainer = new_TMessageContainer_ptr((TBaseMessage_ptr&)move_TBaseMessage_ptr(first), aConnection);
+				this->sendMessage(move_TMessageContainer_ptr(firstContainer), false);
+			}
 		}
 	}
 	else{
@@ -1274,17 +1274,22 @@ void TStorageServer::processPingRequest(TConnection_ptr& aConnection, TPingReqMe
 			return;
 		}
 
+		bool close = false;
 		TSession_ptr session = this->isThereASessionFor(u);
 		if (session != nullptr){
 			session->setLastPing(aMsg->getTime());
 
 			//send ping reply
 			reply = new_TPingReplyMessage_ptr(tok);
-			TMessageContainer_ptr replyContainer = new_TMessageContainer_ptr(move_TBaseMessage_ptr(reply), aConnection); //reply is moved
-			this->sendMessage(move_TMessageContainer_ptr(replyContainer), false); //replyContainer is moved
 		}
-		else
+		else {
 			this->onServerError("TStorageServer", "processPingRequest", "There is no session opened for user: " + u);
+			close = true;
+			reply = new_TPingReplyMessage_ptr("");
+		}
+
+		replyContainer = new_TMessageContainer_ptr(move_TBaseMessage_ptr(reply), aConnection); //reply is moved
+		this->sendMessage(move_TMessageContainer_ptr(replyContainer), close); //replyContainer is moved
 	}
 	else{
 		this->onServerError("TStorageServer", "processPingRequest", "received an empty message; skipped.");
@@ -1300,16 +1305,16 @@ void TStorageServer::processVerifyCred(TConnection_ptr& aConnection, TVerifyCred
 			unique_lock<mutex> lock(this->fLogMutex);
 
 			//Log the message
-			this->onServerLog("TStorageServer", "processRegistrationRequest", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
-			this->onServerLog("TStorageServer", "processRegistrationRequest", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
-			this->onServerLog("TStorageServer", "processRegistrationRequest", "<=  ");
-			this->onServerLog("TStorageServer", "processRegistrationRequest", "<=   VerifyCredReqMessage ");
-			this->onServerLog("TStorageServer", "processRegistrationRequest", "<=  ");
-			this->onServerLog("TStorageServer", "processRegistrationRequest", "<=   user: " + u);
-			this->onServerLog("TStorageServer", "processRegistrationRequest", "<=   coded pass: " + p);
-			this->onServerLog("TStorageServer", "processRegistrationRequest", "<=  ");
-			this->onServerLog("TStorageServer", "processRegistrationRequest", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
-			this->onServerLog("TStorageServer", "processRegistrationRequest", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+			this->onServerLog("TStorageServer", "processVerifyCred", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+			this->onServerLog("TStorageServer", "processVerifyCred", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+			this->onServerLog("TStorageServer", "processVerifyCred", "<=  ");
+			this->onServerLog("TStorageServer", "processVerifyCred", "<=   VerifyCredReqMessage ");
+			this->onServerLog("TStorageServer", "processVerifyCred", "<=  ");
+			this->onServerLog("TStorageServer", "processVerifyCred", "<=   user: " + u);
+			this->onServerLog("TStorageServer", "processVerifyCred", "<=   coded pass: " + p);
+			this->onServerLog("TStorageServer", "processVerifyCred", "<=  ");
+			this->onServerLog("TStorageServer", "processVerifyCred", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
+			this->onServerLog("TStorageServer", "processVerifyCred", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
 		}
 		catch (...){ }
 
@@ -1325,7 +1330,7 @@ void TStorageServer::processVerifyCred(TConnection_ptr& aConnection, TVerifyCred
 			}
 		}
 		catch (EDBException e){
-			this->onServerError("TStorageServer", "processGetLastVersion", "Unable to verify credentials: " + e.getMessage());
+			this->onServerError("TStorageServer", "processVerifyCred", "Unable to verify credentials: " + e.getMessage());
 			reply = new_TVerifyCredReplyMessage_ptr(false, "");
 			close = true;
 		}
