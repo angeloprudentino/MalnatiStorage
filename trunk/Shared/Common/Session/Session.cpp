@@ -51,7 +51,7 @@ const bool TFile::isEqualTo(const TFile& aFile){
 TVersion::TVersion(const int aId, const time_t aVersionDate){
 	this->fId = aId;
 	this->fVersionDate = aVersionDate;
-	//this->fNext = this->fFileList.begin();
+	this->fSomethingRemoved = false;
 }
 
 TVersion::~TVersion(){
@@ -86,6 +86,10 @@ void TVersion::removeFile(TFile_ptr& aFile){
 		if (*(it) != nullptr && aFile->isEqualTo(**(it))){
 			it->reset();
 			this->fFileList.erase(it);
+			this->fSomethingRemoved = true;
+			if (!this->fFileList.empty())
+				this->fNext = this->fFileList.begin();
+
 			break;
 		}
 
@@ -95,14 +99,34 @@ void TVersion::removeFile(TFile_ptr& aFile){
 void TVersion::terminateWithSuccess(){
 	this->fId++;
 
-	for (TFile_list::iterator it = this->fFileList.begin(); it != this->fFileList.end(); it++)
-		if (*it != nullptr)
-			(*it)->setVersion(this->fId);
-
+	if (!this->fFileList.empty()){
+		for (TFile_list::iterator it = this->fFileList.begin(); it != this->fFileList.end(); it++)
+			if (*it != nullptr)
+				(*it)->setVersion(this->fId);
+	}
+	
 	this->fVersionDate = time(NULL);
 }
 
+const bool TVersion::isValid() {
+	if (this->fFileList.size() == 0)
+		return false;
+	else{
+		if (this->fSomethingRemoved)
+			return true;
+
+		for (TFile_list::iterator it = this->fFileList.begin(); it != this->fFileList.end(); it++){
+			if ((*it) != nullptr && (*it)->getVersion() > this->fId)
+				return true;
+		}
+		return false;
+	}
+}
+
 TFile_ptr TVersion::getNextFile(){
+	if (this->fFileList.empty())
+		return nullptr;
+
 	if (this->fNext != this->fFileList.end()){		
 		TFile_ptr f = copy_TFile_ptr((*this->fNext)->getServerPathPrefix(), (*this->fNext)->getClientRelativePath(), (*this->fNext)->getLastMod());
 		f->setVersion((*this->fNext)->getVersion());
@@ -146,29 +170,5 @@ const bool TSession::updateFile(TFile_ptr& aFile){
 
 void TSession::removeFile(TFile_ptr& aFile){
 	this->fVersion->removeFile(move_TFile_ptr(aFile));
-}
-
-TVersion_ptr TSession::terminateWithSuccess(const bool aIsRestore){
-	if (!aIsRestore)
-		this->fVersion->terminateWithSuccess();
-
-	return move_TVersion_ptr(this->fVersion);
-}
-
-const bool TSession::purge(){
-	string u = getUserFromToken(this->fToken->c_str());
-	int v = this->fVersion->getVersion();
-
-	path p(buildServerPathPrefix(u, v));
-	if (exists(p)){
-		boost::system::error_code ec;
-		remove_all(p, ec);
-		if (ec)
-			return false;
-		else
-			return true;
-	}
-
-	return true;
 }
 #pragma endregion

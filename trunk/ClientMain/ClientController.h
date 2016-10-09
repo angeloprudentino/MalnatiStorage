@@ -59,7 +59,7 @@ public:
 	void onUpdateSuccess(List<UserFile^>^ aFileList, const int aVersion, String^ aVersionDate);
 	void onUpdateError(String^ aMsg);
 	void onRestoreStart(String^ aToken);
-	void onRestoreSuccess(const int aVersion, String^ aVersionDate);
+	void onRestoreSuccess(List<UserFile^>^ aFileList, const int aVersion, String^ aVersionDate);
 	void onRestoreError(String^ aMsg);
 	void onGetVersionsSuccess(List<UserVersion^>^ aVersionsList);
 	void onGetVersionsError(String^ aMsg);

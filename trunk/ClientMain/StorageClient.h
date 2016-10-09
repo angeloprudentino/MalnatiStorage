@@ -33,7 +33,6 @@ private:
 	io_service fMainIoService;
 	tcp::socket* fSock = nullptr;
 	boost::atomic<bool> fMustExit;
-	//boost::atomic<bool> fLoggedIn;
 	gcroot<StorageClientController^> fCallbackObj = nullptr;
 	RequestsQueue* fQueue = nullptr;
 	thread* fExecutor = nullptr;
@@ -59,6 +58,7 @@ private:
 	string_ptr readMsg();
 	const bool processDirectory(const int aVersion, const string& aToken, const path& aRootPath, const path& aDirPath, List<UserFile^>^ aFileList, TUserFileList_ptr& aSqliteFileList);
 	const bool processFile(const int aVersion, const string& aToken, const path& aRootPath, const path& aFilePath, List<UserFile^>^ aFileList, TUserFileList_ptr& aSqliteFileList);
+	const bool removeFiles(const string& aToken, const path& aRootPath, TUserFileList_ptr& aSqliteFileList);
 	void verifyUser(const string& aUser, const string& aPass);
 	void registerUser(const string& aUser, const string& aPass, const string& aRootPath);
 	int getLastVersion(const string& aUser, const string& aPass);

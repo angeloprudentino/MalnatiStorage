@@ -10,6 +10,8 @@
 #include <boost/filesystem.hpp>
 #include "StorageClient.h"
 
+#define MAX_TRY 5
+
 using namespace System;
 using namespace std;
 using namespace boost;
@@ -97,10 +99,6 @@ void TStorageClient::onUpdateSuccess(List<UserFile^>^ aFileList, const int aVers
 		errorToFile("TStorageClient", "onUpdateSuccess", "Callback objest is null!");
 		this->disconnect();
 	}
-
-	if (this->fSqliteDB != nullptr)
-		delete this->fSqliteDB;
-	this->fSqliteDB = nullptr;
 }
 
 void TStorageClient::onUpdateError(String^ aMsg){
@@ -110,14 +108,10 @@ void TStorageClient::onUpdateError(String^ aMsg){
 
 	if (!System::Object::ReferenceEquals(this->fCallbackObj, nullptr))
 		this->fCallbackObj->onUpdateError(aMsg);
-	else
+	else{
 		errorToFile("TStorageClient", "onUpdateError", "Callback objest is null!");
-
-	if (this->fSqliteDB != nullptr)
-		delete this->fSqliteDB;
-	this->fSqliteDB = nullptr;
-
-	this->disconnect();
+		this->disconnect();
+	}
 }
 
 void TStorageClient::onRestoreStart(String^ aToken, const bool aStoreOnLocalDB){
@@ -143,10 +137,7 @@ void TStorageClient::onRestoreSuccess(const int aVersion, String^ aVersionDate, 
 #endif
 
 	if (!System::Object::ReferenceEquals(this->fCallbackObj, nullptr)) {
-		if (!aStoreOnLocalDB)
-			this->fCallbackObj->onRestoreSuccess(aVersion, aVersionDate);
-		else
-			this->fCallbackObj->onUpdateSuccess(aFileList, aVersion, aVersionDate);
+		this->fCallbackObj->onRestoreSuccess(aFileList, aVersion, aVersionDate);
 	}
 	else {
 		errorToFile("TStorageClient", "onRestoreSuccess", "Callback objest is null!");
@@ -165,10 +156,10 @@ void TStorageClient::onRestoreError(String^ aMsg, const bool aStoreOnLocalDB){
 		else
 			this->onUpdateError(aMsg);
 	}
-	else
+	else{
 		errorToFile("TStorageClient", "onRestoreError", "Callback objest is null!");
-
-	this->disconnect();
+		this->disconnect();
+	}
 }
 
 void TStorageClient::onGetVersionsSuccess(List<UserVersion^>^ aVersionsList){
@@ -191,10 +182,10 @@ void TStorageClient::onGetVersionsError(String^ aMsg){
 
 	if (!System::Object::ReferenceEquals(this->fCallbackObj, nullptr))
 		this->fCallbackObj->onGetVersionsError(aMsg);
-	else
+	else{
 		errorToFile("TStorageClient", "onGetVersionsError", "Callback objest is null!");
-
-	this->disconnect();
+		this->disconnect();
+	}
 }
 
 void TStorageClient::connect(const string& aHost, int aPort){
@@ -237,17 +228,12 @@ const bool TStorageClient::sendMsg(TBaseMessage_ptr& aMsg){
 		return false;
 	}
 
-	//if (!this->fLoggedIn.load(boost::memory_order_acquire)){
-	//	errorToFile("TStorageClient", "sendMsg", "cannot send msg if not already logged-in!");
-	//	return false;
-	//}
-
 	string_ptr msg = aMsg->encodeMessage();
 	msg->append("\n");
 
 	int count = 2;
 	bool result = true;
-	while (count > 0 /*&& this->fLoggedIn.load(boost::memory_order_acquire)*/){
+	while (count > 0){
 		try{
 			this->connect(DEFAULT_HOST, DEFAULT_PORT);
 			boost::asio::write(*(this->fSock), boost::asio::buffer(*msg));
@@ -316,18 +302,52 @@ const bool TStorageClient::processFile(const int aVersion, const string& aToken,
 	TBaseMessage_ptr bm = nullptr;
 	TSystemErrorMessage_ptr sysErr = nullptr;
 	TFileAckMessage_ptr ack = nullptr;
+	string_ptr fileContent = nullptr;
+	string_ptr checksum = nullptr;
 	bool ackResp = false;
 	bool isAckExpected = false;
 	bool is_ok = true;
 
 	logToFile("TStorageClient", "processFile", "Sending file: " + aFilePath.string());
 	try{
+		//check if file is changed
+		if (aSqliteFileList != nullptr && !aSqliteFileList->empty()){
+			for (TUserFileList::iterator it = aSqliteFileList->begin(); it != aSqliteFileList->end(); it++){
+				if ((*it)->getFilePath() == aFilePath.string()){
+					logToFile("TStorageClient", "processFile", aFilePath.string() + " is already stored.");
+					(*it)->setToRemove(false);
+					fileContent = readFile(aFilePath);
+					if (fileContent != nullptr)
+						checksum = opensslB64FileChecksum(*fileContent);
+
+					if (fileContent != nullptr && checksum != nullptr && (*it)->getFileChecksum() == *checksum){
+						logToFile("TStorageClient", "processFile", aFilePath.string() + " is not changed.");
+						//file is not changed
+						aFileList->Add(gcnew UserFile(unmarshalString(aFilePath.string())));
+						(*it)->updateVersion();
+						fileContent.reset();
+						checksum.reset();
+						return true;
+					}
+					else{
+						fileContent.reset();
+						checksum.reset();
+						(*it).reset();
+						aSqliteFileList->erase(it);
+						break;
+					}
+				}
+			}
+		}
+
+		int count = 0;
 		do{
 			TAddNewFileMessage_ptr m = new_TAddNewFileMessage_ptr(aToken, aFilePath.string());
 			time_t fileDate = m->getFileDate();
 			string checksum = m->getFileChecksum();
 			string relPath = aFilePath.string().substr(aRootPath.string().length());
 			m->setFilePath(relPath);
+			
 			if (!this->sendMsg((TBaseMessage_ptr&)move_TBaseMessage_ptr(m)))
 				return false;
 
@@ -346,7 +366,7 @@ const bool TStorageClient::processFile(const int aVersion, const string& aToken,
 			} while (kind == PING_REPLY_ID);
 
 			if (kind == SYSTEM_ERR_ID){
-				sysErr = new_TSystemErrorMessage_ptr(bm);
+				sysErr = make_TSystemErrorMessage_ptr(bm);
 				errorToFile("TStorageClient", "processFile", sysErr->getDetail());
 				sysErr.reset();
 				is_ok = false;
@@ -363,7 +383,9 @@ const bool TStorageClient::processFile(const int aVersion, const string& aToken,
 						string u;
 						try{
 							u = getUserFromToken(aToken);
-							TUserFile_ptr fptr = copy_TUserFile_ptr(u, aVersion, aFilePath.string(), checksum, fileDate);
+							TUserFile_ptr fptr = new_TUserFile_ptr(u, aVersion, aFilePath.string(), checksum, fileDate, false);
+							if (aSqliteFileList == nullptr)
+								aSqliteFileList = new_TUserFileList_ptr();
 							aSqliteFileList->push_back(move_TUserFile_ptr(fptr));
 						}
 						catch (EOpensslException e){
@@ -371,8 +393,14 @@ const bool TStorageClient::processFile(const int aVersion, const string& aToken,
 							is_ok = false;
 						}
 					}
-					else
+					else{
 						warningToFile("TStorageClient", "processFile", "Received bad ack for file: " + file);
+						count++;
+						if (count == MAX_TRY){
+							errorToFile("TStorageClient", "processFile", "Stop processing file: " + file + " after " + to_string(count) + " attempts");
+							is_ok = false;
+						}
+					}
 				}
 				else
 					warningToFile("TStorageClient", "processFile", "Received ack for file: " + file + "but expected for file: " + relPath);
@@ -385,15 +413,100 @@ const bool TStorageClient::processFile(const int aVersion, const string& aToken,
 			bm.reset();
 		} while ((!ackResp || !isAckExpected) && is_ok);
 	}
-	catch (EMessageException& e){
+	catch (EBaseException& e){
 		errorToFile("TStorageClient", "processFile", e.getMessage());
 		is_ok = false;
 		bm.reset();
 		sysErr.reset();
 		ack.reset();
+		fileContent.reset();
+		checksum.reset();
 	}
 
 	return is_ok;
+}
+
+const bool TStorageClient::removeFiles(const string& aToken, const path& aRootPath, TUserFileList_ptr& aSqliteFileList){
+	for (TUserFileList::iterator it = aSqliteFileList->begin(); it != aSqliteFileList->end(); it++){
+		if ((*it)->isToRemove()){
+			string_ptr msg = nullptr;
+			TBaseMessage_ptr bm = nullptr;
+			TSystemErrorMessage_ptr sysErr = nullptr;
+			TFileAckMessage_ptr ack = nullptr;
+			bool ackResp = false;
+			bool isAckExpected = false;
+			bool is_ok = true;
+
+			try{
+				int count = 0;
+				logToFile("TStorageClient", "removeFiles", "Removing file: " + (*it)->getFilePath());
+				do{
+					string relPath = (*it)->getFilePath().substr(aRootPath.string().length());
+					TRemoveFileMessage_ptr m = new_TRemoveFileMessage_ptr(aToken, relPath);
+					if (!this->sendMsg((TBaseMessage_ptr&)move_TBaseMessage_ptr(m)))
+						return false;
+
+					int kind = NO_ID;
+					do{
+						msg = this->readMsg();
+						if (msg == nullptr)
+							return false;
+
+						bm = new_TBaseMessage_ptr(msg);
+						kind = bm->getID();
+						if (kind == PING_REPLY_ID){
+							bm.reset();
+							logToFile("TStorageClient", "removeFiles", "Received ping reply from server");
+						}
+					} while (kind == PING_REPLY_ID);
+
+					if (kind == SYSTEM_ERR_ID){
+						sysErr = make_TSystemErrorMessage_ptr(bm);
+						errorToFile("TStorageClient", "removeFiles", sysErr->getDetail());
+						sysErr.reset();
+						is_ok = false;
+					}
+					else if (kind == FILE_ACK_ID){
+						ack = make_TFileAckMessage_ptr(bm);
+						ackResp = ack->getResp();
+						string file = ack->getFilePath();
+						isAckExpected = relPath == file;
+						ack.reset();
+						if (isAckExpected){
+							if (!ackResp){
+								warningToFile("TStorageClient", "removeFiles", "Received bad ack for file: " + file);
+								count++;
+								if (count == MAX_TRY){
+									errorToFile("TStorageClient", "removeFiles", "Stop processing file: " + file + " after " + to_string(count) + " attempts");
+									is_ok = false;
+								}
+							}
+						}
+						else
+							warningToFile("TStorageClient", "removeFiles", "Received ack for file: " + file + "but expected for file: " + relPath);
+					}
+					else{
+						errorToFile("TStorageClient", "removeFiles", getMessageName(kind) + " is invalid!");
+						is_ok = false;
+					}
+
+					bm.reset();
+				} while ((!ackResp || !isAckExpected) && is_ok);
+			}
+			catch (EMessageException& e){
+				errorToFile("TStorageClient", "removeFiles", e.getMessage());
+				is_ok = false;
+				bm.reset();
+				sysErr.reset();
+				ack.reset();
+			}
+
+			if (!is_ok)
+				return false;
+		}
+	}
+
+	return true;
 }
 
 TStorageClient::TStorageClient(StorageClientController^ aCallbackObj) : fMainIoService(){
@@ -413,8 +526,14 @@ TStorageClient::~TStorageClient(){
 	if (this->fQueue != nullptr)
 		delete this->fQueue;
 
-	if (this->fSqliteDB != nullptr)
-		delete this->fSqliteDB;
+	try{
+		if (this->fSqliteDB != nullptr)
+			delete this->fSqliteDB;
+		this->fSqliteDB = nullptr;
+	}
+	catch (ESqliteDBException& e){
+		errorToFile("TStorageClient", "destructor", e.getMessage());
+	}
 
 	if (this->fExecutor != nullptr)
 		this->fExecutor->join();
@@ -519,7 +638,7 @@ void TStorageClient::registerUser(const string& aUser, const string& aPass, cons
 		bm = new_TBaseMessage_ptr(msg);
 		int kind = bm->getID();
 		if (kind == SYSTEM_ERR_ID){
-			sysErr = new_TSystemErrorMessage_ptr(bm);
+			sysErr = make_TSystemErrorMessage_ptr(bm);
 			errorToFile("TStorageClient", "registerUser", sysErr->getDetail());
 			this->onRegistrationError("Registration temporarly unavailable! Try later.");
 			result = false;
@@ -574,7 +693,7 @@ int TStorageClient::getLastVersion(const string& aUser, const string& aPass){
 		bm = new_TBaseMessage_ptr(msg);
 		int kind = bm->getID();
 		if (kind == SYSTEM_ERR_ID){
-			sysErr = new_TSystemErrorMessage_ptr(bm);
+			sysErr = make_TSystemErrorMessage_ptr(bm);
 			errorToFile("TStorageClient", "getLastVersion", sysErr->getDetail());
 			version = -1;
 		}
@@ -619,6 +738,10 @@ void TStorageClient::updateCurrentVersion(const string& aUser, const string& aPa
 		this->onUpdateError("Directory to be synchronized must exist!");
 		return;
 	}
+	if (!is_directory(root)){
+		this->onUpdateError("Directory to be synchronized must be valid!");
+		return;
+	}
 
 	int lastServer = this->getLastVersion(aUser, aPass);
 	if (lastServer == -1){
@@ -626,8 +749,8 @@ void TStorageClient::updateCurrentVersion(const string& aUser, const string& aPa
 		return;
 	}
 
+	int lastLocal = 0;
 	if (lastServer > 0){
-		int lastLocal = 0;
 		try{
 			if (this->fSqliteDB == nullptr)
 				this->fSqliteDB = new TSqliteDB(SQLITE_DEFAULT_DB_NAME);
@@ -635,23 +758,39 @@ void TStorageClient::updateCurrentVersion(const string& aUser, const string& aPa
 			lastLocal = this->fSqliteDB->getLastVersion(aUser);
 		}
 		catch (ESqliteDBException& e){
-			this->onUpdateError("Unable to get last version stored locally: " + unmarshalString(e.getMessage()));
+			errorToFile("TStorageClient", "updateCurrentVersion", e.getMessage());
+			this->onUpdateError("Unable to get last version stored locally!");
 			return;
 		}
 
 		if (lastServer > lastLocal){
 			try{
-				moveAllFiles(root, root / path("tmp"));
-				if (!this->restoreVersion(aUser, aPass, lastServer, aRootPath, true))
-					moveAllFiles(root / path("tmp"), root);
-					
-				removeDir(root / path("tmp"));
+				path local(root / path("LOCAL_NO_SYNCH"));
+				moveAllFiles(root, local);
+				if (!this->restoreVersion(aUser, aPass, lastServer, aRootPath, true)){
+					moveAllFiles(local, root);
+					removeDir(local);
+				}
 			}
 			catch (EFilesystemException& e){
-				onUpdateError(unmarshalString(e.getMessage()));
+				errorToFile("TStorageClient", "updateCurrentVersion", e.getMessage());
+				onUpdateError("Unable to restore last version from server!");
 			}
 			return;
 		}
+	}
+
+	directory_iterator end_it;
+	directory_iterator it(root);
+	if (it == end_it){
+		//directory is empty
+		if (lastServer == 0)
+			//no previous versions
+			this->onUpdateError(unmarshalString("Put some files in " + aRootPath + " to start synchronization"));
+		else
+			this->onUpdateError(unmarshalString("Synchronization interrupted because " + aRootPath + " is empty"));
+
+		return;
 	}
 
 	string_ptr msg = nullptr;
@@ -676,7 +815,7 @@ void TStorageClient::updateCurrentVersion(const string& aUser, const string& aPa
 		bm = new_TBaseMessage_ptr(msg);
 		int kind = bm->getID();
 		if (kind == SYSTEM_ERR_ID){
-			sysErr = new_TSystemErrorMessage_ptr(bm);
+			sysErr = make_TSystemErrorMessage_ptr(bm);
 			errorToFile("TStorageClient", "updateCurrentVersion", sysErr->getDetail());
 			result = false;
 			sysErr.reset();
@@ -703,12 +842,25 @@ void TStorageClient::updateCurrentVersion(const string& aUser, const string& aPa
 	if (result){
 		token = updReply->getToken();
 		updReply.reset();
-		this->onUpdateStart(unmarshalString(token));
 
 		logToFile("TStorageClient", "updateCurrentVersion", "Start sending files");
 		bool is_ok = true;
+		TUserFileList_ptr fl = nullptr;
+		try{
+			if (this->fSqliteDB == nullptr)
+				this->fSqliteDB = new TSqliteDB(SQLITE_DEFAULT_DB_NAME);
+
+			fl = this->fSqliteDB->getFileList(aUser, lastLocal);
+		}
+		catch (ESqliteDBException e){
+			errorToFile("TStorageClient", "updateCurrentVersion", e.getMessage());
+			this->onUpdateError("Temporary error! Update session cannot be started.");
+			fl.reset();
+			return;
+		}
+
 		List<UserFile^>^ flist = gcnew List<UserFile^>();
-		TUserFileList_ptr fl = new_TUserFileList_ptr();
+		this->onUpdateStart(unmarshalString(token));
 		try{
 			if (is_regular_file(root)){
 				is_ok = this->processFile(lastServer + 1, token, root, root, flist, fl);
@@ -717,6 +869,15 @@ void TStorageClient::updateCurrentVersion(const string& aUser, const string& aPa
 				is_ok = this->processDirectory(lastServer + 1, token, root, root, flist, fl);
 			}
 
+			if (!is_ok){
+				this->onUpdateError("Temporary error! Update session interrupted.");
+				fl->clear();
+				fl.reset();
+				return;
+			}
+
+			//remove from server file marked as to be removed
+			this->removeFiles(token, root, fl);
 			if (!is_ok){
 				this->onUpdateError("Temporary error! Update session interrupted.");
 				fl->clear();
@@ -750,7 +911,7 @@ void TStorageClient::updateCurrentVersion(const string& aUser, const string& aPa
 			try{
 				is_ok = true;
 				if (kind == SYSTEM_ERR_ID){
-					sysErr = new_TSystemErrorMessage_ptr(bm);
+					sysErr = make_TSystemErrorMessage_ptr(bm);
 					errorToFile("TStorageClient", "updateCurrentVersion", sysErr->getDetail());
 					sysErr.reset();
 					is_ok = false;
@@ -783,8 +944,8 @@ void TStorageClient::updateCurrentVersion(const string& aUser, const string& aPa
 						this->onUpdateSuccess(flist, v, unmarshalString(vdate));
 					}
 					else{
-						errorToFile("TStorageClient", "updateCurrentVersion", "Update session aborted by the server!");
-						this->onUpdateError("Temporary error! Update session interrupted.");
+						warningToFile("TStorageClient", "updateCurrentVersion", "Update session refused by the server!");
+						this->onUpdateSuccess(flist, -1, "");
 					}
 
 					updstopReply.reset();
@@ -863,7 +1024,7 @@ const bool TStorageClient::restoreVersion(const string& aUser, const string& aPa
 		bm = new_TBaseMessage_ptr(msg);
 		int kind = bm->getID();
 		if (kind == SYSTEM_ERR_ID){
-			sysErr = new_TSystemErrorMessage_ptr(bm);
+			sysErr = make_TSystemErrorMessage_ptr(bm);
 			errorToFile("TStorageClient", "restoreVersion", sysErr->getDetail());
 			result = false;
 			sysErr.reset();
@@ -918,7 +1079,7 @@ const bool TStorageClient::restoreVersion(const string& aUser, const string& aPa
 			result = false;
 			try{
 				if (kind == SYSTEM_ERR_ID){
-					sysErr = new_TSystemErrorMessage_ptr(bm);
+					sysErr = make_TSystemErrorMessage_ptr(bm);
 					errorToFile("TStorageClient", "restoreVersion", sysErr->getDetail());
 					exit = is_err = true;
 				}
@@ -926,24 +1087,35 @@ const bool TStorageClient::restoreVersion(const string& aUser, const string& aPa
 					restFile = make_TRestoreFileMessage_ptr(bm);
 					path f(restFile->getFilePath());
 					logToFile("TStorageClient", "restoreVersion", "received file " + f.string());
-					if (aStoreOnLocalDB){
-						if (fl == nullptr)
-							fl = new_TUserFileList_ptr();
-
-						TUserFile_ptr fptr = copy_TUserFile_ptr(aUser, aVersion, (root / f).string(), restFile->getFileChecksum(), restFile->getFileDate());
-						fl->push_back(move_TUserFile_ptr(fptr));
-						
-						if (flist == nullptr)
-							flist = gcnew List<UserFile^>();
-						flist->Add(gcnew UserFile(unmarshalString((root / f).string())));
-					}
 
 					try{
-						storeFile(root / f, restFile->getFileContent());
-						if (!this->sendMsg((TBaseMessage_ptr&)move_TBaseMessage_ptr(new_TRestoreFileAckMessage_ptr(true, token, f.string()))))
-							exit = is_err = true;
+						if (restFile->verifyChecksum()){
+							try{
+								storeFile(root / f, restFile->getFileContent());
+
+								if (flist == nullptr)
+									flist = gcnew List<UserFile^>();
+								flist->Add(gcnew UserFile(unmarshalString((root / f).string())));
+
+								if (aStoreOnLocalDB){
+									if (fl == nullptr)
+										fl = new_TUserFileList_ptr();
+
+									TUserFile_ptr fptr = new_TUserFile_ptr(aUser, aVersion, (root / f).string(), restFile->getFileChecksum(), restFile->getFileDate(), false);
+									fl->push_back(move_TUserFile_ptr(fptr));
+								}
+
+								if (!this->sendMsg((TBaseMessage_ptr&)move_TBaseMessage_ptr(new_TRestoreFileAckMessage_ptr(true, token, f.string()))))
+									exit = is_err = true;
+							}
+							catch (EFilesystemException& e){
+								errorToFile("TStorageClient", "restoreVersion", e.getMessage());
+								if (!this->sendMsg((TBaseMessage_ptr&)move_TBaseMessage_ptr(new_TRestoreFileAckMessage_ptr(false, token, f.string()))))
+									exit = is_err = true;
+							}
+						}
 					}
-					catch (EFilesystemException& e){
+					catch (EMessageException e){
 						errorToFile("TStorageClient", "restoreVersion", e.getMessage());
 						if (!this->sendMsg((TBaseMessage_ptr&)move_TBaseMessage_ptr(new_TRestoreFileAckMessage_ptr(false, token, f.string()))))
 							exit = is_err = true;
@@ -1047,7 +1219,7 @@ void TStorageClient::getAllVersions(const string& aUser, const string& aPass){
 		bm = new_TBaseMessage_ptr(msg);
 		int kind = bm->getID();
 		if (kind == SYSTEM_ERR_ID){
-			sysErr = new_TSystemErrorMessage_ptr(bm);
+			sysErr = make_TSystemErrorMessage_ptr(bm);
 			errorToFile("TStorageClient", "getAllVersions", sysErr->getDetail());
 			this->onGetVersionsError("Version list cannot be retrived.");
 		}
@@ -1066,6 +1238,8 @@ void TStorageClient::getAllVersions(const string& aUser, const string& aPass){
 				}
 				this->onGetVersionsSuccess(result);
 			}
+			else
+				this->onGetVersionsError("No versions available!");
 		}
 		else{
 			errorToFile("TStorageClient", "getAllVersions", getMessageName(kind) + " is invalid");
