@@ -47,15 +47,12 @@ private:
 	TMessageExecutor* fExecutor = nullptr;
 	IDBManagerInterface* fDBManager = nullptr;
 
-	string_ptr newSession(const string& aUser, const int aSessionType, const int aVersion); //throws EOpensslException
+	string_ptr newSession(const string& aUser, const int aSessionType, const int aVersion);
 	TSession_ptr isThereASessionFor(const string& aUser);
 	TSession_ptr isThereAnUpdateSessionFor(const string& aUser);
 	TSession_ptr isThereARestoreSessionFor(const string& aUser);
 	void removeSession(const string& aUser);
 	void checkAndCleanSessions(const boost::system::error_code& aErr);
-
-	const bool userExists(const string& aUser);
-	string_ptr checkUserCredential(const string& aUser, const string& aPass);
 
 	void onServerReady(const bool aReadyState) override;
 	void onServerLog(const string& aClassName, const string& aFuncName, const string& aMsg) override;

@@ -12,7 +12,6 @@
 #include <vector>
 #include <map>
 #include <memory>
-
 #include "Utility.h"
 #include "Session.h"
 
@@ -86,8 +85,8 @@ public:
 	TBaseMessage& operator=(const TBaseMessage&) = delete; // disable assignment
 	virtual ~TBaseMessage();
 
-	virtual string_ptr encodeMessage();
-	virtual void decodeMessage();
+	virtual string_ptr encodeMessage(); 
+	virtual void decodeMessage(); //throws EMessageException
 
 	// getters
 	const int getID(){ return this->fID; };
@@ -110,14 +109,14 @@ private:
 	string_ptr fPath = nullptr;
 
 public:
-	TUserRegistrReqMessage(TBaseMessage_ptr& aBase);
+	TUserRegistrReqMessage(TBaseMessage_ptr& aBase); //throws EMessageException
 	TUserRegistrReqMessage(const string& aUser, const string& aPass, const string& aPath);
 	TUserRegistrReqMessage(const TUserRegistrReqMessage&) = delete;            // disable copying
 	TUserRegistrReqMessage& operator=(const TUserRegistrReqMessage&) = delete; // disable assignment
 	~TUserRegistrReqMessage();
 
 	string_ptr encodeMessage();
-	void decodeMessage();
+	void decodeMessage(); //throws EMessageException
 
 	//getters
 	const string getUser(){ return *(this->fUser); }
@@ -137,14 +136,14 @@ private:
 	bool fResp = false;
 
 public:
-	TUserRegistrReplyMessage(TBaseMessage_ptr& aBase);
-	TUserRegistrReplyMessage(const bool aResp);
+	TUserRegistrReplyMessage(TBaseMessage_ptr& aBase); //throws EMessageException
+	TUserRegistrReplyMessage(const bool aResp); 
 	TUserRegistrReplyMessage(const TUserRegistrReplyMessage&) = delete;            // disable copying
 	TUserRegistrReplyMessage& operator=(const TUserRegistrReplyMessage&) = delete; // disable assignment
 	~TUserRegistrReplyMessage(){};
 
 	string_ptr encodeMessage();
-	void decodeMessage();
+	void decodeMessage(); //throws EMessageException
 
 	//getters
 	const bool getResp(){ return this->fResp; }
@@ -163,14 +162,14 @@ private:
 	string_ptr fPass = nullptr;
 
 public:
-	TUpdateStartReqMessage(TBaseMessage_ptr& aBase);
+	TUpdateStartReqMessage(TBaseMessage_ptr& aBase); //throws EMessageException
 	TUpdateStartReqMessage(const string& aUser, const string& aPass);
 	TUpdateStartReqMessage(const TUpdateStartReqMessage&) = delete;            // disable copying
 	TUpdateStartReqMessage& operator=(const TUpdateStartReqMessage&) = delete; // disable assignment
 	~TUpdateStartReqMessage();
 
 	string_ptr encodeMessage();
-	void decodeMessage();
+	void decodeMessage(); //throws EMessageException
 
 	//getters
 	const string getUser(){ return *(this->fUser); }
@@ -190,14 +189,14 @@ private:
 	string_ptr fToken = nullptr;
 
 public:
-	TUpdateStartReplyMessage(TBaseMessage_ptr& aBase);
+	TUpdateStartReplyMessage(TBaseMessage_ptr& aBase); //throws EMessageException
 	TUpdateStartReplyMessage(const bool aResp, const string& aToken);
 	TUpdateStartReplyMessage(const TUpdateStartReplyMessage&) = delete;            // disable copying
 	TUpdateStartReplyMessage& operator=(const TUpdateStartReplyMessage&) = delete; // disable assignment
 	~TUpdateStartReplyMessage();
 
 	string_ptr encodeMessage();
-	void decodeMessage();
+	void decodeMessage(); //throws EMessageException
 
 	//getters
 	const bool getResp(){ return this->fResp; }
@@ -220,14 +219,14 @@ private:
 	string_ptr fFileContent = nullptr;
 
 public:
-	TAddNewFileMessage(TBaseMessage_ptr& aBase);
-	TAddNewFileMessage(const string& aToken, const string& aFilePath);
+	TAddNewFileMessage(TBaseMessage_ptr& aBase); //throws EMessageException
+	TAddNewFileMessage(const string& aToken, const string& aFilePath); //throws EMessageException
 	TAddNewFileMessage(const TAddNewFileMessage&) = delete;            // disable copying
 	TAddNewFileMessage& operator=(const TAddNewFileMessage&) = delete; // disable assignment
 	~TAddNewFileMessage();
 
 	string_ptr encodeMessage();
-	void decodeMessage();
+	void decodeMessage(); //throws EMessageException
 	const bool verifyChecksum(); //throws EMessageException
 
 	//getters
@@ -257,14 +256,14 @@ private:
 	string_ptr fFileContent = nullptr;
 
 public:
-	TUpdateFileMessage(TBaseMessage_ptr& aBase);
-	TUpdateFileMessage(const string& aToken, const string& aFilePath);
+	TUpdateFileMessage(TBaseMessage_ptr& aBase); //throws EMessageException
+	TUpdateFileMessage(const string& aToken, const string& aFilePath); //throws EMessageException
 	TUpdateFileMessage(const TUpdateFileMessage&) = delete;            // disable copying
 	TUpdateFileMessage& operator=(const TUpdateFileMessage&) = delete; // disable assignment
 	~TUpdateFileMessage();
 
 	string_ptr encodeMessage();
-	void decodeMessage();
+	void decodeMessage(); //throws EMessageException
 	const bool verifyChecksum(); //throws EMessageException
 
 	//getters
@@ -287,20 +286,21 @@ private:
 	string_ptr fFilePath = nullptr;
 
 public:
-	TRemoveFileMessage(TBaseMessage_ptr& aBase);
+	TRemoveFileMessage(TBaseMessage_ptr& aBase); //throws EMessageException
 	TRemoveFileMessage(const string& aToken, const string& aFilePath);
 	TRemoveFileMessage(const TRemoveFileMessage&) = delete;            // disable copying
 	TRemoveFileMessage& operator=(const TRemoveFileMessage&) = delete; // disable assignment
 	~TRemoveFileMessage();
 
 	string_ptr encodeMessage();
-	void decodeMessage();
+	void decodeMessage(); //throws EMessageException
 
 	//getters
 	const string getToken(){ return *(this->fToken); }
 	const string getFilePath(){ return *(this->fFilePath); }
 };
 typedef std::unique_ptr<TRemoveFileMessage> TRemoveFileMessage_ptr;
+#define new_TRemoveFileMessage_ptr(aToken, aFilePath) std::make_unique<TRemoveFileMessage>(aToken, aFilePath)
 #define make_TRemoveFileMessage_ptr(ptr) std::make_unique<TRemoveFileMessage>(ptr)
 
 
@@ -313,14 +313,14 @@ private:
 	string_ptr fFilePath = nullptr;
 
 public:
-	TFileAckMessage(TBaseMessage_ptr& aBase);
+	TFileAckMessage(TBaseMessage_ptr& aBase); //throws EMessageException
 	TFileAckMessage(const bool aResp, const string& aFilePath);
 	TFileAckMessage(const TFileAckMessage&) = delete;            // disable copying
 	TFileAckMessage& operator=(const TFileAckMessage&) = delete; // disable assignment
 	~TFileAckMessage();
 
 	string_ptr encodeMessage();
-	void decodeMessage();
+	void decodeMessage(); //throws EMessageException
 
 	//getters
 	const bool getResp(){ return this->fResp; }
@@ -339,14 +339,14 @@ private:
 	string_ptr fToken = nullptr;
 
 public:
-	TUpdateStopReqMessage(TBaseMessage_ptr& aBase);
+	TUpdateStopReqMessage(TBaseMessage_ptr& aBase); //throws EMessageException
 	TUpdateStopReqMessage(const string& aToken);
 	TUpdateStopReqMessage(const TUpdateStopReqMessage&) = delete;            // disable copying
 	TUpdateStopReqMessage& operator=(const TUpdateStopReqMessage&) = delete; // disable assignment
 	~TUpdateStopReqMessage();
 
 	string_ptr encodeMessage();
-	void decodeMessage();
+	void decodeMessage(); //throws EMessageException
 
 	//getters
 	const string getToken(){ return *(this->fToken); }
@@ -366,14 +366,14 @@ private:
 	time_t fTime;
 
 public:
-	TUpdateStopReplyMessage(TBaseMessage_ptr& aBase);
+	TUpdateStopReplyMessage(TBaseMessage_ptr& aBase); //throws EMessageException
 	TUpdateStopReplyMessage(const bool aResp, const int aVersion, const time_t aTime);
 	TUpdateStopReplyMessage(const TUpdateStopReplyMessage&) = delete;            // disable copying
 	TUpdateStopReplyMessage& operator=(const TUpdateStopReplyMessage&) = delete; // disable assignment
 	~TUpdateStopReplyMessage() {};
 
 	string_ptr encodeMessage();
-	void decodeMessage();
+	void decodeMessage(); //throws EMessageException
 
 	//getters
 	const bool getResp(){ return this->fResp; }
@@ -394,14 +394,14 @@ private:
 	string_ptr fPass = nullptr;
 
 public:
-	TGetVersionsReqMessage(TBaseMessage_ptr& aBase);
+	TGetVersionsReqMessage(TBaseMessage_ptr& aBase); //throws EMessageException
 	TGetVersionsReqMessage(const string& aUser, const string& aPass);
 	TGetVersionsReqMessage(const TGetVersionsReqMessage&) = delete;            // disable copying
 	TGetVersionsReqMessage& operator=(const TGetVersionsReqMessage&) = delete; // disable assignment
 	~TGetVersionsReqMessage();
 
 	string_ptr encodeMessage();
-	void decodeMessage();
+	void decodeMessage(); //throws EMessageException
 
 	//getters
 	const string getUser(){ return *(this->fUser); }
@@ -423,14 +423,14 @@ private:
 	TVersionList_ptr fVersions = nullptr;
 
 public:
-	TGetVersionsReplyMessage(TBaseMessage_ptr& aBase);
+	TGetVersionsReplyMessage(TBaseMessage_ptr& aBase); //throws EMessageException
 	TGetVersionsReplyMessage(const unsigned int aTotVersions, const unsigned int aOldestVersion, const unsigned int aLastVersion, TVersionList_ptr& aVersions);
 	TGetVersionsReplyMessage(const TGetVersionsReplyMessage&) = delete;            // disable copying
 	TGetVersionsReplyMessage& operator=(const TGetVersionsReplyMessage&) = delete; // disable assignment
 	~TGetVersionsReplyMessage();
 
 	string_ptr encodeMessage();
-	void decodeMessage();
+	void decodeMessage(); //throws EMessageException
 
 	//getters
 	const unsigned int getTotVersions(){ return this->fTotVersions; }
@@ -452,14 +452,14 @@ private:
 	string_ptr fPass = nullptr;
 
 public:
-	TGetLastVerReqMessage(TBaseMessage_ptr& aBase);
+	TGetLastVerReqMessage(TBaseMessage_ptr& aBase); //throws EMessageException
 	TGetLastVerReqMessage(const string& aUser, const string& aPass);
 	TGetLastVerReqMessage(const TGetLastVerReqMessage&) = delete;            // disable copying
 	TGetLastVerReqMessage& operator=(const TGetLastVerReqMessage&) = delete; // disable assignment
 	~TGetLastVerReqMessage();
 
 	string_ptr encodeMessage();
-	void decodeMessage();
+	void decodeMessage(); //throws EMessageException
 
 	//getters
 	const string getUser(){ return *(this->fUser); }
@@ -479,14 +479,14 @@ private:
 	time_t fVersionDate;
 
 public:
-	TGetLastVerReplyMessage(TBaseMessage_ptr& aBase);
+	TGetLastVerReplyMessage(TBaseMessage_ptr& aBase); //throws EMessageException
 	TGetLastVerReplyMessage(const int aVersion, const time_t aVersionDate);
 	TGetLastVerReplyMessage(const TGetLastVerReplyMessage&) = delete;            // disable copying
 	TGetLastVerReplyMessage& operator=(const TGetLastVerReplyMessage&) = delete; // disable assignment
 	~TGetLastVerReplyMessage() {};
 
 	string_ptr encodeMessage();
-	void decodeMessage();
+	void decodeMessage(); //throws EMessageException
 
 	//getters
 	const int getVersion(){ return this->fVersion; }
@@ -507,14 +507,14 @@ private:
 	unsigned int fVersion = -1;
 
 public:
-	TRestoreVerReqMessage(TBaseMessage_ptr& aBase);
+	TRestoreVerReqMessage(TBaseMessage_ptr& aBase); //throws EMessageException
 	TRestoreVerReqMessage(const string& aUser, const string& aPass, const unsigned int aVersion);
 	TRestoreVerReqMessage(const TRestoreVerReqMessage&) = delete;            // disable copying
 	TRestoreVerReqMessage& operator=(const TRestoreVerReqMessage&) = delete; // disable assignment
 	~TRestoreVerReqMessage();
 
 	string_ptr encodeMessage();
-	void decodeMessage();
+	void decodeMessage(); //throws EMessageException
 
 	//getters
 	const string getUser(){ return *(this->fUser); }
@@ -535,14 +535,14 @@ private:
 	string_ptr fToken = nullptr;
 
 public:
-	TRestoreVerReplyMessage(TBaseMessage_ptr& aBase);
+	TRestoreVerReplyMessage(TBaseMessage_ptr& aBase); //throws EMessageException
 	TRestoreVerReplyMessage(const bool aResp, const string& aToken);
 	TRestoreVerReplyMessage(const TRestoreVerReplyMessage&) = delete;            // disable copying
 	TRestoreVerReplyMessage& operator=(const TRestoreVerReplyMessage&) = delete; // disable assignment
 	~TRestoreVerReplyMessage();
 
 	string_ptr encodeMessage();
-	void decodeMessage();
+	void decodeMessage(); //throws EMessageException
 
 	//getters
 	const bool getResp(){ return this->fResp; }
@@ -564,20 +564,20 @@ private:
 	string_ptr fFileContent = nullptr;
 
 public:
-	TRestoreFileMessage(TBaseMessage_ptr& aBase);
+	TRestoreFileMessage(TBaseMessage_ptr& aBase); //throws EMessageException
 	TRestoreFileMessage(const string& aBasePath, const string& aFilePath, const time_t aFileDate);
 	TRestoreFileMessage(const TRestoreFileMessage&) = delete;            // disable copying
 	TRestoreFileMessage& operator=(const TRestoreFileMessage&) = delete; // disable assignment
 	~TRestoreFileMessage();
 
 	string_ptr encodeMessage();
-	void decodeMessage();
+	void decodeMessage(); //throws EMessageException
 	const bool verifyChecksum(); //throws EMessageException
 
 	//getters
 	const string getFilePath(){ return *(this->fFilePath); }
 	const time_t getFileDate(){ return this->fFileDate; }
-	const string getFileChecksum(){ return this->fChecksum->c_str(); }
+	const string getFileChecksum(){ return *(this->fChecksum); }
 	string_ptr getFileContent(){ return move_string_ptr(this->fFileContent); }
 };
 typedef std::unique_ptr<TRestoreFileMessage> TRestoreFileMessage_ptr;
@@ -595,14 +595,14 @@ private:
 	string_ptr fFilePath = nullptr;
 
 public:
-	TRestoreFileAckMessage(TBaseMessage_ptr& aBase);
+	TRestoreFileAckMessage(TBaseMessage_ptr& aBase); //throws EMessageException
 	TRestoreFileAckMessage(const bool aResp, const string& aToken, const string& aFilePath);
 	TRestoreFileAckMessage(const TRestoreFileAckMessage&) = delete;            // disable copying
 	TRestoreFileAckMessage& operator=(const TRestoreFileAckMessage&) = delete; // disable assignment
 	~TRestoreFileAckMessage();
 
 	string_ptr encodeMessage();
-	void decodeMessage();
+	void decodeMessage(); //throws EMessageException
 
 	//getters
 	const string getToken(){ return *(this->fToken); }
@@ -623,14 +623,14 @@ private:
 	time_t fVersionDate;
 
 public:
-	TRestoreStopMessage(TBaseMessage_ptr& aBase);
+	TRestoreStopMessage(TBaseMessage_ptr& aBase); //throws EMessageException
 	TRestoreStopMessage(const int aVersion, const time_t aVersionDate);
 	TRestoreStopMessage(const TRestoreStopMessage&) = delete;            // disable copying
 	TRestoreStopMessage& operator=(const TRestoreStopMessage&) = delete; // disable assignment
 	~TRestoreStopMessage() {};
 
 	string_ptr encodeMessage();
-	void decodeMessage();
+	void decodeMessage(); //throws EMessageException
 
 	//getters
 	const int getVersion(){ return this->fVersion; }
@@ -650,14 +650,14 @@ private:
 	string_ptr fToken = nullptr;
 
 public:
-	TPingReqMessage(TBaseMessage_ptr& aBase);
+	TPingReqMessage(TBaseMessage_ptr& aBase); //throws EMessageException
 	TPingReqMessage(const string& aToken);
 	TPingReqMessage(const TPingReqMessage&) = delete;            // disable copying
 	TPingReqMessage& operator=(const TPingReqMessage&) = delete; // disable assignment
 	~TPingReqMessage() {};
 
 	string_ptr encodeMessage();
-	void decodeMessage();
+	void decodeMessage(); //throws EMessageException
 
 	//getters
 	const time_t getTime(){ return this->fTime; }
@@ -677,14 +677,14 @@ private:
 	string_ptr fToken = nullptr;
 
 public:
-	TPingReplyMessage(TBaseMessage_ptr& aBase);
+	TPingReplyMessage(TBaseMessage_ptr& aBase); //throws EMessageException
 	TPingReplyMessage(const string& aToken);
 	TPingReplyMessage(const TPingReplyMessage&) = delete;            // disable copying
 	TPingReplyMessage& operator=(const TPingReplyMessage&) = delete; // disable assignment
 	~TPingReplyMessage() {};
 
 	string_ptr encodeMessage();
-	void decodeMessage();
+	void decodeMessage(); //throws EMessageException
 
 	//getters
 	const time_t getTime(){ return this->fTime; }
@@ -704,14 +704,14 @@ private:
 	string_ptr fPass = nullptr;
 
 public:
-	TVerifyCredReqMessage(TBaseMessage_ptr& aBase);
+	TVerifyCredReqMessage(TBaseMessage_ptr& aBase); //throws EMessageException
 	TVerifyCredReqMessage(const string& aUser, const string& aPass);
 	TVerifyCredReqMessage(const TVerifyCredReqMessage&) = delete;            // disable copying
 	TVerifyCredReqMessage& operator=(const TVerifyCredReqMessage&) = delete; // disable assignment
 	~TVerifyCredReqMessage();
 
 	string_ptr encodeMessage();
-	void decodeMessage();
+	void decodeMessage(); //throws EMessageException
 
 	//getters
 	const string getUser(){ return *(this->fUser); }
@@ -731,14 +731,14 @@ private:
 	string_ptr fPath = nullptr;
 
 public:
-	TVerifyCredReplyMessage(TBaseMessage_ptr& aBase);
+	TVerifyCredReplyMessage(TBaseMessage_ptr& aBase); //throws EMessageException
 	TVerifyCredReplyMessage(const bool aResp, const string& aPath);
 	TVerifyCredReplyMessage(const TVerifyCredReplyMessage&) = delete;            // disable copying
 	TVerifyCredReplyMessage& operator=(const TVerifyCredReplyMessage&) = delete; // disable assignment
 	~TVerifyCredReplyMessage() {};
 
 	string_ptr encodeMessage();
-	void decodeMessage();
+	void decodeMessage(); //throws EMessageException
 
 	//getters
 	const bool getResp() { return this->fResp; }
@@ -757,14 +757,14 @@ private:
 	string_ptr fDetail = nullptr;
 
 public:
-	TSystemErrorMessage(TBaseMessage_ptr& aBase);
+	TSystemErrorMessage(TBaseMessage_ptr& aBase); //throws EMessageException
 	TSystemErrorMessage(const string& aDetail);
 	TSystemErrorMessage(const TSystemErrorMessage&) = delete;            // disable copying
 	TSystemErrorMessage& operator=(const TSystemErrorMessage&) = delete; // disable assignment
 	~TSystemErrorMessage() {};
 
 	string_ptr encodeMessage();
-	void decodeMessage();
+	void decodeMessage(); //throws EMessageException
 
 	//getters
 	const string getDetail(){ return *(this->fDetail); }

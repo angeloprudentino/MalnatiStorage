@@ -46,28 +46,9 @@ static string const SQLiteErrMsg[SQLITE_ERR_NUM + 1] = {
 //         TUserFile	        //
 //////////////////////////////////
 #pragma region "TUserFile"
-TUserFile::TUserFile(const string& aUser, const int aVersion, const string& aFilePath){
+TUserFile::TUserFile(const string& aUser, const int aVersion, const string& aFilePath, const string& aChecksum, const time_t& aFileDate, const bool aToRemove){
 	this->fUser = make_string_ptr(aUser);
-	this->fFilePath = make_string_ptr(aFilePath);
-	this->fVersion = aVersion;
-
-	//read file and calculate checksum
-	try{
-		this->fFileContent = readFile(path(this->fFilePath->c_str()));
-		this->fChecksum = opensslB64FileChecksum(*(this->fFileContent));
-	}
-	catch (EOpensslException e){
-		throw EUserFileException("TUserFile: " + e.getMessage());
-	}
-	path p(*(this->fFilePath));
-	boost::system::error_code ec;
-	this->fFileDate = last_write_time(p, ec);
-	if (ec)
-		this->fFileDate = time(nullptr);
-}
-
-TUserFile::TUserFile(const string& aUser, const int aVersion, const string& aFilePath, const string& aChecksum, const time_t& aFileDate){
-	this->fUser = make_string_ptr(aUser);
+	this->fToRemove = aToRemove; 
 	this->fFilePath = make_string_ptr(aFilePath);
 	this->fVersion = aVersion;
 	this->fChecksum = make_string_ptr(aChecksum);
@@ -81,31 +62,12 @@ TUserFile::~TUserFile(){
 	if (this->fFilePath != nullptr)
 		this->fFilePath.reset();
 
-	if (this->fFileContent != nullptr)
-		this->fFileContent.reset();
-
 	if (this->fChecksum != nullptr)
 		this->fChecksum.reset();
 
 	this->fUser = nullptr;
 	this->fFilePath = nullptr;
-	this->fFileContent = nullptr;
 	this->fChecksum = nullptr;
-}
-
-const bool TUserFile::verifyChecksum(){
-	bool checksumMatches = false;
-	string_ptr myChecksum = nullptr;
-	try{
-		myChecksum = opensslB64FileChecksum(*(this->fFileContent));
-		checksumMatches = (*(myChecksum) == *(this->fChecksum));
-	}
-	catch (EOpensslException e){
-		throw EUserFileException("verifyChecksum failed: " + e.getMessage());
-	}
-	myChecksum.reset();
-
-	return checksumMatches;
 }
 #pragma endregion
 
@@ -216,7 +178,7 @@ void TSqliteDB::insertFileList(TUserFileList_ptr& aFileList){
 				string path = (*it)->getFilePath();
 				this->checkError(sqlite3_bind_text(fInsertFileList_stmt, sqlite3_bind_parameter_index(fInsertFileList_stmt, ":path"), path.c_str(), (int)path.length(), nullptr), "TSqliteDB.insertFileList.sqlite3_bind_text -> ");
 				string checksum = (*it)->getFileChecksum();
-				this->checkError(sqlite3_bind_text(fInsertFileList_stmt, sqlite3_bind_parameter_index(fInsertFileList_stmt, ":user"), checksum.c_str(), (int)checksum.length(), nullptr), "TSqliteDB.insertFileList.sqlite3_bind_text -> ");
+				this->checkError(sqlite3_bind_text(fInsertFileList_stmt, sqlite3_bind_parameter_index(fInsertFileList_stmt, ":checksum"), checksum.c_str(), (int)checksum.length(), nullptr), "TSqliteDB.insertFileList.sqlite3_bind_text -> ");
 				int version = (*it)->getVersion();
 				this->checkError(sqlite3_bind_int(fInsertFileList_stmt, sqlite3_bind_parameter_index(fInsertFileList_stmt, ":version"), version), "TSqliteDB.insertFileList.sqlite3_bind_int -> ");
 				time_t lastmod = (*it)->getFileDate();
@@ -336,7 +298,7 @@ TUserFileList_ptr TSqliteDB::getFileList(const string& aUser, const int aVersion
 			}
 
 			this->checkError(sqlite3_bind_text(fGetFileList_stmt, sqlite3_bind_parameter_index(fGetFileList_stmt, ":user"), aUser.c_str(), (int)aUser.length(), nullptr), "TSqliteDB.getFileList.sqlite3_bind_text -> ");
-			this->checkError(sqlite3_bind_int(fRemoveFileList_stmt, sqlite3_bind_parameter_index(fRemoveFileList_stmt, ":version"), aVersion), "TSqliteDB.removeFileList.sqlite3_bind_int -> ");
+			this->checkError(sqlite3_bind_int(fGetFileList_stmt, sqlite3_bind_parameter_index(fGetFileList_stmt, ":version"), aVersion), "TSqliteDB.GetFileList.sqlite3_bind_int -> ");
 
 			int res = -1;
 			while (res != SQLITE_DONE) {
@@ -350,7 +312,7 @@ TUserFileList_ptr TSqliteDB::getFileList(const string& aUser, const int aVersion
 					string p = (const char*)sqlite3_column_text(fGetFileList_stmt, 2);
 					string c = (const char*)sqlite3_column_text(fGetFileList_stmt, 3);
 					long ts = sqlite3_column_int(fGetFileList_stmt, 4);
-					TUserFile_ptr ptr = copy_TUserFile_ptr(u, v, p, c, ts);
+					TUserFile_ptr ptr = new_TUserFile_ptr(u, v, p, c, ts, true);
 					query_res->push_back(move_TUserFile_ptr(ptr));
 				}
 				else if (res != SQLITE_DONE)

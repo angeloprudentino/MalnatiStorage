@@ -577,7 +577,7 @@ string_ptr readFile(const path& aPath){
 
 	string_ptr res = nullptr;
 #ifdef _DEBUG
-	if (contents != nullptr){
+	if (contents != nullptr && contents->length()>0){
 		try{
 			res = opensslB64Encode((char*)contents->c_str(), (int)contents->length());
 			delete contents;

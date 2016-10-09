@@ -15,15 +15,6 @@
 
 
 //////////////////////////////////////
-//       EUserFileException	        //
-//////////////////////////////////////
-class EUserFileException : public EBaseException {
-public:
-	EUserFileException(const string& aMsg) : EBaseException(aMsg){}
-};
-
-
-//////////////////////////////////////
 //       ESqliteDBException	        //
 //////////////////////////////////////
 class ESqliteDBException : public EBaseException {
@@ -38,20 +29,17 @@ public:
 class TUserFile{
 private:
 	string_ptr fUser = nullptr;
+	bool fToRemove = true;
 	int fVersion = 0;
 	string_ptr fFilePath = nullptr;
-	string_ptr fFileContent = nullptr;
 	string_ptr fChecksum = nullptr;
 	time_t fFileDate;
 	
 public:
-	TUserFile(const string& aUser, const int aVersion, const string& aFilePath); //throws EUserFileException
-	TUserFile(const string& aUser, const int aVersion, const string& aFilePath, const string& aChecksum, const time_t& aFileDate);
+	TUserFile(const string& aUser, const int aVersion, const string& aFilePath, const string& aChecksum, const time_t& aFileDate, const bool aToRemove);
 	TUserFile(const TUserFile&) = delete;            // disable copying
 	TUserFile& operator=(const TUserFile&) = delete; // disable assignment
 	~TUserFile();
-
-	const bool verifyChecksum(); //throws EUserFileException
 
 	//getters
 	const string getUser() { return this->fUser->c_str(); }
@@ -59,12 +47,16 @@ public:
 	const string getFileChecksum() { return this->fChecksum->c_str(); }
 	const int getVersion() { return this->fVersion; }
 	const time_t getFileDate() { return this->fFileDate; }
+	const bool isToRemove() { return this->fToRemove; }
+
+	//setter
+	void setToRemove(const bool aToRemove) { this->fToRemove = aToRemove; }
+	void updateVersion() { this->fVersion++; }
 };
 typedef std::unique_ptr<TUserFile> TUserFile_ptr;
 typedef std::list<TUserFile_ptr> TUserFileList;
 typedef std::unique_ptr<TUserFileList> TUserFileList_ptr;
-#define new_TUserFile_ptr(aUser, aVersion, aFilePath) std::make_unique<TUserFile>(aUser, aVersion, aFilePath)
-#define copy_TUserFile_ptr(aUser, aVersion, aFilePath, aChecksum, aFileDate) std::make_unique<TUserFile>(aUser, aVersion, aFilePath, aChecksum, aFileDate)
+#define new_TUserFile_ptr(aUser, aVersion, aFilePath, aChecksum, aFileDate, aToRemove) std::make_unique<TUserFile>(aUser, aVersion, aFilePath, aChecksum, aFileDate, aToRemove)
 #define make_TUserFile_ptr(ptr) std::make_unique<TUserFile>(ptr)
 #define move_TUserFile_ptr(ptr) std::move(ptr)
 #define new_TUserFileList_ptr() std::make_unique<TUserFileList>()
@@ -83,7 +75,7 @@ private:
 	sqlite3_stmt* fGetLastVersion_stmt = nullptr;
 	sqlite3_stmt* fGetFileList_stmt = nullptr;
 
-	void checkError(const int aCode, const string& aSender);
+	void checkError(const int aCode, const string& aSender); //throws ESqliteDBException
 
 	void initDB(); //throws ESqliteDBException
 	void checkIntegrity(); //throws ESqliteDBException

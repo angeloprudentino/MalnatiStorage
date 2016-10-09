@@ -69,6 +69,7 @@ class TVersion{
 private:
 	int fId = NO_ID;
 	time_t fVersionDate;
+	bool fSomethingRemoved = false;
 	TFile_list fFileList;
 	TFileHandle fNext;  //used only to manage RESTORE_SESSION cases
 
@@ -84,7 +85,7 @@ public:
 
 	void updateNext() { this->fNext++; }
 	void terminateWithSuccess();
-	void purge();
+	const bool isValid();
 	
 	//getters
 	const int getVersion() { return this->fId; }
@@ -120,8 +121,6 @@ public:
 	void addFile(TFile_ptr& aFile);
 	const bool updateFile(TFile_ptr& aFile);
 	void removeFile(TFile_ptr& aFile);
-	TVersion_ptr terminateWithSuccess(const bool aIsRestore);
-	const bool purge(); //throws EOpensslException
 
 	//getters
 	const int getKind() { return this->fKind; }
@@ -129,11 +128,12 @@ public:
 	const time_t getLastPing() { return this->fLastPing; }
 	const int getVersion() { return this->fVersion->getVersion(); }
 	TFile_ptr getNextFileToSend(){ return move_TFile_ptr(this->fVersion->getNextFile()); }
-	TFile_ptr updateNextFileToSend(){ this->fVersion->updateNext(); return move_TFile_ptr(this->fVersion->getNextFile()); }
+	TVersion_ptr terminateSession() { return move_TVersion_ptr(this->fVersion); }
 
 	//setters
 	void setLastPing(const time_t aPing) { this->fLastPing = aPing; }
 	void setVersion(TVersion_ptr& aVersion) { this->fVersion = move_TVersion_ptr(aVersion); }
+	TFile_ptr updateNextFileToSend(){ this->fVersion->updateNext(); return move_TFile_ptr(this->fVersion->getNextFile()); }
 };
 typedef std::shared_ptr<TSession> TSession_ptr;
 typedef map<string, TSession_ptr> TSessions;

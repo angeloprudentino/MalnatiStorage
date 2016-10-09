@@ -535,7 +535,7 @@ void TServerSocket::handleWrite(TConnection_ptr& aConnection, list<string_ptr>::
 		doServerError(this->fCallbackObj, "TServerSocket", "handleWrite", "Error \"" + aErr.message() + "\" while sending a message to " + peer.address().to_string() + ":" + std::to_string(peer.port()));
 	}
 
-	if (aErr || aCloseAfterSend){
+	if (aErr/* || aCloseAfterSend*/){
 		if (aConnection->getSocket().is_open()) {
 			doServerLog(this->fCallbackObj, "TServerSocket", "handleWrite", "Closing socket with " + peer.address().to_string() + ":" + std::to_string(peer.port()));
 			aConnection->getSocket().shutdown(socket_base::shutdown_both);

@@ -27,13 +27,15 @@ namespace StorageClientWPF
     /// </summary>
     public partial class MainWindow : MetroWindow, StorageClientController
     {
-        private const int UPDATE_INTERVAL = 300 * 1000;
+        private const int UPDATE_INTERVAL = /*300*/60 * 1000;
         private const int PING_INTERVAL = 60 * 1000;
 
         private string username;
         private string password;
         private string path;
         private string token;
+        private List<UserFile> lastValidFileList;
+        private List<UserVersion> lastValidVersionList;
 
         private StorageClientCore core;
         private Timer updateTimer;
@@ -52,6 +54,7 @@ namespace StorageClientWPF
             this.LogOut.Visibility = Visibility.Collapsed;
             this.SoWriteGrid.Visibility = Visibility.Collapsed;
             this.RestoreButton.Visibility = Visibility.Collapsed;
+            this.RestoreBackButton.Visibility = Visibility.Collapsed;
             this.progressRing.IsActive = false;
         }
 
@@ -62,6 +65,7 @@ namespace StorageClientWPF
                 //update UI safely
                 this.showErrorMessage("Unexpected Error", aMsg);
                 this.progressRing.IsActive = false;
+                this.scroll.Visibility = Visibility.Collapsed;
             }
             else
             {
@@ -74,7 +78,11 @@ namespace StorageClientWPF
             if (this.Dispatcher.CheckAccess())
             {
                 //update UI safely
+                this.lastValidVersionList = aVersionsList;
                 this.DrawVersionBottons(aVersionsList);
+                this.RestoreButton.Visibility = Visibility.Collapsed;
+                this.RestoreBackButton.Visibility = Visibility.Visible;
+                this.RestoreBackButton.IsEnabled = true;
                 this.progressRing.IsActive = false;
             }
             else
@@ -108,6 +116,7 @@ namespace StorageClientWPF
 
                 this.progressRing.IsActive = false;
                 this.LoginButton.IsEnabled = true;
+                this.scroll.Visibility = Visibility.Collapsed;
                 this.user_label.Visibility = Visibility.Collapsed;
                 this.user.Visibility = Visibility.Collapsed;
                 this.pass_label.Visibility = Visibility.Collapsed;
@@ -122,6 +131,7 @@ namespace StorageClientWPF
                 this.folder_testbox.Visibility = Visibility.Collapsed;
                 this.LogOut.Visibility = Visibility.Visible;
                 this.RestoreButton.Visibility = Visibility.Visible;
+                this.RestoreBackButton.Visibility = Visibility.Collapsed;
                 this.SoWriteGrid.Visibility = Visibility.Visible;
             }
             else
@@ -156,6 +166,7 @@ namespace StorageClientWPF
                 this.startUpdate(this, null);
 
                 //aggiorno la grafica
+                this.scroll.Visibility = Visibility.Collapsed;
                 this.user.Visibility = Visibility.Collapsed;
                 this.user_label.Visibility = Visibility.Collapsed;
                 this.pass.Visibility = Visibility.Collapsed;
@@ -173,6 +184,7 @@ namespace StorageClientWPF
                 this.label_reg.Visibility = Visibility.Collapsed;
                 this.LogOut.Visibility = Visibility.Visible;
                 this.RestoreButton.Visibility = Visibility.Visible;
+                this.RestoreBackButton.Visibility = Visibility.Collapsed;
                 this.SoWriteGrid.Visibility = Visibility.Visible;
             }
             else
@@ -185,12 +197,23 @@ namespace StorageClientWPF
         {
             if (this.Dispatcher.CheckAccess())
             {
+                //stop update timer during restore
+                if (this.updateTimer != null)
+                    this.updateTimer.Stop();
+
                 //update UI safely
-                this.status_label.Content = "Restore started";
+                this.status_label.Foreground = new SolidColorBrush(Colors.Black);
+                this.status_label.Content = "Restoring files from server";
                 this.status_label.ToolTip = this.status_label.Content;
                 this.progressRing.IsActive = true;
-                this.token = aToken;
+                this.LogOut.IsEnabled = false;
+                this.RestoreButton.IsEnabled = false;
+                this.RestoreButton.Visibility = Visibility.Collapsed;
+                this.RestoreBackButton.IsEnabled = false;
+                this.RestoreBackButton.Visibility = Visibility.Visible;
+                this.clearRows();
 
+                this.token = aToken;
                 if (this.pingTimer == null)
                 {
                     this.pingTimer = new Timer();
@@ -198,6 +221,8 @@ namespace StorageClientWPF
                     this.pingTimer.Interval = PING_INTERVAL;
                 }
                 this.pingTimer.Start();
+
+
             }
             else
             {
@@ -210,9 +235,21 @@ namespace StorageClientWPF
             if (this.Dispatcher.CheckAccess())
             {
                 //update UI safely
+                this.status_label.Foreground = new SolidColorBrush(Colors.Red);
                 this.status_label.Content = aMsg;
                 this.status_label.ToolTip = this.status_label.Content;
                 this.progressRing.IsActive = false;
+                this.LogOut.IsEnabled = true;
+                this.RestoreButton.IsEnabled = false;
+                this.RestoreButton.Visibility = Visibility.Collapsed;
+                this.RestoreBackButton.IsEnabled = true;
+                this.RestoreBackButton.Visibility = Visibility.Visible;
+
+                if (this.lastValidVersionList != null)
+                    this.DrawVersionBottons(this.lastValidVersionList);
+                else
+                    this.clearRows();
+
                 if (this.pingTimer != null)
                     this.pingTimer.Stop();
             }
@@ -222,20 +259,29 @@ namespace StorageClientWPF
             }
         }
 
-        public void onRestoreSuccess(int aVersion, string aVersionDate)
+        public void onRestoreSuccess(List<UserFile> aFileList, int aVersion, string aVersionDate)
         {
             if (this.Dispatcher.CheckAccess())
             {
                 //update UI safely
+
+                this.status_label.Foreground = new SolidColorBrush(Colors.Black);
                 this.status_label.Content = "Restore of version " + aVersion + " [" + aVersionDate + "] completed";
                 this.status_label.ToolTip = this.status_label.Content;
                 this.progressRing.IsActive = false;
+                this.LogOut.IsEnabled = true;
+                this.RestoreButton.IsEnabled = false;
+                this.RestoreButton.Visibility = Visibility.Collapsed;
+                this.RestoreBackButton.IsEnabled = true;
+                this.RestoreBackButton.Visibility = Visibility.Visible;
+                this.DrawFileBottons(aFileList);
+
                 if (this.pingTimer != null)
                     this.pingTimer.Stop();
             }
             else
             {
-                Dispatcher.BeginInvoke((Action)(() => onRestoreSuccess(aVersion, aVersionDate)));
+                Dispatcher.BeginInvoke((Action)(() => onRestoreSuccess(aFileList, aVersion, aVersionDate)));
             }
         }
 
@@ -244,6 +290,7 @@ namespace StorageClientWPF
             if (this.Dispatcher.CheckAccess())
             {
                 //update UI safely
+                this.status_label.Foreground = new SolidColorBrush(Colors.Red);
                 this.status_label.Content = aMsg;
                 this.status_label.ToolTip = this.status_label.Content;
                 this.relaunchUpdate();
@@ -252,8 +299,12 @@ namespace StorageClientWPF
                     this.pingTimer.Stop();
 
                 this.RestoreButton.IsEnabled = true;
+                this.RestoreButton.Visibility = Visibility.Visible;
                 this.LogOut.IsEnabled = true;
-
+                if (this.lastValidFileList != null)
+                    this.DrawFileBottons(this.lastValidFileList);
+                else
+                    this.clearRows();
             }
             else
             {
@@ -266,9 +317,11 @@ namespace StorageClientWPF
             if (this.Dispatcher.CheckAccess())
             {
                 //update UI safely
-                this.status_label.Content = "Update started";
+                this.status_label.Foreground = new SolidColorBrush(Colors.Black);
+                this.status_label.Content = "Synchronizing with server";
                 this.status_label.ToolTip = this.status_label.Content;
                 this.progressRing.IsActive = true;
+                this.scroll.Visibility = Visibility.Collapsed;
                 this.token = aToken;
 
                 if (this.pingTimer == null)
@@ -281,7 +334,9 @@ namespace StorageClientWPF
 
                 //disabilito i bottoni
                 this.RestoreButton.IsEnabled = false;
+                this.RestoreBackButton.IsEnabled = false;
                 this.LogOut.IsEnabled = false;
+                this.clearRows();
 
             }
             else
@@ -295,13 +350,18 @@ namespace StorageClientWPF
             if (this.Dispatcher.CheckAccess())
             {
                 //update UI safely
-                this.status_label.Content = "Update finished: stored vesion " + aVersion + " at " + aVersionDate;
+                this.status_label.Foreground = new SolidColorBrush(Colors.Black);
+                if (aVersion == -1)
+                    this.status_label.Content = "Nothing changed since last synchronization";
+                else
+                    this.status_label.Content = "Synchronization finished: stored vesion " + aVersion + " at " + aVersionDate;
                 this.status_label.ToolTip = this.status_label.Content;
                 this.relaunchUpdate();
                 this.progressRing.IsActive = false;
                 if (this.pingTimer != null)
                     this.pingTimer.Stop();
 
+                this.lastValidFileList = aFileList;
                 this.DrawFileBottons(aFileList);
                 //riabilito i bottoni
                 this.RestoreButton.IsEnabled = true;
@@ -369,6 +429,9 @@ namespace StorageClientWPF
 
             if (this.updateTimer != null)
                 this.updateTimer.Dispose();
+
+            if (this.pingTimer != null)
+                this.pingTimer.Dispose();
         }
 
         //gestri eventi per la label "register" vicino al Login
@@ -391,7 +454,7 @@ namespace StorageClientWPF
             this.folder_testbox.Visibility = Visibility.Visible;
             this.LoginButton.Visibility = Visibility.Collapsed;
             this.label_reg.Visibility = Visibility.Collapsed;
-            this.status_label.Content = " ";
+            this.status_label.Content = null;
             this.status_label.ToolTip = this.status_label.Content;
 
             //sistemare le textbox, svuotarle e settare a false il tasto cancella
@@ -401,7 +464,7 @@ namespace StorageClientWPF
             this.pass.SetValue(TextBoxHelper.ClearTextButtonProperty, false);
             this.repeat_pass.Password = "";
             this.repeat_pass.SetValue(TextBoxHelper.ClearTextButtonProperty, false);
-
+            this.folder_testbox.Text = "";
         }
 
         //si evidenzia la label quando ci finisci sopra
@@ -440,13 +503,14 @@ namespace StorageClientWPF
             this.repeat_pass.Password = "";
             this.repeat_pass.SetValue(TextBoxHelper.ClearTextButtonProperty, false);
 
-            this.status_label.Content = "";
+            this.status_label.Content = null;
             this.status_label.ToolTip = this.status_label.Content;
             this.progressRing.IsActive = false;
         }
 
         private void LogOut_Click(object sender, RoutedEventArgs e)
         {
+            this.user_label.Text = "Username";
             this.user_label.Visibility = Visibility.Visible;
             this.user.Visibility = Visibility.Visible;
             this.pass_label.Visibility = Visibility.Visible;
@@ -455,10 +519,11 @@ namespace StorageClientWPF
             this.label_reg.Visibility = Visibility.Visible;
             this.LogOut.Visibility = Visibility.Collapsed;
             this.RestoreButton.Visibility = Visibility.Collapsed;
+            this.RestoreBackButton.Visibility = Visibility.Collapsed;
             WriteGrid.RowDefinitions.Clear();
             WriteGrid.Children.Clear();
             this.SoWriteGrid.Visibility = Visibility.Collapsed;
-            this.status_label.Content = "";
+            this.status_label.Content = null;
             this.status_label.ToolTip = this.status_label.Content;
             this.progressRing.IsActive = false;
 
@@ -474,8 +539,16 @@ namespace StorageClientWPF
 
         private void Register_button_Click(object sender, RoutedEventArgs e)
         {
-            //controllo che ci sia una cartella
-            string path = this.folder_testbox.Text;
+            string path = this.folder_testbox.Text; this.username = this.user.Text;
+            this.password = this.pass.Password;
+            string second_password = this.repeat_pass.Password;
+            this.path = this.folder_testbox.Text;
+
+            if (this.password.CompareTo(second_password) != 0)
+            {
+                this.showErrorMessage("Invalid Credentials", "Password and Repeat Password must be the same");
+                return;
+            }
 
             // get the file attributes for file or directory
             try
@@ -486,11 +559,6 @@ namespace StorageClientWPF
                 //detect whether its a directory or file
                 if ((attr & FileAttributes.Directory) == FileAttributes.Directory)
                 {
-                    //è una directory valida
-                    this.username = this.user.Text;
-                    this.password = this.pass.Password;
-                    this.path = this.folder_testbox.Text;
-
                     if (core == null)
                         core = new StorageClientCore(this);
 
@@ -523,18 +591,29 @@ namespace StorageClientWPF
                 this.onRestoreError("Restore temporary not available! Try later.");
         }
 
-        private void DrawFileBottons(List<UserFile> aList)
-        {
-            //prima pulisci tutto
+        private void clearRows(){
             WriteGrid.RowDefinitions.Clear();
             WriteGrid.Children.Clear();
+            this.scroll.Visibility = Visibility.Collapsed;
+
+            this.user_label.Text = "";
+            this.user_label.Visibility = Visibility.Collapsed;
+        }
+
+        private void DrawFileBottons(List<UserFile> aFileList)
+        {
+            //prima pulisci tutto
+            clearRows();
 
             this.user_label.Text = "Files in folder: ";
             this.user_label.Visibility = Visibility.Visible;
+            this.scroll.Visibility = Visibility.Visible;
 
-            foreach (UserFile s in aList)
+            if (aFileList.Count > 12)
+                WriteGrid.Height += 30 * (aFileList.Count - 12);
+
+            foreach (UserFile s in aFileList)
             {
-
                 RowDefinition row = new RowDefinition();
                 row.Height = new GridLength(30);
                 //grid_files_versions.RowDefinitions.Add(row);
@@ -563,12 +642,16 @@ namespace StorageClientWPF
         private void DrawVersionBottons(List<UserVersion> aVersionsList)
         {
             //prima pulisci tutto
-            WriteGrid.RowDefinitions.Clear();
-            WriteGrid.Children.Clear();
+            clearRows();
 
             this.user_label.Text = "Available versions: ";
             this.user_label.Visibility = Visibility.Visible;
+            this.scroll.Visibility = Visibility.Visible;
+
             //ogni entry indica il numero di versione e la data
+
+            if (aVersionsList.Count > 12)
+                WriteGrid.Height += 30 * (aVersionsList.Count - 12);
 
             foreach (UserVersion v in aVersionsList)
             {
@@ -643,7 +726,8 @@ namespace StorageClientWPF
             folderBrowserDialog1.ShowDialog();
             string path = folderBrowserDialog1.SelectedPath;
             Debug.WriteLine("restore path: " + path);
-            this.status_label.Content = "Trying to restore version " + Version + " in path:" + path;
+            this.status_label.Foreground = new SolidColorBrush(Colors.Black);
+            this.status_label.Content = "Trying to restore version " + Version;
             this.status_label.ToolTip = this.status_label.Content;
 
             if (core == null)
@@ -712,6 +796,25 @@ namespace StorageClientWPF
                 Debug.WriteLine(ex.Message);
             }
             Debug.WriteLine("password cambiato");
+        }
+
+        private void RestoreBackButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.status_label.Foreground = new SolidColorBrush(Colors.Black);
+            this.status_label.Content = null;
+            this.status_label.ToolTip = this.status_label.Content;
+            this.progressRing.IsActive = false;
+            this.LogOut.IsEnabled = true;
+            this.RestoreButton.IsEnabled = true;
+            this.RestoreButton.Visibility = Visibility.Visible;
+            this.RestoreBackButton.IsEnabled = false;
+            this.RestoreBackButton.Visibility = Visibility.Collapsed;
+            if (this.lastValidFileList != null)
+                this.DrawFileBottons(this.lastValidFileList);
+            else
+                this.clearRows();
+
+            this.relaunchUpdate();
         }
     }
 }
