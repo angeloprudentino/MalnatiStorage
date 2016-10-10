@@ -569,7 +569,7 @@ void TStorageServer::processAddNewFile(TConnection_ptr& aConnection, TAddNewFile
 
 		bool close = false;
 		if (!checksumMatches){
-			this->onServerError("TStorageServer", "processAddNewFile", "Checksum mismatch for :" + fp);
+			this->onServerError("TStorageServer", "processAddNewFile", "Checksum mismatch for : " + fp);
 			reply = new_TFileAckMessage_ptr(false, fp);
 		}
 		else{
@@ -670,7 +670,7 @@ void TStorageServer::processUpdateFile(TConnection_ptr& aConnection, TUpdateFile
 
 		bool close = false;
 		if (!checksumMatches){
-			this->onServerError("TStorageServer", "processUpdateFile", "Checksum mismatch for :" + fp);
+			this->onServerError("TStorageServer", "processUpdateFile", "Checksum mismatch for : " + fp);
 			reply = new_TFileAckMessage_ptr(false, fp);
 		}
 		else{
