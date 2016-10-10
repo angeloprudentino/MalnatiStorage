@@ -745,7 +745,7 @@ void TStorageClient::updateCurrentVersion(const string& aUser, const string& aPa
 
 	int lastServer = this->getLastVersion(aUser, aPass);
 	if (lastServer == -1){
-		this->onUpdateError("Unable to get last version stored on server!");
+		this->onUpdateError("Temporary error! Update session cannot be started.");
 		return;
 	}
 
@@ -759,12 +759,15 @@ void TStorageClient::updateCurrentVersion(const string& aUser, const string& aPa
 		}
 		catch (ESqliteDBException& e){
 			errorToFile("TStorageClient", "updateCurrentVersion", e.getMessage());
-			this->onUpdateError("Unable to get last version stored locally!");
+			this->onUpdateError("Temporary error! Update session cannot be started.");
 			return;
 		}
 
 		if (lastServer > lastLocal){
 			try{
+				path root(aRootPath);
+				if (!exists(root))
+
 				path local(root / path("LOCAL_NO_SYNCH"));
 				moveAllFiles(root, local);
 				if (!this->restoreVersion(aUser, aPass, lastServer, aRootPath, true)){
@@ -774,7 +777,7 @@ void TStorageClient::updateCurrentVersion(const string& aUser, const string& aPa
 			}
 			catch (EFilesystemException& e){
 				errorToFile("TStorageClient", "updateCurrentVersion", e.getMessage());
-				onUpdateError("Unable to restore last version from server!");
+				onUpdateError("Temporary error! Update session cannot be started.");
 			}
 			return;
 		}

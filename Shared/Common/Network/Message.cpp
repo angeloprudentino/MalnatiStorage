@@ -523,13 +523,16 @@ TAddNewFileMessage::TAddNewFileMessage(const string& aToken, const string& aFile
 	catch (EFilesystemException& e){
 		throw EMessageException("TAddNewFileMessage: " + e.getMessage());
 	}
+	if (this->fFileContent == nullptr) this->fFileContent = new_string_ptr("");
+
 	try{
-		if (this->fFileContent != nullptr)
-			this->fChecksum = opensslB64FileChecksum(*(this->fFileContent));
+		this->fChecksum = opensslB64FileChecksum(*(this->fFileContent));
 	}
 	catch (EOpensslException e){
 		throw EMessageException("TAddNewFileMessage: " + e.getMessage());
 	}
+	if (this->fChecksum == nullptr) this->fChecksum = new_string_ptr("");
+
 	path p(*(this->fFilePath));
 	boost::system::error_code ec;
 	this->fFileDate = last_write_time(p, ec);
@@ -601,8 +604,8 @@ void TAddNewFileMessage::decodeMessage(){
 	this->fFilePath = move_string_ptr(this->fItems->at(2));
 
 	//file checksum
-	if (*(this->fItems->at(3)) == EMPTY)
-		throw EMessageException("The file checksum field cannot be empty");
+	//if (*(this->fItems->at(3)) == EMPTY)
+	//	throw EMessageException("The file checksum field cannot be empty");
 	this->fChecksum = move_string_ptr(this->fItems->at(3));
 
 	//file date
@@ -611,8 +614,8 @@ void TAddNewFileMessage::decodeMessage(){
 	this->fFileDate = stringToTime(*(this->fItems->at(4)));
 
 	//file content
-	if (*(this->fItems->at(5)) == EMPTY)
-		throw EMessageException("The file content field cannot be empty");
+	//if (*(this->fItems->at(5)) == EMPTY)
+	//	throw EMessageException("The file content field cannot be empty");
 	this->fFileContent = move_string_ptr(this->fItems->at(5));
 }
 
@@ -623,8 +626,8 @@ const bool TAddNewFileMessage::verifyChecksum(){
 		if (this->fFileContent != nullptr)
 			myChecksum = opensslB64FileChecksum(*(this->fFileContent));
 		
-		if (myChecksum == nullptr && this->fChecksum == nullptr)
-			return true;
+		if (myChecksum == nullptr)
+			myChecksum = new_string_ptr("");
 		
 		if (myChecksum != nullptr && this->fChecksum != nullptr)
 			checksumMatches = (*(myChecksum) == *(this->fChecksum));
@@ -655,6 +658,29 @@ TUpdateFileMessage::TUpdateFileMessage(const string& aToken, const string& aFile
 	this->fID = UPDATE_FILE_ID;
 	this->fToken = make_string_ptr(aToken);
 	this->fFilePath = make_string_ptr(aFilePath);
+	
+	//read file, encode it and calculate checksum
+	try{
+		this->fFileContent = readFile(path(this->fFilePath->c_str()));
+	}
+	catch (EFilesystemException& e){
+		throw EMessageException("TUpdateFileMessage: " + e.getMessage());
+	}
+	if (this->fFileContent == nullptr) this->fFileContent = new_string_ptr("");
+
+	try{
+		this->fChecksum = opensslB64FileChecksum(*(this->fFileContent));
+	}
+	catch (EOpensslException e){
+		throw EMessageException("TUpdateFileMessage: " + e.getMessage());
+	}
+	if (this->fChecksum == nullptr) this->fChecksum = new_string_ptr("");
+
+	path p(*(this->fFilePath));
+	boost::system::error_code ec;
+	this->fFileDate = last_write_time(p, ec);
+	if (ec)
+		this->fFileDate = time(nullptr);
 }
 
 TUpdateFileMessage::~TUpdateFileMessage(){
@@ -677,27 +703,6 @@ TUpdateFileMessage::~TUpdateFileMessage(){
 }
 
 string_ptr TUpdateFileMessage::encodeMessage(){
-	//read file, encode it and calculate checksum
-	try{
-		this->fFileContent = readFile(path(this->fFilePath->c_str()));
-	}
-	catch (EFilesystemException& e){
-		throw EMessageException("TUpdateFileMessage: " + e.getMessage());
-	}
-	try{
-		if (this->fFileContent != nullptr)
-			this->fChecksum = opensslB64FileChecksum(*(this->fFileContent));
-	}
-	catch (EOpensslException e){
-		throw EMessageException("TUpdateFileMessage: " + e.getMessage());
-	}
-
-	path p(*(this->fFilePath));
-	boost::system::error_code ec;
-	this->fFileDate = last_write_time(p, ec);
-	if (ec)
-		this->fFileDate = time(nullptr);
-
 	this->fItems->push_back(make_string_ptr(getMessageName(this->fID)));
 	this->fItems->push_back(move_string_ptr(this->fToken));
 	this->fItems->push_back(move_string_ptr(this->fFilePath));
@@ -742,8 +747,8 @@ void TUpdateFileMessage::decodeMessage(){
 	this->fFilePath = move_string_ptr(this->fItems->at(2));
 
 	//file checksum
-	if (*(this->fItems->at(3)) == EMPTY)
-		throw EMessageException("The file checksum field cannot be empty");
+	//if (*(this->fItems->at(3)) == EMPTY)
+	//	throw EMessageException("The file checksum field cannot be empty");
 	this->fChecksum = move_string_ptr(this->fItems->at(3));
 
 	//file date
@@ -752,8 +757,8 @@ void TUpdateFileMessage::decodeMessage(){
 	this->fFileDate = stringToTime(*(this->fItems->at(4)));
 
 	//file content
-	if (*(this->fItems->at(5)) == EMPTY)
-		throw EMessageException("The file content field cannot be empty");
+	//if (*(this->fItems->at(5)) == EMPTY)
+	//	throw EMessageException("The file content field cannot be empty");
 	this->fFileContent = move_string_ptr(this->fItems->at(5));
 }
 
@@ -764,8 +769,8 @@ const bool TUpdateFileMessage::verifyChecksum(){
 		if (this->fFileContent != nullptr)
 			myChecksum = opensslB64FileChecksum(*(this->fFileContent));
 
-		if (myChecksum == nullptr && this->fChecksum == nullptr)
-			return true;
+		if (myChecksum == nullptr)
+			myChecksum = new_string_ptr("");
 
 		if (myChecksum != nullptr && this->fChecksum != nullptr)
 			checksumMatches = (*(myChecksum) == *(this->fChecksum));
@@ -1584,13 +1589,15 @@ TRestoreFileMessage::TRestoreFileMessage(const string& aBasePath, const string& 
 	catch (EFilesystemException& e){
 		throw EMessageException("TRestoreFileMessage: " + e.getMessage());
 	}
+	if (this->fFileContent == nullptr) this->fFileContent = new_string_ptr("");
+
 	try{
-		if (this->fFileContent != nullptr)
-			this->fChecksum = opensslB64FileChecksum(*(this->fFileContent));
+		this->fChecksum = opensslB64FileChecksum(*(this->fFileContent));
 	}
 	catch (EOpensslException e){
 		throw EMessageException("TRestoreFileMessage: " + e.getMessage());
 	}
+	if (this->fChecksum == nullptr) this->fChecksum = new_string_ptr("");
 
 	this->fFileDate = aFileDate;
 }
@@ -1648,8 +1655,8 @@ void TRestoreFileMessage::decodeMessage(){
 	this->fFilePath = move_string_ptr(this->fItems->at(1));
 
 	//file checksum
-	if (*(this->fItems->at(2)) == EMPTY)
-		throw EMessageException("The file checksum field cannot be empty");
+	//if (*(this->fItems->at(2)) == EMPTY)
+	//	throw EMessageException("The file checksum field cannot be empty");
 	this->fChecksum = move_string_ptr(this->fItems->at(2));
 
 	//file date
@@ -1658,8 +1665,8 @@ void TRestoreFileMessage::decodeMessage(){
 	this->fFileDate = stringToTime(*(this->fItems->at(3)));
 
 	//file content
-	if (*(this->fItems->at(4)) == EMPTY)
-		throw EMessageException("The file content field cannot be empty");
+	//if (*(this->fItems->at(4)) == EMPTY)
+	//	throw EMessageException("The file content field cannot be empty");
 	this->fFileContent = move_string_ptr(this->fItems->at(4));
 }
 
@@ -1670,8 +1677,8 @@ const bool TRestoreFileMessage::verifyChecksum(){
 		if (this->fFileContent != nullptr)
 			myChecksum = opensslB64FileChecksum(*(this->fFileContent));
 
-		if (myChecksum == nullptr && this->fChecksum == nullptr)
-			return true;
+		if (myChecksum == nullptr)
+			myChecksum = new_string_ptr("");
 
 		if (myChecksum != nullptr && this->fChecksum != nullptr)
 			checksumMatches = (*(myChecksum) == *(this->fChecksum));
