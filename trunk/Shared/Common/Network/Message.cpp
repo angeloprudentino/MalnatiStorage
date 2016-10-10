@@ -1579,7 +1579,7 @@ TRestoreFileMessage::TRestoreFileMessage(const string& aBasePath, const string& 
 
 	//read file, encode it and calculate checksum
 	try{
-		this->fFileContent = readFile(path(this->fFilePath->c_str()));
+		this->fFileContent = readFile(path(aBasePath + "//" + aFilePath));
 	}
 	catch (EFilesystemException& e){
 		throw EMessageException("TRestoreFileMessage: " + e.getMessage());
