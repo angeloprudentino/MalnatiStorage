@@ -1,5 +1,5 @@
 /*
- * Author: Angelo Prudentino
+ * Authors: Angelo Prudentino & Daniele Testa
  * Date: 30/09/2015
  * File: NetworkController.h
  * Description: this file contains interfaces for socket controllers

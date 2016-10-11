@@ -1,5 +1,5 @@
 /*
- * Author: Angelo Prudentino
+ * Authors: Angelo Prudentino & Daniele Testa
  * Date: 30/09/2015
  * File: Utility.h
  * Description: utility functions for both client and server

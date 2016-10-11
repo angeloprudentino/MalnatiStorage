@@ -1,5 +1,5 @@
 /*
- * Author: Angelo Prudentino
+ * Authors: Angelo Prudentino & Daniele Testa
  * Date: 02/10/2015
  * File: StorageServer.h
  * Description: This is the main class of the server

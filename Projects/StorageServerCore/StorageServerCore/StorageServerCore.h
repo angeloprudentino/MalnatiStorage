@@ -1,5 +1,5 @@
 /*
- * Author: Angelo Prudentino
+ * Authors: Angelo Prudentino & Daniele Testa
  * Date: 27/09/2016
  * File: StorageServerCore.h
  * Description: This is the entry-point class of the server dll

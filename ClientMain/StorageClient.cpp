@@ -1,5 +1,5 @@
 /*
- * Author: Angelo Prudentino
+ * Authors: Angelo Prudentino & Daniele Testa
  * Date: 14/09/2016
  * File: StorageClientCore.cpp
  * Description: this file contains all classes implementing

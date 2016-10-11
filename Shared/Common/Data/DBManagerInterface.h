@@ -1,5 +1,5 @@
 /*
- * Author: Angelo Prudentino
+ * Authors: Angelo Prudentino & Daniele Testa
  * Date: 10/07/2016
  * File: DBManagerInterface.h
  * Description: This file describes all the interactions with a generic DB

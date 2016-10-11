@@ -1,5 +1,5 @@
 /*
- * Author: Angelo Prudentino
+ * Authors: Angelo Prudentino & Daniele Testa
  * Date: 10/07/2016
  * File: DBManagerMSDE.h
  * Description: This class manages all the interactions with an MSDE DB
