@@ -1,4 +1,11 @@
-﻿using System;
+﻿/*
+ * Authors: Angelo Prudentino & Daniele Testa
+ * Date: 14/09/2016
+ * File: StorageService.cs
+ * Description: Windows' service wrapper for StorageServer
+ *
+ */
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;

@@ -1,5 +1,5 @@
 /*
- * Author: Angelo Prudentino
+ * Authors: Angelo Prudentino & Daniele Testa
  * Date: 17/04/2016
  * File: MessageQueue.cpp
  * Description: this file contains the class implementing a thread-safe message queue

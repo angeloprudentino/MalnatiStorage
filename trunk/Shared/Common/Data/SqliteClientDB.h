@@ -1,5 +1,5 @@
 /*
- * Author: Angelo Prudentino
+ * Authors: Angelo Prudentino & Daniele Testa
  * Date: 29/09/2016
  * File: SqliteClientDB.h
  * Description: this file contains all classes implementing

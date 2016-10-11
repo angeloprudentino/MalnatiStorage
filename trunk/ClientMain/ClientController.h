@@ -1,8 +1,8 @@
 /*
- * Author: Angelo Prudentino
+ * Authors: Angelo Prudentino & Daniele Testa
  * Date: 14/09/2016
  * File: ClientController.h
- * Description: 
+ * Description: Objects to interface C++ core dll and WPF gui 
  *
  */
 

@@ -1,11 +1,11 @@
 /*
-* Author: Angelo Prudentino
-* Date: 29/05/2016
-* File: Session.cpp
-* Description: this file contains all classes related to user versions
-*              stored on the server
-*
-*/
+ * Authors: Angelo Prudentino & Daniele Testa
+ * Date: 29/05/2016
+ * File: Session.cpp
+ * Description: this file contains all classes related to user versions
+ *              stored on the server
+ *
+ */
 
 #include <time.h>
 #include "Session.h"

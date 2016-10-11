@@ -1,4 +1,12 @@
-﻿using System;
+﻿/*
+ * Authors: Angelo Prudentino & Daniele Testa
+ * Date: 14/09/2016
+ * File: MainWindow.xaml.cs
+ * Description: Client application user interface
+ *
+ */
+ 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;

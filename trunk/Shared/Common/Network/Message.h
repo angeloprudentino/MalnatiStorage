@@ -1,5 +1,5 @@
 /*
- * Author: Angelo Prudentino
+ * Authors: Angelo Prudentino & Daniele Testa
  * Date: 06/03/2016
  * File: Message.h
  * Description: this file contains all classes implementing

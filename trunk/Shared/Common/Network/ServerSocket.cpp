@@ -1,5 +1,5 @@
 /*
- * Author: Angelo Prudentino
+ * Authors: Angelo Prudentino & Daniele Testa
  * Date: 30/09/2015
  * File: ServerSocket.cpp
  * Description: this file contains all classes related to Server-side network protocol implementation

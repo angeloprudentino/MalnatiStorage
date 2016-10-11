@@ -1,5 +1,5 @@
 /*
- * Author: Angelo Prudentino
+ * Authors: Angelo Prudentino & Daniele Testa
  * Date: 06/08/2016
  * File: ServerController.h
  * Description: interface definition for server controllers

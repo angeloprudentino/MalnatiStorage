@@ -1,8 +1,8 @@
 /*
- * Author: Angelo Prudentino
+ * Authors: Angelo Prudentino & Daniele Testa
  * Date: 16/09/2016
  * File: ClientRequests.cpp
- * Description: 
+ * Description: Objects to interface C++ core dll and WPF gui 
  *
  */
 

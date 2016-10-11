@@ -1,5 +1,5 @@
 /*
- * Author: Angelo Prudentino
+ * Authors: Angelo Prudentino & Daniele Testa
  * Date: 17/04/2016
  * File: Executor.h
  * Description: this file contains the class implementing message consumer
