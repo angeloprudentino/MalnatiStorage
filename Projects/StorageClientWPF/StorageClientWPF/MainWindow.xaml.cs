@@ -55,6 +55,7 @@ namespace StorageClientWPF
             this.SoWriteGrid.Visibility = Visibility.Collapsed;
             this.RestoreButton.Visibility = Visibility.Collapsed;
             this.RestoreBackButton.Visibility = Visibility.Collapsed;
+            this.folderPicker.Visibility = Visibility.Collapsed;
             this.progressRing.IsActive = false;
         }
 
@@ -182,6 +183,7 @@ namespace StorageClientWPF
                 this.folder_testbox.Visibility = Visibility.Collapsed;
                 this.LoginButton.Visibility = Visibility.Collapsed;
                 this.label_reg.Visibility = Visibility.Collapsed;
+                this.folderPicker.Visibility = Visibility.Collapsed;
                 this.LogOut.Visibility = Visibility.Visible;
                 this.RestoreButton.Visibility = Visibility.Visible;
                 this.RestoreBackButton.Visibility = Visibility.Collapsed;
@@ -453,7 +455,7 @@ namespace StorageClientWPF
             this.LoginButton.Visibility = Visibility.Visible;
             this.label_reg.Visibility = Visibility.Visible;
             this.folder_label.Visibility = Visibility.Visible;
-            //    this.folder_picker.Visibility = Visibility.Visible;
+            this.folderPicker.Visibility = Visibility.Visible; 
             this.folder_testbox.Visibility = Visibility.Visible;
             this.LoginButton.Visibility = Visibility.Collapsed;
             this.label_reg.Visibility = Visibility.Collapsed;
@@ -492,7 +494,7 @@ namespace StorageClientWPF
             this.second_pass_label.Visibility = Visibility.Collapsed;
             this.Register_button.Visibility = Visibility.Collapsed;
             this.folder_label.Visibility = Visibility.Collapsed;
-            //    this.folder_picker.Visibility = Visibility.Collapsed;
+            this.folderPicker.Visibility = Visibility.Collapsed;
             this.folder_testbox.Visibility = Visibility.Collapsed;
             this.LoginButton.Visibility = Visibility.Visible;
             this.label_reg.Visibility = Visibility.Visible;
@@ -740,22 +742,6 @@ namespace StorageClientWPF
                 this.onRestoreError("Restore temporary not available! Try later.");
         }
 
-        private void folder_testbox_MouseUp(object sender, MouseButtonEventArgs e)
-        {
-            //se clicco nella text box mi apre il folder picker
-            FolderBrowserDialog folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
-            // Set the help text description for the FolderBrowserDialog.
-            folderBrowserDialog1.Description =
-                "Select the directory that you want to use as the default.";
-
-            // Do not allow the user to create new files via the FolderBrowserDialog.
-            folderBrowserDialog1.ShowNewFolderButton = false;
-            folderBrowserDialog1.ShowDialog();
-            string path = folderBrowserDialog1.SelectedPath;
-            Debug.WriteLine(path);
-            this.folder_testbox.Text = path;
-        }
-
         //per mostrare un errore all' utente
         private async Task showErrorMessage(string title, string message)
         {
@@ -818,6 +804,22 @@ namespace StorageClientWPF
                 this.clearRows();
 
             this.relaunchUpdate();
+        }
+
+        private void folderPicker_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            //se clicco nella text box mi apre il folder picker
+            FolderBrowserDialog folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
+            // Set the help text description for the FolderBrowserDialog.
+            folderBrowserDialog1.Description =
+                "Select the directory that you want to synchronize.";
+
+            // Do not allow the user to create new files via the FolderBrowserDialog.
+            folderBrowserDialog1.ShowNewFolderButton = false;
+            folderBrowserDialog1.ShowDialog();
+            string path = folderBrowserDialog1.SelectedPath;
+            Debug.WriteLine(path);
+            this.folder_testbox.Text = path;
         }
     }
 }

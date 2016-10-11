@@ -22,15 +22,15 @@
         <TextBlock x:Name="user_label" HorizontalAlignment="Left" Margin="30,21,0,0" TextWrapping="Wrap" Text="Username" VerticalAlignment="Top" RenderTransformOrigin="-1.143,0.306" Width="129" Height="20"/>
         <TextBlock x:Name="pass_label" HorizontalAlignment="Left" Margin="30,64,0,0" TextWrapping="Wrap" Text="Password" VerticalAlignment="Top" Height="20" Width="55"/>
         <PasswordBox x:Name="pass" ToolTip="Insert your Password" Controls:TextBoxHelper.ClearTextButton="False" PasswordChanged="pass_PasswordChanged" HorizontalAlignment="Left" Margin="137,64,0,0" Password="" VerticalAlignment="Top" Width="170" Height="20"/>
-        <Button x:Name="LoginButton" Content="LogIn" HorizontalAlignment="Left" Margin="137,116,0,0" VerticalAlignment="Top" Width="91" Click="LoginButton_Click" d:IsHidden="True"/>
+        <Button x:Name="LoginButton" Content="LogIn" HorizontalAlignment="Left" Margin="137,116,0,0" VerticalAlignment="Top" Width="91" Click="LoginButton_Click" Cursor="Hand"/>
         <TextBlock x:Name="second_pass_label" HorizontalAlignment="Left" Margin="30,108,0,0" TextWrapping="Wrap" Text="Repeat Password" VerticalAlignment="Top"/>
         <PasswordBox x:Name="repeat_pass" ToolTip="Repeat your Password"  Controls:TextBoxHelper.ClearTextButton="False" PasswordChanged="repeat_pass_PasswordChanged"  HorizontalAlignment="Left" Margin="137,107,0,0" Password="" VerticalAlignment="Top" Width="170" Height="20"/>
-        <Label x:Name="label_reg" Content="Register" HorizontalAlignment="Left" Margin="250,116,0,0" VerticalAlignment="Top" Height="29" Width="66" MouseUp="cl_MouseUp"  MouseEnter="cl_MouseEnter" MouseLeave="cl_MouseLeave" d:IsHidden="True"  />
+        <Label x:Name="label_reg" Content="Register" HorizontalAlignment="Left" Margin="250,116,0,0" VerticalAlignment="Top" Height="29" Width="66" MouseUp="cl_MouseUp"  MouseEnter="cl_MouseEnter" MouseLeave="cl_MouseLeave" Cursor="Hand"  />
 
         <TextBlock x:Name="folder_label" HorizontalAlignment="Left" Margin="30,148,0,0" TextWrapping="Wrap" Text="Folder" VerticalAlignment="Top" RenderTransformOrigin="0.465,1.034"/>
-        <TextBox x:Name="folder_testbox" ToolTip="Double click to select the folder you want to synchronize" MouseDoubleClick="folder_testbox_MouseUp" MouseUp="folder_testbox_MouseUp" Controls:TextBoxHelper.ClearTextButton="False"  TextWrapping="NoWrap"  MaxLines="1"  HorizontalAlignment="Left" Height="20" Margin="137,150,0,0"  VerticalAlignment="Top" Width="170" />
-        <Button x:Name="Register_button" Content="Register" HorizontalAlignment="Left" Margin="137,193,0,0" VerticalAlignment="Top" Width="91" Click="Register_button_Click"/>
-        <Button x:Name="back_button" Content="Back" HorizontalAlignment="Left" Margin="30,431,0,0" VerticalAlignment="Top" Width="74" Height="20" Click="back_button_Click"/>
+        <TextBox x:Name="folder_testbox" ToolTip="Type the path of the folder you want to synchronize" Controls:TextBoxHelper.ClearTextButton="False"  TextWrapping="NoWrap"  MaxLines="1"  HorizontalAlignment="Left" Height="20" Margin="137,150,0,0"  VerticalAlignment="Top" Width="170" />
+        <Button x:Name="Register_button" Content="Register" HorizontalAlignment="Left" Margin="137,193,0,0" VerticalAlignment="Top" Width="91" Click="Register_button_Click" Cursor="Hand"/>
+        <Button x:Name="back_button" Content="Back" HorizontalAlignment="Left" Margin="30,431,0,0" VerticalAlignment="Top" Width="74" Height="20" Click="back_button_Click" Cursor="Hand"/>
 
         <Label  x:Name="status_label" HorizontalAlignment="Left" Height="32" Margin="30,471,0,0" VerticalAlignment="Top" Width="335" RenderTransformOrigin="0.498,3.64"/>
 
@@ -43,13 +43,18 @@
 
 
 
-        <Button x:Name="LogOut"  Content="LogOut" HorizontalAlignment="Left" Margin="30,431,0,0" VerticalAlignment="Top" Width="75" Click="LogOut_Click"/>
-        <Button x:Name="RestoreButton" Content="Restore" HorizontalAlignment="Left" Margin="137,431,0,0" VerticalAlignment="Top" Width="75" Click="RestoreButton_Click"/>
-        <Button x:Name="RestoreBackButton" Content="Back" HorizontalAlignment="Left" Margin="137,431,0,0" VerticalAlignment="Top" Width="75" Click="RestoreBackButton_Click"/>
+        <Button x:Name="LogOut"  Content="LogOut" HorizontalAlignment="Left" Margin="30,431,0,0" VerticalAlignment="Top" Width="75" Click="LogOut_Click" Cursor="Hand"/>
+        <Button x:Name="RestoreButton" Content="Restore" HorizontalAlignment="Left" Margin="137,431,0,0" VerticalAlignment="Top" Width="75" Click="RestoreButton_Click" Cursor="Hand"/>
+        <Button x:Name="RestoreBackButton" Content="Back" HorizontalAlignment="Left" Margin="137,431,0,0" VerticalAlignment="Top" Width="75" Click="RestoreBackButton_Click" Cursor="Hand"/>
         <Grid x:Name="control" HorizontalAlignment="Left" Height="141" Margin="60,166,0,0" VerticalAlignment="Top" Width="247">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="200*"/>
+                <ColumnDefinition Width="47*"/>
+            </Grid.ColumnDefinitions>
 
-            <Controls:ProgressRing x:Name="progressRing" Margin="94,0,93,13" VerticalAlignment="Bottom"/>
+            <Controls:ProgressRing x:Name="progressRing" Margin="94,0,46,13" VerticalAlignment="Bottom"/>
         </Grid>
+        <Image x:Name="folderPicker" HorizontalAlignment="Left" Height="26" Margin="321,150,0,0" VerticalAlignment="Top" Width="26" RenderTransformOrigin="0.381,0.786" Source="Resources/thumb_14742984990Folder.png" Cursor="Hand" ToolTip="Click to choose the folder you want to synchronize" MouseUp="folderPicker_MouseUp"/>
 
 
 
