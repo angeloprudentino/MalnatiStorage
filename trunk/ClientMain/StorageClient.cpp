@@ -205,12 +205,14 @@ void TStorageClient::connect(const string& aHost, int aPort){
 		if (this->fSock == nullptr)
 			this->fSock = new tcp::socket(this->fMainIoService);
 
-		tcp::endpoint ep(ip::address::from_string(aHost), aPort);
-		this->fSock->connect(ep);
+		if (!this->fSock->is_open()){
+			tcp::endpoint ep(ip::address::from_string(aHost), aPort);
+			this->fSock->connect(ep);
+		}
 	}
 	catch (...){
-		if (this->fSock != nullptr)
-			delete this->fSock;
+		//if (this->fSock != nullptr)
+		//	delete this->fSock;
 	}
 }
 
@@ -221,8 +223,8 @@ void TStorageClient::disconnect(){
 			this->fSock->close();
 		}
 		catch (...){
-			if (this->fSock != nullptr)
-				delete this->fSock;
+			//if (this->fSock != nullptr)
+			//	delete this->fSock;
 		}
 	}
 }
@@ -323,8 +325,12 @@ const bool TStorageClient::processFile(const int aVersion, const string& aToken,
 					fileContent = readFile(aFilePath);
 					if (fileContent != nullptr)
 						checksum = opensslB64FileChecksum(*fileContent);
+					//else{
+					//	fileContent = new_string_ptr();
+					//	checksum = new_string_ptr();
+					//}
 
-					if (fileContent != nullptr && checksum != nullptr && (*it)->getFileChecksum() == *checksum){
+					if ((fileContent == nullptr && checksum == nullptr) || (fileContent != nullptr && checksum != nullptr && (*it)->getFileChecksum() == *checksum)){
 						logToFile("TStorageClient", "processFile", aFilePath.string() + " is not changed.");
 						//file is not changed
 						aFileList->Add(gcnew UserFile(unmarshalString(aFilePath.string())));
