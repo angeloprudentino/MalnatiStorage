@@ -29,6 +29,8 @@ namespace StorageClientWPF
     {
         private const int UPDATE_INTERVAL = /*300*/60 * 1000;
         private const int PING_INTERVAL = 60 * 1000;
+        private const String UPDATE_FILE_DESC = "Synchronized files:";
+        private const String RESTORE_FILE_DESC = "Restored files:";
 
         private string username;
         private string password;
@@ -78,6 +80,9 @@ namespace StorageClientWPF
         {
             if (this.Dispatcher.CheckAccess())
             {
+                //stop update timer during restore
+                this.stopUpdate();
+
                 //update UI safely
                 this.lastValidVersionList = aVersionsList;
                 this.DrawVersionBottons(aVersionsList);
@@ -161,12 +166,11 @@ namespace StorageClientWPF
             if (this.Dispatcher.CheckAccess())
             {
                 //update UI safely
-                this.progressRing.IsActive = false;
-                this.Register_button.IsEnabled = true;
-
                 this.startUpdate(this, null);
 
                 //aggiorno la grafica
+                this.progressRing.IsActive = false;
+                this.Register_button.IsEnabled = true;
                 this.scroll.Visibility = Visibility.Collapsed;
                 this.user.Visibility = Visibility.Collapsed;
                 this.user_label.Visibility = Visibility.Collapsed;
@@ -199,10 +203,6 @@ namespace StorageClientWPF
         {
             if (this.Dispatcher.CheckAccess())
             {
-                //stop update timer during restore
-                if (this.updateTimer != null)
-                    this.updateTimer.Stop();
-
                 //update UI safely
                 this.status_label.Foreground = new SolidColorBrush(Colors.Black);
                 this.status_label.Content = "Restoring files from server";
@@ -276,7 +276,7 @@ namespace StorageClientWPF
                 this.RestoreButton.Visibility = Visibility.Collapsed;
                 this.RestoreBackButton.IsEnabled = true;
                 this.RestoreBackButton.Visibility = Visibility.Visible;
-                this.DrawFileBottons(aFileList);
+                this.DrawFileBottons(RESTORE_FILE_DESC, aFileList);
 
                 if (this.pingTimer != null)
                     this.pingTimer.Stop();
@@ -304,7 +304,7 @@ namespace StorageClientWPF
                 this.RestoreButton.Visibility = Visibility.Visible;
                 this.LogOut.IsEnabled = true;
                 if (this.lastValidFileList != null)
-                    this.DrawFileBottons(this.lastValidFileList);
+                    this.DrawFileBottons(UPDATE_FILE_DESC, this.lastValidFileList);
                 else
                     this.clearRows();
             }
@@ -339,7 +339,6 @@ namespace StorageClientWPF
                 this.RestoreBackButton.IsEnabled = false;
                 this.LogOut.IsEnabled = false;
                 this.clearRows();
-
             }
             else
             {
@@ -367,7 +366,7 @@ namespace StorageClientWPF
                     this.pingTimer.Stop();
 
                 this.lastValidFileList = aFileList;
-                this.DrawFileBottons(aFileList);
+                this.DrawFileBottons(UPDATE_FILE_DESC, aFileList);
                 //riabilito i bottoni
                 this.RestoreButton.IsEnabled = true;
                 this.LogOut.IsEnabled = true;
@@ -408,8 +407,7 @@ namespace StorageClientWPF
 
         private void startUpdate(object sender, EventArgs e)
         {
-            if (this.updateTimer != null)
-                this.updateTimer.Stop();
+            this.stopUpdate();
 
             if (this.core != null)
             {
@@ -418,6 +416,22 @@ namespace StorageClientWPF
                 else
                     this.progressRing.IsActive = true;
             }
+        }
+
+        private void stopUpdate()
+        {
+            if (this.updateTimer != null)
+                this.updateTimer.Stop();
+        }
+
+        private void startPingTimer(string aToken)
+        {
+
+        }
+
+        private void stopPingTimer()
+        {
+
         }
 
         private void pingSession(object sender, EventArgs e)
@@ -532,8 +546,7 @@ namespace StorageClientWPF
             this.status_label.ToolTip = this.status_label.Content;
             this.progressRing.IsActive = false;
 
-            if (this.updateTimer != null)
-                this.updateTimer.Stop();
+            this.stopUpdate();
 
             if (this.core != null)
                 this.core.issueRequest(new LogoutRequest());
@@ -577,12 +590,12 @@ namespace StorageClientWPF
                 }
                 else
                 {
-                    this.showErrorMessage("Unexpected Error", "Please select a valid folder");
+                    this.showErrorMessage("Unexpected Error", "Please select a valid directory");
                 }
             }
             catch (Exception ex)
             {
-                this.showErrorMessage("Unexpected Error", "Please select a valid folder");
+                this.showErrorMessage("Unexpected Error", "Please select a valid directory");
             }
 
         }
@@ -605,12 +618,12 @@ namespace StorageClientWPF
             this.user_label.Visibility = Visibility.Collapsed;
         }
 
-        private void DrawFileBottons(List<UserFile> aFileList)
+        private void DrawFileBottons(String aMsg, List<UserFile> aFileList)
         {
             //prima pulisci tutto
             clearRows();
 
-            this.user_label.Text = "Files in folder: ";
+            this.user_label.Text = aMsg;
             this.user_label.Visibility = Visibility.Visible;
             this.scroll.Visibility = Visibility.Visible;
 
@@ -720,17 +733,7 @@ namespace StorageClientWPF
 
             String Version = (String)lb.Content;
             int ver = Int32.Parse((String)lb.ToolTip);
-            //aprire un folder picker, per scegliere dove ripristinare 
-            FolderBrowserDialog folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
-            // Set the help text description for the FolderBrowserDialog.
-            folderBrowserDialog1.Description =
-                "Select the directory in which you want to restore the version";
-
-            // Do not allow the user to create new files via the FolderBrowserDialog.
-            folderBrowserDialog1.ShowNewFolderButton = false;
-            folderBrowserDialog1.ShowDialog();
-            string path = folderBrowserDialog1.SelectedPath;
-            Debug.WriteLine("restore path: " + path);
+            string path = pathFromFolderPicker("Select the directory in which you want to restore the selected version");
             this.status_label.Foreground = new SolidColorBrush(Colors.Black);
             this.status_label.Content = "Trying to restore version " + Version;
             this.status_label.ToolTip = this.status_label.Content;
@@ -799,7 +802,7 @@ namespace StorageClientWPF
             this.RestoreBackButton.IsEnabled = false;
             this.RestoreBackButton.Visibility = Visibility.Collapsed;
             if (this.lastValidFileList != null)
-                this.DrawFileBottons(this.lastValidFileList);
+                this.DrawFileBottons(UPDATE_FILE_DESC, this.lastValidFileList);
             else
                 this.clearRows();
 
@@ -808,18 +811,16 @@ namespace StorageClientWPF
 
         private void folderPicker_MouseUp(object sender, MouseButtonEventArgs e)
         {
-            //se clicco nella text box mi apre il folder picker
-            FolderBrowserDialog folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
-            // Set the help text description for the FolderBrowserDialog.
-            folderBrowserDialog1.Description =
-                "Select the directory that you want to synchronize.";
+            this.folder_testbox.Text = pathFromFolderPicker("Select the directory that you want to synchronize.");
+        }
 
-            // Do not allow the user to create new files via the FolderBrowserDialog.
-            folderBrowserDialog1.ShowNewFolderButton = false;
-            folderBrowserDialog1.ShowDialog();
-            string path = folderBrowserDialog1.SelectedPath;
-            Debug.WriteLine(path);
-            this.folder_testbox.Text = path;
+        private string pathFromFolderPicker(string aMsg)
+        {
+            FolderBrowserDialog folderBrowserDialog = new System.Windows.Forms.FolderBrowserDialog();
+            folderBrowserDialog.Description = aMsg;
+            folderBrowserDialog.ShowNewFolderButton = true;
+            folderBrowserDialog.ShowDialog();
+            return folderBrowserDialog.SelectedPath;
         }
     }
 }
