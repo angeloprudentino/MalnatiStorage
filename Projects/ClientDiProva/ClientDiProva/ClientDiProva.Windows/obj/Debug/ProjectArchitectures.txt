@@ -1,1 +1,0 @@
-C:\Projects\Projects\ClientDiProva\ClientDiProva\ClientDiProva.Windows\ClientDiProva.Windows.csproj;neutral
