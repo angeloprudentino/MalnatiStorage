@@ -123,7 +123,7 @@ void TStorageClient::onRestoreStart(String^ aToken, const bool aStoreOnLocalDB){
 		if (!aStoreOnLocalDB)
 			this->fCallbackObj->onRestoreStart(aToken);
 		else
-			this->fCallbackObj->onUpdateStart(aToken);
+			this->onUpdateStart(aToken);
 	}
 	else {
 		errorToFile("TStorageClient", "onRestoreStart", "Callback objest is null!");
@@ -137,7 +137,10 @@ void TStorageClient::onRestoreSuccess(const int aVersion, String^ aVersionDate, 
 #endif
 
 	if (!System::Object::ReferenceEquals(this->fCallbackObj, nullptr)) {
-		this->fCallbackObj->onRestoreSuccess(aFileList, aVersion, aVersionDate);
+		if (!aStoreOnLocalDB)
+			this->fCallbackObj->onRestoreSuccess(aFileList, aVersion, aVersionDate); 
+		else
+			this->onUpdateSuccess(aFileList, (-aVersion), aVersionDate);
 	}
 	else {
 		errorToFile("TStorageClient", "onRestoreSuccess", "Callback objest is null!");
@@ -206,7 +209,8 @@ void TStorageClient::connect(const string& aHost, int aPort){
 		this->fSock->connect(ep);
 	}
 	catch (...){
-
+		if (this->fSock != nullptr)
+			delete this->fSock;
 	}
 }
 
@@ -217,7 +221,8 @@ void TStorageClient::disconnect(){
 			this->fSock->close();
 		}
 		catch (...){
-
+			if (this->fSock != nullptr)
+				delete this->fSock;
 		}
 	}
 }
@@ -284,9 +289,8 @@ const bool TStorageClient::processDirectory(const int aVersion, const string& aT
 	bool is_ok = true;
 	for (directory_entry& x : directory_iterator(aDirPath)){
 		path f = x.path();
-		if (is_regular_file(f)){
+		if (is_regular_file(f))
 			is_ok = this->processFile(aVersion, aToken, aRootPath, f, aFileList, aSqliteFileList);
-		}
 		else if (is_directory(f))
 			is_ok = this->processDirectory(aVersion, aToken, aRootPath, f, aFileList, aSqliteFileList);
 
@@ -734,10 +738,6 @@ void TStorageClient::updateCurrentVersion(const string& aUser, const string& aPa
 		return;
 	}
 	path root(aRootPath);
-	if (!exists(root)){
-		this->onUpdateError("Directory to be synchronized must exist!");
-		return;
-	}
 	if (!is_directory(root)){
 		this->onUpdateError("Directory to be synchronized must be valid!");
 		return;
@@ -765,8 +765,8 @@ void TStorageClient::updateCurrentVersion(const string& aUser, const string& aPa
 
 		if (lastServer > lastLocal){
 			try{
-				path root(aRootPath);
 				if (!exists(root))
+					createDir(root);
 
 				path local(root / path("LOCAL_NO_SYNCH"));
 				moveAllFiles(root, local);
@@ -783,10 +783,17 @@ void TStorageClient::updateCurrentVersion(const string& aUser, const string& aPa
 		}
 	}
 
-	directory_iterator end_it;
-	directory_iterator it(root);
-	if (it == end_it){
-		//directory is empty
+	if (!exists(root)){
+		if (lastServer == 0)
+			//no previous versions
+			this->onUpdateError(unmarshalString("Create directory " + aRootPath + " and put some files in it to start synchronization"));
+		else
+			this->onUpdateError(unmarshalString("Synchronization interrupted because " + aRootPath + " does not exist"));
+
+		return;
+	}
+
+	if (isDirectoryEmpty(root)){
 		if (lastServer == 0)
 			//no previous versions
 			this->onUpdateError(unmarshalString("Put some files in " + aRootPath + " to start synchronization"));
@@ -948,7 +955,7 @@ void TStorageClient::updateCurrentVersion(const string& aUser, const string& aPa
 					}
 					else{
 						warningToFile("TStorageClient", "updateCurrentVersion", "Update session refused by the server!");
-						this->onUpdateSuccess(flist, -1, "");
+						this->onUpdateSuccess(flist, 0, "");
 					}
 
 					updstopReply.reset();

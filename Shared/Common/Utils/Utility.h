@@ -99,5 +99,7 @@ void criticalErrorToFile(const string& aClassName, const string& aFuncName, cons
 void storeFile(const path& aPath, string_ptr& aFileContent); //throws EFilesystemException
 string_ptr readFile(const path& aPath); //throws EFilesystemException
 void removeDir(const path& aPath); //throws EFilesystemException
+void createDir(const path& aPath); //throws EFilesystemException
 string buildServerPathPrefix(const string& aUser, const int aVersion); //throws EFilesystemException
 void moveAllFiles(const path& aSrc, const path& aDst); //throws EFilesystemException
+bool isDirectoryEmpty(const path& aPath);

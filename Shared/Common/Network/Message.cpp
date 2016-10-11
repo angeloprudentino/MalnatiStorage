@@ -523,7 +523,7 @@ TAddNewFileMessage::TAddNewFileMessage(const string& aToken, const string& aFile
 	catch (EFilesystemException& e){
 		throw EMessageException("TAddNewFileMessage: " + e.getMessage());
 	}
-	if (this->fFileContent == nullptr) this->fFileContent = new_string_ptr("");
+	if (this->fFileContent == nullptr) this->fFileContent = new_string_ptr();
 
 	try{
 		this->fChecksum = opensslB64FileChecksum(*(this->fFileContent));
@@ -531,7 +531,7 @@ TAddNewFileMessage::TAddNewFileMessage(const string& aToken, const string& aFile
 	catch (EOpensslException e){
 		throw EMessageException("TAddNewFileMessage: " + e.getMessage());
 	}
-	if (this->fChecksum == nullptr) this->fChecksum = new_string_ptr("");
+	if (this->fChecksum == nullptr) this->fChecksum = new_string_ptr();
 
 	path p(*(this->fFilePath));
 	boost::system::error_code ec;
@@ -627,7 +627,7 @@ const bool TAddNewFileMessage::verifyChecksum(){
 			myChecksum = opensslB64FileChecksum(*(this->fFileContent));
 		
 		if (myChecksum == nullptr)
-			myChecksum = new_string_ptr("");
+			myChecksum = new_string_ptr();
 		
 		if (myChecksum != nullptr && this->fChecksum != nullptr)
 			checksumMatches = (*(myChecksum) == *(this->fChecksum));
@@ -666,7 +666,7 @@ TUpdateFileMessage::TUpdateFileMessage(const string& aToken, const string& aFile
 	catch (EFilesystemException& e){
 		throw EMessageException("TUpdateFileMessage: " + e.getMessage());
 	}
-	if (this->fFileContent == nullptr) this->fFileContent = new_string_ptr("");
+	if (this->fFileContent == nullptr) this->fFileContent = new_string_ptr();
 
 	try{
 		this->fChecksum = opensslB64FileChecksum(*(this->fFileContent));
@@ -674,7 +674,7 @@ TUpdateFileMessage::TUpdateFileMessage(const string& aToken, const string& aFile
 	catch (EOpensslException e){
 		throw EMessageException("TUpdateFileMessage: " + e.getMessage());
 	}
-	if (this->fChecksum == nullptr) this->fChecksum = new_string_ptr("");
+	if (this->fChecksum == nullptr) this->fChecksum = new_string_ptr();
 
 	path p(*(this->fFilePath));
 	boost::system::error_code ec;
@@ -770,7 +770,7 @@ const bool TUpdateFileMessage::verifyChecksum(){
 			myChecksum = opensslB64FileChecksum(*(this->fFileContent));
 
 		if (myChecksum == nullptr)
-			myChecksum = new_string_ptr("");
+			myChecksum = new_string_ptr();
 
 		if (myChecksum != nullptr && this->fChecksum != nullptr)
 			checksumMatches = (*(myChecksum) == *(this->fChecksum));
@@ -1589,7 +1589,7 @@ TRestoreFileMessage::TRestoreFileMessage(const string& aBasePath, const string& 
 	catch (EFilesystemException& e){
 		throw EMessageException("TRestoreFileMessage: " + e.getMessage());
 	}
-	if (this->fFileContent == nullptr) this->fFileContent = new_string_ptr("");
+	if (this->fFileContent == nullptr) this->fFileContent = new_string_ptr();
 
 	try{
 		this->fChecksum = opensslB64FileChecksum(*(this->fFileContent));
@@ -1597,7 +1597,7 @@ TRestoreFileMessage::TRestoreFileMessage(const string& aBasePath, const string& 
 	catch (EOpensslException e){
 		throw EMessageException("TRestoreFileMessage: " + e.getMessage());
 	}
-	if (this->fChecksum == nullptr) this->fChecksum = new_string_ptr("");
+	if (this->fChecksum == nullptr) this->fChecksum = new_string_ptr();
 
 	this->fFileDate = aFileDate;
 }
@@ -1678,7 +1678,7 @@ const bool TRestoreFileMessage::verifyChecksum(){
 			myChecksum = opensslB64FileChecksum(*(this->fFileContent));
 
 		if (myChecksum == nullptr)
-			myChecksum = new_string_ptr("");
+			myChecksum = new_string_ptr();
 
 		if (myChecksum != nullptr && this->fChecksum != nullptr)
 			checksumMatches = (*(myChecksum) == *(this->fChecksum));

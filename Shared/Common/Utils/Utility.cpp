@@ -607,6 +607,16 @@ void removeDir(const path& aPath){
 	}
 }
 
+void createDir(const path& aPath){
+	boost::system::error_code ec;
+
+	if (!exists(aPath)){
+		create_directories(aPath, ec);
+		if (ec)
+			throw EFilesystemException("Error creating directory path: " + aPath.string() + " -> " + ec.message());
+	}
+}
+
 string buildServerPathPrefix(const string& aUser, const int aVersion){
 	if (aUser.empty())
 		throw EFilesystemException("error in buildServerPathPrefix(): aUser is empty!");
@@ -623,13 +633,7 @@ void moveAllFiles(const path& aSrc, const path& aDst){
 
 	if (exists(aSrc)){
 		if (is_regular_file(aSrc)){
-			path parent = aDst.parent_path();
-			if (!exists(parent)){
-				create_directories(parent, ec);
-				if (ec)
-					throw EFilesystemException("Error creating directory path: " + parent.string() + " -> " + ec.message());
-			}
-
+			createDir(aDst.parent_path());
 			rename(aSrc, aDst, ec);
 			if (ec)
 				throw EFilesystemException("Error renaming path: " + aSrc.string() + " into:" + aDst.string() + " -> " + ec.message());
@@ -641,5 +645,20 @@ void moveAllFiles(const path& aSrc, const path& aDst){
 			}
 		}
 	}
+}
+
+bool isDirectoryEmpty(const path& aPath){
+	if (!exists(aPath))
+		return true;
+
+	if (!is_directory(aPath))
+		return true;
+
+	directory_iterator end_it;
+	directory_iterator it(aPath);
+	if (it == end_it)
+		return true;
+	else
+		return false;
 }
 #pragma endregion

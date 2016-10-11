@@ -351,10 +351,13 @@ namespace StorageClientWPF
             {
                 //update UI safely
                 this.status_label.Foreground = new SolidColorBrush(Colors.Black);
-                if (aVersion == -1)
+                if (aVersion == 0)
                     this.status_label.Content = "Nothing changed since last synchronization";
+                else if(aVersion < 0)
+                    this.status_label.Content = "Synchronization finished: restored vesion " + (-aVersion) + " with date " + aVersionDate;
                 else
                     this.status_label.Content = "Synchronization finished: stored vesion " + aVersion + " at " + aVersionDate;
+
                 this.status_label.ToolTip = this.status_label.Content;
                 this.relaunchUpdate();
                 this.progressRing.IsActive = false;
