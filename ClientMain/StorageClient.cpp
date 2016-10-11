@@ -205,10 +205,10 @@ void TStorageClient::connect(const string& aHost, int aPort){
 		if (this->fSock == nullptr)
 			this->fSock = new tcp::socket(this->fMainIoService);
 
-		if (!this->fSock->is_open()){
+		//if (!this->fSock->is_open()){
 			tcp::endpoint ep(ip::address::from_string(aHost), aPort);
 			this->fSock->connect(ep);
-		}
+		//}
 	}
 	catch (...){
 		//if (this->fSock != nullptr)
@@ -219,8 +219,10 @@ void TStorageClient::connect(const string& aHost, int aPort){
 void TStorageClient::disconnect(){
 	if (this->fSock != nullptr){
 		try{
-			this->fSock->shutdown(socket_base::shutdown_both);
-			this->fSock->close();
+			//if (this->fSock->is_open()){
+				this->fSock->shutdown(socket_base::shutdown_both);
+				this->fSock->close();
+			//}
 		}
 		catch (...){
 			//if (this->fSock != nullptr)
@@ -1221,12 +1223,12 @@ void TStorageClient::getAllVersions(const string& aUser, const string& aPass){
 
 	logToFile("TStorageClient", "getAllVersions", "Try to get all versions of user " + aUser);
 	if (!this->sendMsg((TBaseMessage_ptr&)move_TBaseMessage_ptr(new_TGetVersionsReqMessage_ptr(aUser, aPass)))){
-		this->onGetVersionsError("Version list cannot be retrived.");
+		this->onGetVersionsError("Temporary Error! Version list cannot be retrived.");
 		return;
 	}
 	msg = this->readMsg();
 	if (msg == nullptr){
-		this->onGetVersionsError("Version list cannot be retrived.");
+		this->onGetVersionsError("Temporary Error! Version list cannot be retrived.");
 		return;
 	}
 
@@ -1237,7 +1239,7 @@ void TStorageClient::getAllVersions(const string& aUser, const string& aPass){
 		if (kind == SYSTEM_ERR_ID){
 			sysErr = make_TSystemErrorMessage_ptr(bm);
 			errorToFile("TStorageClient", "getAllVersions", sysErr->getDetail());
-			this->onGetVersionsError("Version list cannot be retrived.");
+			this->onGetVersionsError("Temporary Error! Version list cannot be retrived.");
 		}
 		else if (kind == GET_VERSIONS_REPLY_ID){
 			verReply = make_TGetVersionsReplyMessage_ptr(bm);
@@ -1259,12 +1261,12 @@ void TStorageClient::getAllVersions(const string& aUser, const string& aPass){
 		}
 		else{
 			errorToFile("TStorageClient", "getAllVersions", getMessageName(kind) + " is invalid");
-			this->onGetVersionsError("Version list cannot be retrived.");
+			this->onGetVersionsError("Temporary Error! Version list cannot be retrived.");
 		}
 	}
 	catch (EMessageException& e){
 		errorToFile("TStorageClient", "getAllVersions", e.getMessage());
-		this->onGetVersionsError("Version list cannot be retrived.");
+		this->onGetVersionsError("Temporary Error! Version list cannot be retrived.");
 	}
 	bm.reset();
 	sysErr.reset();
