@@ -1,1 +1,0 @@
-C:\Projects\Projects\StorageClientCS\StorageClientCS\StorageClientCS.Windows\StorageClientCS.Windows.csproj;neutral

@@ -1,1 +1,0 @@
-C:\Projects\Projects\ClientDiProva\ClientDiProva\ClientDiProva.WindowsPhone\ClientDiProva.WindowsPhone.csproj;neutral
