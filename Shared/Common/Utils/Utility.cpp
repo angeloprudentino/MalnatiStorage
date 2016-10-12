@@ -527,7 +527,7 @@ void storeFile(const path& aPath, string_ptr& aFileContent){
 	if (!ec){
 		boost::filesystem::ofstream of(aPath, ios::out | ios::binary);
 		try{
-#ifdef _DEBUG
+#ifdef STORAGE_CLIENT
 			B64result ret = opensslB64Decode(*aFileContent);
 			aFileContent.reset();
 			if (ret.data != nullptr && ret.size > 0)
@@ -576,7 +576,7 @@ string_ptr readFile(const path& aPath){
 	}
 
 	string_ptr res = nullptr;
-#ifdef _DEBUG
+#ifdef STORAGE_CLIENT
 	if (contents != nullptr && contents->length()>0){
 		try{
 			res = opensslB64Encode((char*)contents->c_str(), (int)contents->length());
