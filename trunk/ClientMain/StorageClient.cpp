@@ -204,29 +204,21 @@ void TStorageClient::connect(const string& aHost, int aPort){
 	try{
 		if (this->fSock == nullptr)
 			this->fSock = new tcp::socket(this->fMainIoService);
-
-		//if (!this->fSock->is_open()){
-			tcp::endpoint ep(ip::address::from_string(aHost), aPort);
-			this->fSock->connect(ep);
-		//}
+		
+		tcp::endpoint ep(ip::address::from_string(aHost), aPort);
+		this->fSock->connect(ep);
 	}
 	catch (...){
-		//if (this->fSock != nullptr)
-		//	delete this->fSock;
 	}
 }
 
 void TStorageClient::disconnect(){
 	if (this->fSock != nullptr){
 		try{
-			//if (this->fSock->is_open()){
-				this->fSock->shutdown(socket_base::shutdown_both);
-				this->fSock->close();
-			//}
+			this->fSock->shutdown(socket_base::shutdown_both);
+			this->fSock->close();
 		}
 		catch (...){
-			//if (this->fSock != nullptr)
-			//	delete this->fSock;
 		}
 	}
 }
@@ -682,7 +674,6 @@ void TStorageClient::registerUser(const string& aUser, const string& aPass, cons
 	if (result){
 		logToFile("TStorageClient", "registerUser", "User " + aUser + " registered");
 		this->onRegistrationSucces();
-		this->issueRequest(gcnew UpdateRequest(unmarshalString(aUser), unmarshalString(aPass), unmarshalString(aRootPath)));
 	}
 	else{
 		warningToFile("TStorageClient", "registerUser", "User " + aUser + " cannot be registered");
@@ -746,7 +737,7 @@ void TStorageClient::updateCurrentVersion(const string& aUser, const string& aPa
 		return;
 	}
 	path root(aRootPath);
-	if (!is_directory(root)){
+	if (exists(root) && !is_directory(root)){
 		this->onUpdateError("Directory to be synchronized must be valid!");
 		return;
 	}
@@ -1018,6 +1009,11 @@ const bool TStorageClient::restoreVersion(const string& aUser, const string& aPa
 		this->onRestoreError("Destination directory must exist!", aStoreOnLocalDB);
 		return false;
 	}
+	else if (!is_directory(p)){
+		this->onRestoreError("Restore destination must be a valid directory!", aStoreOnLocalDB);
+		return false;
+	}
+
 	if (aVersion <= 0){
 		errorToFile("TStorageClient", "restoreVersion", "Required version cannot be lower than 0");
 		this->onRestoreError("Required version cannot be lower than 0", aStoreOnLocalDB);
@@ -1302,7 +1298,6 @@ void TStorageClient::processRequest(){
 				break;
 			}
 			case LOGOUT_REQ:{
-				//this->fLoggedIn.store(false, boost::memory_order_release);
 				this->disconnect();
 				break;
 			}

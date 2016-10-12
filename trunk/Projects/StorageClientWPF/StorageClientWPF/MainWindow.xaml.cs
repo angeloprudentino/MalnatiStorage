@@ -130,9 +130,6 @@ namespace StorageClientWPF
             if (this.Dispatcher.CheckAccess())
             {
                 //update UI safely
-                this.path = aPath;
-                this.startUpdate(this, null);
-
                 this.progressRing.IsActive = false;
                 this.LoginButton.IsEnabled = true;
                 this.label_reg.IsEnabled = true;
@@ -152,7 +149,9 @@ namespace StorageClientWPF
                 this.folder_testbox.Visibility = Visibility.Collapsed;
                 this.SoWriteGrid.Visibility = Visibility.Visible;
                 this.showMainBtnBar(false);
-                this.clearStatusLabel();
+
+                this.path = aPath;
+                this.startUpdate(this, null);
             }
             else
             {
@@ -181,9 +180,6 @@ namespace StorageClientWPF
             if (this.Dispatcher.CheckAccess())
             {
                 //update UI safely
-                this.startUpdate(this, null);
-
-                //aggiorno la grafica
                 this.progressRing.IsActive = false;
                 this.Register_button.IsEnabled = true;
                 this.back_button.IsEnabled = true;
@@ -204,7 +200,8 @@ namespace StorageClientWPF
                 this.folderPicker.Visibility = Visibility.Collapsed;
                 this.SoWriteGrid.Visibility = Visibility.Visible;
                 this.showMainBtnBar(false);
-                this.clearStatusLabel();
+
+                this.startUpdate(this, null);
             }
             else
             {
