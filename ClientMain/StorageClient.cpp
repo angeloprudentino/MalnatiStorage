@@ -8,6 +8,7 @@
  */
 #include <boost\bind.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/thread/thread.hpp>
 #include "StorageClient.h"
 
 #define MAX_TRY 5
@@ -201,24 +202,24 @@ void TStorageClient::connect(const string& aHost, int aPort){
 		return;
 	}
 
-	try{
-		if (this->fSock == nullptr)
-			this->fSock = new tcp::socket(this->fMainIoService);
+	if (this->fSock == nullptr)
+		this->fSock = new tcp::socket(this->fMainIoService);
 		
+	if (!this->fSock->is_open()){
 		tcp::endpoint ep(ip::address::from_string(aHost), aPort);
 		this->fSock->connect(ep);
-	}
-	catch (...){
 	}
 }
 
 void TStorageClient::disconnect(){
 	if (this->fSock != nullptr){
 		try{
-			this->fSock->shutdown(socket_base::shutdown_both);
-			this->fSock->close();
+			if (this->fSock->is_open()){
+				this->fSock->close();
+			}
 		}
-		catch (...){
+		catch (const boost::system::system_error& e){
+			errorToFile("TStorageClient", "disconnect", string("disconnection error: ") + e.what());
 		}
 	}
 }
@@ -240,11 +241,18 @@ const bool TStorageClient::sendMsg(TBaseMessage_ptr& aMsg){
 			boost::asio::write(*(this->fSock), boost::asio::buffer(*msg));
 			break;
 		}
-		catch (...){
+		catch (const boost::system::system_error& e){
 			this->disconnect();
 			count--;
+			string err = "impossible to send msg: ";
 			if (count == 0){
+				errorToFile("TStorageClient", "sendMsg", err + e.what() + "; exit.");
 				result = false;
+			}
+			else{
+				errorToFile("TStorageClient", "sendMsg", err + e.what() + "; retry.");
+				//wait 2 seconds, then retry
+				boost::this_thread::sleep_for(boost::chrono::seconds(2));
 			}
 		}
 	}
@@ -260,18 +268,25 @@ string_ptr TStorageClient::readMsg(){
 	string_ptr msg = new_string_ptr();
 
 	int count = 2;
-	while (count > 0 /*&& this->fLoggedIn.load(boost::memory_order_acquire)*/){
+	while (count > 0){
 		try{
 			this->connect(DEFAULT_HOST, DEFAULT_PORT);
 			boost::asio::read_until(*(this->fSock), *buf, END_MSG + string("\n"));
 			getline(*is, *msg);
 			break;
 		}
-		catch (...){
+		catch (const boost::system::system_error& e){
 			this->disconnect();
 			count--;
+			string err = "impossible to read msg: ";
 			if (count == 0){
+				errorToFile("TStorageClient", "readMsg", err + e.what() + "; exit.");
 				msg.reset();
+			}
+			else{
+				errorToFile("TStorageClient", "readMsg", err + e.what() + "; retry.");
+				//wait 2 seconds, then retry
+				boost::this_thread::sleep_for(boost::chrono::seconds(2));
 			}
 		}
 	}
@@ -319,10 +334,6 @@ const bool TStorageClient::processFile(const int aVersion, const string& aToken,
 					fileContent = readFile(aFilePath);
 					if (fileContent != nullptr)
 						checksum = opensslB64FileChecksum(*fileContent);
-					//else{
-					//	fileContent = new_string_ptr();
-					//	checksum = new_string_ptr();
-					//}
 
 					if ((fileContent == nullptr && checksum == nullptr) || (fileContent != nullptr && checksum != nullptr && (*it)->getFileChecksum() == *checksum)){
 						logToFile("TStorageClient", "processFile", aFilePath.string() + " is not changed.");
