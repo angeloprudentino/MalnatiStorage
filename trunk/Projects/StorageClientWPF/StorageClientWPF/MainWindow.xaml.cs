@@ -650,6 +650,7 @@ namespace StorageClientWPF
         {
             //prima pulisci tutto
             clearRows();
+            int tot = aVersionsList.Count;
 
             this.user_label.FontWeight = FontWeights.Bold;
             this.user_label.Text = "Available versions: ";
@@ -659,7 +660,7 @@ namespace StorageClientWPF
             //ogni entry indica il numero di versione e la data
 
             if (aVersionsList.Count > 12)
-                WriteGrid.Height += 30 * (aVersionsList.Count - 12);
+                WriteGrid.Height += 30 * (tot - 12);
 
             foreach (UserVersion v in aVersionsList)
             {
@@ -684,10 +685,78 @@ namespace StorageClientWPF
 
                 ////grid_files_versions.Children.Add(sp);
                 WriteGrid.Children.Add(sp);
+                List<UserFile> files = v.getFileList();
+
+
+                foreach (UserFile s in files)
+                {
+                    RowDefinition row2 = new RowDefinition();
+                    row2.Height = new GridLength(30);
+                    WriteGrid.RowDefinitions.Add(row2);
+                    i = WriteGrid.RowDefinitions.Count;
+                    lb = new System.Windows.Controls.Label();
+                    TextElement.SetFontSize(lb, 10);
+                    lb.ToolTip = s.getFilePath();
+                    lb.Content = s.getFileName();
+                    lb.Tag = v.getVersionID();
+                    lb.MouseEnter += lb_MouseEnter;
+                    lb.MouseLeave += lb_MouseLeave;
+                    //metodo per fare la restore del singolo file
+                    lb.MouseUp += lb_MouseUpFile;
+                    
+
+                    sp = new StackPanel();
+                    sp.Children.Clear();
+                    sp.SetValue(Grid.RowProperty, i - 1);
+
+                    Thickness margin = sp.Margin;
+                    margin.Left = 20;
+                    sp.Margin = margin;
+
+                    //ad ogni elemento aggiunto aggiorno il contatore
+                    tot += 1;
+                    if (tot > 12) WriteGrid.Height += 30;
+
+                    sp.Children.Add(lb);
+
+                    ////grid_files_versions.Children.Add(sp);
+                    WriteGrid.Children.Add(sp);
+                }
+            
             }
 
         }
 
+        private void lb_MouseUpFile(object sender, MouseButtonEventArgs e)
+        {
+            System.Windows.Controls.Label lb = (System.Windows.Controls.Label)sender;
+
+
+            int Version = (int)lb.Tag;
+            String file = (String)lb.ToolTip;
+            
+            //int ver = Int32.Parse((String)lb.ToolTip);
+            string path = pathFromFolderPicker("Select the directory in which you want to restore the selected file");
+            if (path.CompareTo("") == 0)
+            {
+                showErrorMessage("Error", "Select a valid folder to restore the file");
+                return;
+            }
+            if (core == null)
+                core = new StorageClientCore(this);
+
+            if (!this.core.issueRequest(new RestoreRequest(this.username, this.password, Version,file, path)))
+                this.onRestoreError("Restore temporary not available! Try later.");
+            else
+            {
+            this.status_label.Foreground = new SolidColorBrush(Colors.Black);
+            this.status_label.Content = "Restoring file " + Version + " from server";
+            this.status_label.ToolTip = this.status_label.Content;
+            this.progressRing.IsActive = true;
+            this.hideMainBtnBar();
+            this.clearRows();
+            }
+        }
         private void lb_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
         {
             System.Windows.Controls.Label lb = (System.Windows.Controls.Label)sender;
@@ -723,11 +792,15 @@ namespace StorageClientWPF
             String Version = (String)lb.Content;
             int ver = Int32.Parse((String)lb.ToolTip);
             string path = pathFromFolderPicker("Select the directory in which you want to restore the selected version");
-
+            if (path.CompareTo("") == 0)
+            {
+                showErrorMessage("Error", "Select a valid folder to restore the version");
+                return;
+            }
             if (core == null)
                 core = new StorageClientCore(this);
 
-            if (!this.core.issueRequest(new RestoreRequest(this.username, this.password, ver, path)))
+            if (!this.core.issueRequest(new RestoreRequest(this.username, this.password, ver,"", path)))
                 this.onRestoreError("Restore temporary not available! Try later.");
             else
             {
