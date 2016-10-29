@@ -141,7 +141,7 @@ const bool TServerSockController::checkMessageToSend(const string& aClassName, c
 			break;
 		}
 		case RESTORE_STOP_ID:{
-			this->onServerLog(aClassName, aFuncName, "=>  RestoreSotpMessage");
+			this->onServerLog(aClassName, aFuncName, "=>  RestoreStopMessage");
 			this->onServerLog(aClassName, aFuncName, "=>  ");
 			this->onServerLog(aClassName, aFuncName, "=>  version: " + to_string(((TRestoreStopMessage_ptr&)aBMsg)->getVersion()));
 			this->onServerLog(aClassName, aFuncName, "=>  version date: " + formatFileDate(((TRestoreStopMessage_ptr&)aBMsg)->getVersionDate()));

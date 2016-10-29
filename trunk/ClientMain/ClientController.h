@@ -17,13 +17,15 @@ using namespace System::Collections::Generic;
 ///////////////////////////////
 public ref class UserFile{
 private :
+	int fVersion = 0;
 	String^ fFileName;
 	String^ fFilePath;
 
 public:
-	UserFile(String^ aFilePath);
+	UserFile(const int aVersion, String^ aFilePath);
 
 	//getters
+	const int getFileVersion() { return this->fVersion; }
 	String^ getFileName() { return this->fFileName; }
 	String^ getFilePath() { return this->fFilePath; }
 };

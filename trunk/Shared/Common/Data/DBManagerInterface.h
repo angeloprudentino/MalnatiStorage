@@ -31,6 +31,7 @@ public:
 	virtual const bool checkIfUserExists(const string& aUser) = 0; // throws EDBException
 	virtual string_ptr verifyUserCredentials(const string& aUser, const string& aPass) = 0; // throws EDBException
 	virtual TVersion_ptr getVersion(const string& aUser, int aVersion) = 0; // throws EDBException
+	virtual TVersion_ptr getSingleFileOfVersion(const string& aUser, int aVersion, const string& aFile) = 0; // throws EDBException
 	virtual TVersion_ptr getLastVersion(const string& aUser, bool aLoadFiles) = 0; // throws EDBException
 	virtual TVersionList_ptr getAllVersions(const string& aUser) = 0; // throws EDBException
 };

@@ -16,7 +16,8 @@ using namespace boost::filesystem;
 ///////////////////////////////
 //          UserFile         //
 ///////////////////////////////
-UserFile::UserFile(String^ aFilePath){
+UserFile::UserFile(const int aVersion, String^ aFilePath){
+	this->fVersion = aVersion;
 	std::string fp = marshalString(aFilePath);
 	path p(fp);
 

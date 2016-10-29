@@ -23,7 +23,7 @@
 //        TStorageServer	      //
 ////////////////////////////////////
 #pragma region "TStorageServer"
-string_ptr TStorageServer::newSession(const string& aUser, const int aSessionType, const int aVersion){
+string_ptr TStorageServer::newSession(const string& aUser, const int aSessionType, const int aVersion, const string& aFile){
 	//access map in mutual exclusion to avoid 2 thread inserting the same session in the table
 	unique_lock<mutex> lock(this->fSessionsMutex);
 
@@ -62,6 +62,8 @@ string_ptr TStorageServer::newSession(const string& aUser, const int aSessionTyp
 			TVersion_ptr v = nullptr;
 			if (aVersion <= 0)
 				v = this->fDBManager->getLastVersion(aUser, true);
+			else if (aSessionType == RESTORE_SESSION && aFile != "")
+				v = this->fDBManager->getSingleFileOfVersion(aUser, aVersion, aFile);
 			else
 				v = this->fDBManager->getVersion(aUser, aVersion);
 
@@ -479,7 +481,7 @@ void TStorageServer::processUpdateStart(TConnection_ptr& aConnection, TUpdateSta
 
 		//generate a new token and start a new session
 		bool close = false;
-		string_ptr token_ptr = this->newSession(u, UPDATE_SESSION, -1);
+		string_ptr token_ptr = this->newSession(u, UPDATE_SESSION, -1, "");
 		if (token_ptr != nullptr){
 			//send back positive response
 			reply = new_TUpdateStartReplyMessage_ptr(true, token_ptr->c_str());
@@ -1055,6 +1057,7 @@ void TStorageServer::processRestoreVersion(TConnection_ptr& aConnection, TRestor
 		string u = aMsg->getUser();
 		string p = aMsg->getPass();
 		int v = aMsg->getVersion();
+		string f = aMsg->getFile();
 
 		try{
 			unique_lock<mutex> lock(this->fLogMutex);
@@ -1068,6 +1071,10 @@ void TStorageServer::processRestoreVersion(TConnection_ptr& aConnection, TRestor
 			this->onServerLog("TStorageServer", "processRestoreVersion", "<=   user: " + u);
 			this->onServerLog("TStorageServer", "processRestoreVersion", "<=   coded pass: " + p);
 			this->onServerLog("TStorageServer", "processRestoreVersion", "<=   required version: " + to_string(v));
+			if (f == "")
+				this->onServerLog("TStorageServer", "processRestoreVersion", "<=   all version required");
+			else
+				this->onServerLog("TStorageServer", "processRestoreVersion", "<=   required file: " + f);
 			this->onServerLog("TStorageServer", "processRestoreVersion", "<=  ");
 			this->onServerLog("TStorageServer", "processRestoreVersion", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
 			this->onServerLog("TStorageServer", "processRestoreVersion", "<= <= <= <= <= <= <= <= <= <= <= <= <= ");
@@ -1101,7 +1108,7 @@ void TStorageServer::processRestoreVersion(TConnection_ptr& aConnection, TRestor
 
 		//generate a new token and start a new session
 		bool close = false;
-		string_ptr token_ptr = this->newSession(u, RESTORE_SESSION, v);
+		string_ptr token_ptr = this->newSession(u, RESTORE_SESSION, v, f);
 		if (token_ptr != nullptr){
 			reply = new_TRestoreVerReplyMessage_ptr(true, token_ptr->c_str());
 			token_ptr.reset();
