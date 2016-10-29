@@ -617,34 +617,37 @@ namespace StorageClientWPF
             this.user_label.Visibility = Visibility.Visible;
             this.scroll.Visibility = Visibility.Visible;
 
-            if (aFileList.Count > 12)
-                WriteGrid.Height += 30 * (aFileList.Count - 12);
-
-            foreach (UserFile s in aFileList)
+            if (aFileList != null)
             {
-                RowDefinition row = new RowDefinition();
-                row.Height = new GridLength(30);
-                //grid_files_versions.RowDefinitions.Add(row);
-                WriteGrid.RowDefinitions.Add(row);
-                int i = WriteGrid.RowDefinitions.Count;
-                System.Windows.Controls.Label lb = new System.Windows.Controls.Label();
-                lb.ToolTip = s.getFilePath();
-                lb.Content = s.getFileName();
-                lb.MouseUp += lb_MouseUp;
-                lb.MouseEnter += lb_MouseEnter;
-                lb.MouseLeave += lb_MouseLeave;
-                //System.Windows.Controls.Button lb = new System.Windows.Controls.Button();
+                if (aFileList.Count > 12)
+                    WriteGrid.Height += 30 * (aFileList.Count - 12);
 
-                StackPanel sp = new StackPanel();
-                sp.Children.Clear();
-                sp.SetValue(Grid.RowProperty, i - 1);
+                foreach (UserFile s in aFileList)
+                {
+                    RowDefinition row = new RowDefinition();
+                    row.Height = new GridLength(30);
+                    //grid_files_versions.RowDefinitions.Add(row);
+                    WriteGrid.RowDefinitions.Add(row);
+                    int i = WriteGrid.RowDefinitions.Count;
+                    System.Windows.Controls.Label lb = new System.Windows.Controls.Label();
+                    lb.Tag = s.getFilePath();
+                    lb.ToolTip = "Click here to open file " + s.getFilePath();
+                    lb.Content = s.getFileName();
+                    lb.MouseUp += lb_MouseUp;
+                    lb.MouseEnter += lb_MouseEnter;
+                    lb.MouseLeave += lb_MouseLeave;
+                    //System.Windows.Controls.Button lb = new System.Windows.Controls.Button();
 
-                sp.Children.Add(lb);
+                    StackPanel sp = new StackPanel();
+                    sp.Children.Clear();
+                    sp.SetValue(Grid.RowProperty, i - 1);
 
-                //grid_files_versions.Children.Add(sp);
-                WriteGrid.Children.Add(sp);
+                    sp.Children.Add(lb);
+
+                    //grid_files_versions.Children.Add(sp);
+                    WriteGrid.Children.Add(sp);
+                }
             }
-
         }
 
         private void DrawVersionBottons(List<UserVersion> aVersionsList)
@@ -671,8 +674,9 @@ namespace StorageClientWPF
                 WriteGrid.RowDefinitions.Add(row);
                 int i = WriteGrid.RowDefinitions.Count;
                 System.Windows.Controls.Label lb = new System.Windows.Controls.Label();
-                lb.ToolTip = v.getVersionID().ToString();
-                lb.Content = "Version " + v.getVersionID() + ": " + v.getVersionDate();
+                lb.Tag = v.getVersionID();
+                lb.ToolTip = "Click here to restore version " + v.getVersionID();
+                lb.Content = "Version " + v.getVersionID() + " [" + v.getVersionDate() + "]";
                 lb.MouseUp += lb_MouseUpVersion;
                 lb.MouseEnter += lb_MouseEnter;
                 lb.MouseLeave += lb_MouseLeave;
@@ -689,7 +693,7 @@ namespace StorageClientWPF
                 List<UserFile> files = v.getFileList();
 
 
-                foreach (UserFile s in files)
+                foreach (UserFile f in files)
                 {
                     RowDefinition row2 = new RowDefinition();
                     row2.Height = new GridLength(30);
@@ -697,9 +701,9 @@ namespace StorageClientWPF
                     i = WriteGrid.RowDefinitions.Count;
                     lb = new System.Windows.Controls.Label();
                     TextElement.SetFontSize(lb, 10);
-                    lb.ToolTip = s.getFilePath();
-                    lb.Content = s.getFileName();
-                    lb.Tag = v.getVersionID();
+                    lb.Tag = f;
+                    lb.ToolTip = "Click here to restore only " + f.getFilePath();
+                    lb.Content = f.getFileName();
                     lb.MouseEnter += lb_MouseEnter;
                     lb.MouseLeave += lb_MouseLeave;
                     //metodo per fare la restore del singolo file
@@ -732,9 +736,9 @@ namespace StorageClientWPF
         {
             System.Windows.Controls.Label lb = (System.Windows.Controls.Label)sender;
 
-
-            int Version = (int)lb.Tag;
-            String file = (String)lb.ToolTip;
+            UserFile f = (UserFile)lb.Tag;
+            int Version = f.getFileVersion();
+            String file = f.getFilePath();
             
             //int ver = Int32.Parse((String)lb.ToolTip);
             string path = pathFromFolderPicker("Select the directory in which you want to restore the selected file");
@@ -751,7 +755,7 @@ namespace StorageClientWPF
             else
             {
             this.status_label.Foreground = new SolidColorBrush(Colors.Black);
-            this.status_label.Content = "Restoring file " + Version + " from server";
+            this.status_label.Content = "Restoring file " + file + " from server";
             this.status_label.ToolTip = this.status_label.Content;
             this.progressRing.IsActive = true;
             this.hideMainBtnBar();
@@ -775,7 +779,7 @@ namespace StorageClientWPF
             //evento per gestire l' apertura del file
             System.Windows.Controls.Label lb = (System.Windows.Controls.Label)sender;
 
-            String path = (String)lb.ToolTip;
+            String path = (String)lb.Tag;
             try
             {
                 System.Diagnostics.Process.Start(path);
@@ -791,7 +795,7 @@ namespace StorageClientWPF
             System.Windows.Controls.Label lb = (System.Windows.Controls.Label)sender;
 
             String Version = (String)lb.Content;
-            int ver = Int32.Parse((String)lb.ToolTip);
+            int ver = (int)lb.Tag;
             string path = pathFromFolderPicker("Select the directory in which you want to restore the selected version");
             if (path.CompareTo("") == 0)
             {
@@ -830,7 +834,6 @@ namespace StorageClientWPF
             {
                 Debug.WriteLine(ex.Message);
             }
-            Debug.WriteLine("testo cambiato");
         }
 
         private void repeat_pass_PasswordChanged(object sender, RoutedEventArgs e)
@@ -843,7 +846,6 @@ namespace StorageClientWPF
             {
                 Debug.WriteLine(ex.Message);
             }
-            Debug.WriteLine("password cambiato");
         }
 
         private void pass_PasswordChanged(object sender, RoutedEventArgs e)
@@ -856,8 +858,7 @@ namespace StorageClientWPF
             {
                 Debug.WriteLine(ex.Message);
             }
-            Debug.WriteLine("password cambiato");
-        }
+       }
 
         private void RestoreBackButton_Click(object sender, RoutedEventArgs e)
         {

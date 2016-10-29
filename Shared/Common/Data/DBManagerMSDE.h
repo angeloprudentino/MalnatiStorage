@@ -39,6 +39,7 @@ private:
 	gcroot<SqlCommand^> fSelectUserSaltCmd = nullptr;
 	gcroot<SqlCommand^> fVerifyCredentialCmd = nullptr;
 	gcroot<SqlCommand^> fSelectVersionCmd = nullptr;
+	gcroot<SqlCommand^> fSelectFileOfVersionCmd = nullptr;
 	gcroot<SqlCommand^> fSelectLastVersionCmd = nullptr;
 	gcroot<SqlCommand^> fSelectLastVersionFilesCmd = nullptr;
 	gcroot<SqlCommand^> fSelectAllVersionsCmd = nullptr;
@@ -57,6 +58,7 @@ public:
 	const bool checkIfUserExists(const string& aUser) override; // throws EDBException
 	string_ptr verifyUserCredentials(const string& aUser, const string& aPass) override; // throws EDBException
 	TVersion_ptr getVersion(const string& aUser, int aVersion) override; // throws EDBException
+	TVersion_ptr getSingleFileOfVersion(const string& aUser, int aVersion, const string& aFile); // throws EDBException
 	TVersion_ptr getLastVersion(const string& aUser, bool aLoadFiles) override; // throws EDBException
 	TVersionList_ptr getAllVersions(const string& aUser) override; // throws EDBException
 };

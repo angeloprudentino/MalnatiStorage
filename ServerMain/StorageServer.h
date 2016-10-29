@@ -47,7 +47,7 @@ private:
 	TMessageExecutor* fExecutor = nullptr;
 	IDBManagerInterface* fDBManager = nullptr;
 
-	string_ptr newSession(const string& aUser, const int aSessionType, const int aVersion);
+	string_ptr newSession(const string& aUser, const int aSessionType, const int aVersion, const string& aFile);
 	TSession_ptr isThereASessionFor(const string& aUser);
 	TSession_ptr isThereAnUpdateSessionFor(const string& aUser);
 	TSession_ptr isThereARestoreSessionFor(const string& aUser);

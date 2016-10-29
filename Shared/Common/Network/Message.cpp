@@ -1541,7 +1541,7 @@ void TRestoreVerReqMessage::decodeMessage(){
 	}
 
 	//file
-	this->fPass = move_string_ptr(this->fItems->at(4));
+	this->fFile = move_string_ptr(this->fItems->at(4));
 }
 #pragma endregion
 

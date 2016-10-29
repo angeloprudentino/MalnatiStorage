@@ -56,6 +56,7 @@ private:
 	void disconnect();
 	const bool sendMsg(TBaseMessage_ptr& aMsg);
 	string_ptr readMsg();
+	TBaseMessage_ptr filterPingMsgs(const string& aCaller);
 	const bool processDirectory(const int aVersion, const string& aToken, const path& aRootPath, const path& aDirPath, List<UserFile^>^ aFileList, TUserFileList_ptr& aSqliteFileList);
 	const bool processFile(const int aVersion, const string& aToken, const path& aRootPath, const path& aFilePath, List<UserFile^>^ aFileList, TUserFileList_ptr& aSqliteFileList);
 	const bool removeFiles(const string& aToken, const path& aRootPath, TUserFileList_ptr& aSqliteFileList);

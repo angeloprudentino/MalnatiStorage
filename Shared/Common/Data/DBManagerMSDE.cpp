@@ -87,6 +87,7 @@ TDBManagerMSDE::~TDBManagerMSDE(){
 	delete this->fSelectUserSaltCmd;
 	delete this->fVerifyCredentialCmd;
 	delete this->fSelectVersionCmd;
+	delete this->fSelectFileOfVersionCmd;
 	delete this->fSelectLastVersionCmd;
 	delete this->fSelectLastVersionFilesCmd;
 	delete this->fSelectAllVersionsCmd;
@@ -334,7 +335,8 @@ string_ptr TDBManagerMSDE::verifyUserCredentials(const string& aUser, const stri
 		}
 		catch (Exception^ e) {
 			this->fVerifyCredentialCmd->Parameters->Clear();
-			reader->Close();
+			if (!System::Object::ReferenceEquals(reader, nullptr))
+				reader->Close();
 			throw EDBException("Error during VerifyCredentialCmd: " + marshalString(e->Message));
 		}
 
@@ -390,7 +392,53 @@ TVersion_ptr TDBManagerMSDE::getVersion(const string& aUser, int aVersion){
 		}
 		catch (Exception^ e) {
 			this->fSelectVersionCmd->Parameters->Clear();
+			if (!System::Object::ReferenceEquals(reader, nullptr))
+				reader->Close();
+			throw EDBException("Error during SelectVersionCmd: " + marshalString(e->Message));
+		}
+	}
+	else{
+		throw EDBException("No connection to DB!");
+	}
+}
+
+TVersion_ptr TDBManagerMSDE::getSingleFileOfVersion(const string& aUser, int aVersion, const string& aFile){
+	if (!System::Object::ReferenceEquals(this->fConnection, nullptr) && (this->fConnection->State == ConnectionState::Open)){
+		TVersion_ptr version = nullptr;
+
+		//Select user version
+		if (System::Object::ReferenceEquals(this->fSelectFileOfVersionCmd, nullptr)){
+			this->fSelectFileOfVersionCmd = gcnew SqlCommand("SELECT VerDate, ServerPath, ClientRelativePath, LastModDate FROM Users, Versions, Files WHERE Users.UserID = Versions.UserID AND Users.UserID = Files.UserID AND Versions.VerID = Files.VerID AND Versions.VerID = @verID AND Username = @username AND Files.ClientRelativePath = @file;");
+			this->fSelectFileOfVersionCmd->CommandType = CommandType::Text;
+			this->fSelectFileOfVersionCmd->Connection = this->fConnection;
+		}
+		this->fSelectFileOfVersionCmd->Parameters->Add("@verID", SqlDbType::Int)->Value = aVersion;
+		this->fSelectFileOfVersionCmd->Parameters->Add("@username", SqlDbType::NVarChar, 50)->Value = unmarshalString(aUser);
+		this->fSelectFileOfVersionCmd->Parameters->Add("@file", SqlDbType::NVarChar, 50)->Value = unmarshalString(aFile);
+		SqlDataReader^ reader;
+		try{
+			reader = fSelectFileOfVersionCmd->ExecuteReader();
+
+			if (reader->HasRows){
+				reader->Read();
+				version = new_TVersion_ptr(aVersion, reader->GetInt64(0));
+				string serverPath = marshalString(reader->GetString(1));
+				string clientPath = marshalString(reader->GetString(2));
+				long long lastMod = reader->GetInt64(3);
+				TFile_ptr file = copy_TFile_ptr(serverPath, clientPath, lastMod);
+				file->setVersion(aVersion);
+				version->addFile(move_TFile_ptr(file));
+			}
+
+			this->fSelectFileOfVersionCmd->Parameters->Clear();
 			reader->Close();
+
+			return version;
+		}
+		catch (Exception^ e) {
+			this->fSelectFileOfVersionCmd->Parameters->Clear();
+			if (!System::Object::ReferenceEquals(reader, nullptr))
+				reader->Close();
 			throw EDBException("Error during SelectVersionCmd: " + marshalString(e->Message));
 		}
 	}
@@ -456,7 +504,8 @@ TVersion_ptr TDBManagerMSDE::getLastVersion(const string& aUser, bool aLoadFiles
 		}
 		catch (Exception^ e) {
 			cmd->Parameters->Clear();
-			reader->Close();
+			if (!System::Object::ReferenceEquals(reader, nullptr))
+				reader->Close();
 			throw EDBException("Error during " + f + ": " + marshalString(e->Message));
 		}
 	}

@@ -296,6 +296,26 @@ string_ptr TStorageClient::readMsg(){
 	return move_string_ptr(msg);
 }
 
+TBaseMessage_ptr TStorageClient::filterPingMsgs(const string& aCaller){
+	string_ptr msg = nullptr;
+	TBaseMessage_ptr bm = nullptr;
+	int kind = NO_ID;
+	do{
+		msg = this->readMsg();
+		if (msg == nullptr)
+			return nullptr;
+
+		bm = new_TBaseMessage_ptr(msg);
+		kind = bm->getID();
+		if (kind == PING_REPLY_ID){
+			logToFile("TStorageClient", aCaller, "Received ping reply from server");
+			bm.reset();
+		}
+	} while (kind == PING_REPLY_ID);
+
+	return move_TBaseMessage_ptr(bm);
+}
+
 const bool TStorageClient::processDirectory(const int aVersion, const string& aToken, const path& aRootPath, const path& aDirPath, List<UserFile^>^ aFileList, TUserFileList_ptr& aSqliteFileList){
 	bool is_ok = true;
 	for (directory_entry& x : directory_iterator(aDirPath)){
@@ -313,7 +333,6 @@ const bool TStorageClient::processDirectory(const int aVersion, const string& aT
 }
 
 const bool TStorageClient::processFile(const int aVersion, const string& aToken, const path& aRootPath, const path& aFilePath, List<UserFile^>^ aFileList, TUserFileList_ptr& aSqliteFileList){
-	string_ptr msg = nullptr;
 	TBaseMessage_ptr bm = nullptr;
 	TSystemErrorMessage_ptr sysErr = nullptr;
 	TFileAckMessage_ptr ack = nullptr;
@@ -338,7 +357,7 @@ const bool TStorageClient::processFile(const int aVersion, const string& aToken,
 					if ((fileContent == nullptr && checksum == nullptr) || (fileContent != nullptr && checksum != nullptr && (*it)->getFileChecksum() == *checksum)){
 						logToFile("TStorageClient", "processFile", aFilePath.string() + " is not changed.");
 						//file is not changed
-						aFileList->Add(gcnew UserFile(unmarshalString(aFilePath.string())));
+						aFileList->Add(gcnew UserFile(aVersion, unmarshalString(aFilePath.string())));
 						(*it)->updateVersion();
 						fileContent.reset();
 						checksum.reset();
@@ -366,19 +385,11 @@ const bool TStorageClient::processFile(const int aVersion, const string& aToken,
 			if (!this->sendMsg((TBaseMessage_ptr&)move_TBaseMessage_ptr(m)))
 				return false;
 
-			int kind = NO_ID;
-			do{
-				msg = this->readMsg();
-				if (msg == nullptr)
-					return false;
+			bm = this->filterPingMsgs("processFile");
+			if (bm == nullptr)
+				return false;
 
-				bm = new_TBaseMessage_ptr(msg);
-				kind = bm->getID();
-				if (kind == PING_REPLY_ID){
-					bm.reset();
-					logToFile("TStorageClient", "processFile", "Received ping reply from server");
-				}
-			} while (kind == PING_REPLY_ID);
+			int kind = bm->getID();
 
 			if (kind == SYSTEM_ERR_ID){
 				sysErr = make_TSystemErrorMessage_ptr(bm);
@@ -394,7 +405,7 @@ const bool TStorageClient::processFile(const int aVersion, const string& aToken,
 				ack.reset();
 				if (isAckExpected){
 					if (ackResp){
-						aFileList->Add(gcnew UserFile(unmarshalString(aFilePath.string())));
+						aFileList->Add(gcnew UserFile(aVersion, unmarshalString(aFilePath.string())));
 						string u;
 						try{
 							u = getUserFromToken(aToken);
@@ -444,7 +455,6 @@ const bool TStorageClient::processFile(const int aVersion, const string& aToken,
 const bool TStorageClient::removeFiles(const string& aToken, const path& aRootPath, TUserFileList_ptr& aSqliteFileList){
 	for (TUserFileList::iterator it = aSqliteFileList->begin(); it != aSqliteFileList->end(); it++){
 		if ((*it)->isToRemove()){
-			string_ptr msg = nullptr;
 			TBaseMessage_ptr bm = nullptr;
 			TSystemErrorMessage_ptr sysErr = nullptr;
 			TFileAckMessage_ptr ack = nullptr;
@@ -461,20 +471,11 @@ const bool TStorageClient::removeFiles(const string& aToken, const path& aRootPa
 					if (!this->sendMsg((TBaseMessage_ptr&)move_TBaseMessage_ptr(m)))
 						return false;
 
-					int kind = NO_ID;
-					do{
-						msg = this->readMsg();
-						if (msg == nullptr)
-							return false;
+					bm = this->filterPingMsgs("removeFiles");
+					if (bm == nullptr)
+						return false;
 
-						bm = new_TBaseMessage_ptr(msg);
-						kind = bm->getID();
-						if (kind == PING_REPLY_ID){
-							bm.reset();
-							logToFile("TStorageClient", "removeFiles", "Received ping reply from server");
-						}
-					} while (kind == PING_REPLY_ID);
-
+					int kind = bm->getID();
 					if (kind == SYSTEM_ERR_ID){
 						sysErr = make_TSystemErrorMessage_ptr(bm);
 						errorToFile("TStorageClient", "removeFiles", sysErr->getDetail());
@@ -566,7 +567,6 @@ void TStorageClient::verifyUser(const string& aUser, const string& aPass){
 		return;
 	}
 
-	string_ptr msg = nullptr;
 	TBaseMessage_ptr bm = nullptr;
 	TSystemErrorMessage_ptr sysErr = nullptr;
 
@@ -577,8 +577,8 @@ void TStorageClient::verifyUser(const string& aUser, const string& aPass){
 		this->onLoginError("Login temporarly unavailable! Try later.");
 		return;
 	}
-	msg = this->readMsg();
-	if (msg == nullptr){
+	bm = this->filterPingMsgs("verifyUser");
+	if (bm == nullptr){
 		//this->fLoggedIn.store(false, boost::memory_order_release);
 		this->onLoginError("Login temporarly unavailable! Try later.");
 		return;
@@ -586,7 +586,6 @@ void TStorageClient::verifyUser(const string& aUser, const string& aPass){
 
 	TVerifyCredReplyMessage_ptr verReply = nullptr;
 	try{
-		bm = new_TBaseMessage_ptr(msg);
 		verReply = make_TVerifyCredReplyMessage_ptr(bm);
 		bm.reset();
 	}
@@ -633,7 +632,6 @@ void TStorageClient::registerUser(const string& aUser, const string& aPass, cons
 	}
 
 	bool result = false;
-	string_ptr msg = nullptr;
 	TBaseMessage_ptr bm = nullptr;
 	TSystemErrorMessage_ptr sysErr = nullptr;
 
@@ -642,15 +640,14 @@ void TStorageClient::registerUser(const string& aUser, const string& aPass, cons
 		this->onRegistrationError("Registration temporarly unavailable! Try later.");
 		return;
 	}
-	msg = this->readMsg();
-	if (msg == nullptr){
+	bm = this->filterPingMsgs("registerUser");
+	if (bm == nullptr){
 		this->onRegistrationError("Registration temporarly unavailable! Try later.");
 		return;
 	}
 
 	TUserRegistrReplyMessage_ptr regReply = nullptr;
 	try{
-		bm = new_TBaseMessage_ptr(msg);
 		int kind = bm->getID();
 		if (kind == SYSTEM_ERR_ID){
 			sysErr = make_TSystemErrorMessage_ptr(bm);
@@ -693,18 +690,18 @@ void TStorageClient::registerUser(const string& aUser, const string& aPass, cons
 }
 
 int TStorageClient::getLastVersion(const string& aUser, const string& aPass){
-	string_ptr msg = nullptr;
 	TBaseMessage_ptr bm = nullptr;
 	TSystemErrorMessage_ptr sysErr = nullptr;
 
 	int version = 0;
 	if (!this->sendMsg((TBaseMessage_ptr&)move_TBaseMessage_ptr(new_TGetLastVerReqMessage_ptr(aUser, aPass))))
 		return -1;
-	msg = this->readMsg();
+	bm = this->filterPingMsgs("getLastVersion");
+	if (bm == nullptr)
+		return -1;
 
 	TGetLastVerReplyMessage_ptr lastVer = nullptr;
 	try{
-		bm = new_TBaseMessage_ptr(msg);
 		int kind = bm->getID();
 		if (kind == SYSTEM_ERR_ID){
 			sysErr = make_TSystemErrorMessage_ptr(bm);
@@ -813,7 +810,6 @@ void TStorageClient::updateCurrentVersion(const string& aUser, const string& aPa
 		return;
 	}
 
-	string_ptr msg = nullptr;
 	TBaseMessage_ptr bm = nullptr;
 	TSystemErrorMessage_ptr sysErr = nullptr;
 
@@ -823,8 +819,8 @@ void TStorageClient::updateCurrentVersion(const string& aUser, const string& aPa
 		this->onUpdateError("Temporary error! Update session cannot be started.");
 		return;
 	}
-	msg = this->readMsg();
-	if (msg == nullptr){
+	bm = this->filterPingMsgs("updateCurrentVersion");
+	if (bm == nullptr){
 		this->onUpdateError("Temporary error! Update session cannot be started.");
 		return;
 	}
@@ -832,7 +828,6 @@ void TStorageClient::updateCurrentVersion(const string& aUser, const string& aPa
 	TUpdateStartReplyMessage_ptr updReply = nullptr;
 	bool result = false;
 	try{
-		bm = new_TBaseMessage_ptr(msg);
 		int kind = bm->getID();
 		if (kind == SYSTEM_ERR_ID){
 			sysErr = make_TSystemErrorMessage_ptr(bm);
@@ -911,22 +906,13 @@ void TStorageClient::updateCurrentVersion(const string& aUser, const string& aPa
 				return;
 			}
 
-			int kind = NO_ID;
-			do{
-				msg = this->readMsg();
-				if (msg == nullptr){
-					this->onUpdateError("Temporary error! Update session interrupted.");
-					return;
-				}
+			bm = this->filterPingMsgs("updateCurrentVersion");
+			if (bm == nullptr){
+				this->onUpdateError("Temporary error! Update session interrupted.");
+				return;
+			}
 
-				bm = new_TBaseMessage_ptr(msg);
-				kind = bm->getID();
-				if (kind == PING_REPLY_ID){
-					bm.reset();
-					logToFile("TStorageClient", "updateCurrentVersion", "Received ping reply from server");
-				}
-			} while (kind == PING_REPLY_ID);
-
+			int kind = bm->getID();
 			TUpdateStopReplyMessage_ptr updstopReply = nullptr;
 			try{
 				is_ok = true;
@@ -999,7 +985,6 @@ void TStorageClient::updateCurrentVersion(const string& aUser, const string& aPa
 const bool TStorageClient::restoreVersion(const string& aUser, const string& aPass, const int aVersion, const string& aFile, const string& aDestPath, const bool aStoreOnLocalDB){
 	path root(aDestPath);
 	bool is_err = false;
-	string_ptr msg = nullptr;
 	TBaseMessage_ptr bm = nullptr;
 	TSystemErrorMessage_ptr sysErr = nullptr;
 
@@ -1037,8 +1022,8 @@ const bool TStorageClient::restoreVersion(const string& aUser, const string& aPa
 		this->onRestoreError("Temporary error! Restore of version " + aVersion + " cannot be started.", aStoreOnLocalDB);
 		return false;
 	}
-	msg = this->readMsg();
-	if (msg == nullptr){
+	bm = this->filterPingMsgs("restoreVersion");
+	if (bm == nullptr){
 		this->onRestoreError("Temporary error! Restore of version " + aVersion + " cannot be started.", aStoreOnLocalDB);
 		return false;
 	}
@@ -1046,7 +1031,6 @@ const bool TStorageClient::restoreVersion(const string& aUser, const string& aPa
 	TRestoreVerReplyMessage_ptr restReply = nullptr;
 	bool result = false;
 	try{
-		bm = new_TBaseMessage_ptr(msg);
 		int kind = bm->getID();
 		if (kind == SYSTEM_ERR_ID){
 			sysErr = make_TSystemErrorMessage_ptr(bm);
@@ -1083,22 +1067,13 @@ const bool TStorageClient::restoreVersion(const string& aUser, const string& aPa
 		logToFile("TStorageClient", "restoreVersion", "Start receiving files");
 		bool exit = false;
 		while (!exit){
-			int kind = NO_ID;
-			do{
-				msg = this->readMsg();
-				if (msg == nullptr){
-					is_err = true;
-					break;
-				}
+			bm = this->filterPingMsgs("updateCurrentVersion");
+			if (bm == nullptr){
+				is_err = true;
+				break;
+			}
 
-				bm = new_TBaseMessage_ptr(msg);
-				kind = bm->getID();
-				if (kind == PING_REPLY_ID){
-					bm.reset();
-					logToFile("TStorageClient", "restoreVersion", "Received ping reply from server");
-				}
-			} while (kind == PING_REPLY_ID);
-
+			int kind = bm->getID();
 			TRestoreFileMessage_ptr restFile = nullptr;
 			TRestoreStopMessage_ptr restStop = nullptr;
 			result = false;
@@ -1120,7 +1095,7 @@ const bool TStorageClient::restoreVersion(const string& aUser, const string& aPa
 
 								if (flist == nullptr)
 									flist = gcnew List<UserFile^>();
-								flist->Add(gcnew UserFile(unmarshalString((root / f).string())));
+								flist->Add(gcnew UserFile(aVersion, unmarshalString((root / f).string())));
 
 								if (aStoreOnLocalDB){
 									if (fl == nullptr)
@@ -1149,7 +1124,8 @@ const bool TStorageClient::restoreVersion(const string& aUser, const string& aPa
 				else if (kind == RESTORE_STOP_ID){
 					restStop = make_TRestoreStopMessage_ptr(bm);
 					string vdate = formatFileDate(restStop->getVersionDate());
-					logToFile("TStorageClient", "restoreVersion", "Version " + to_string(restStop->getVersion()) + " [" + vdate + "] completely restored.");
+					if (restStop->getVersion() > 0)
+						logToFile("TStorageClient", "restoreVersion", "Version " + to_string(restStop->getVersion()) + " [" + vdate + "] completely restored.");
 
 					if (aStoreOnLocalDB){
 						try{
@@ -1163,7 +1139,10 @@ const bool TStorageClient::restoreVersion(const string& aUser, const string& aPa
 								fl.reset();
 							}
 
-							this->onRestoreSuccess(restStop->getVersion(), unmarshalString(vdate), aStoreOnLocalDB, flist);
+							if (restStop->getVersion() > 0)
+								this->onRestoreSuccess(restStop->getVersion(), unmarshalString(vdate), aStoreOnLocalDB, flist);
+							else
+								is_err = true;
 							exit = true;
 						}
 						catch (ESqliteDBException& e){
@@ -1176,7 +1155,10 @@ const bool TStorageClient::restoreVersion(const string& aUser, const string& aPa
 						}
 					}
 					else{
-						this->onRestoreSuccess(restStop->getVersion(), unmarshalString(vdate), aStoreOnLocalDB, flist);
+						if (restStop->getVersion() > 0)
+							this->onRestoreSuccess(restStop->getVersion(), unmarshalString(vdate), aStoreOnLocalDB, flist);
+						else
+							is_err = true;
 						exit = true;
 					}
 				}
@@ -1224,7 +1206,6 @@ void TStorageClient::getAllVersions(const string& aUser, const string& aPass){
 		return;
 	}
 
-	string_ptr msg = nullptr;
 	TBaseMessage_ptr bm = nullptr;
 	TSystemErrorMessage_ptr sysErr = nullptr;
 
@@ -1233,15 +1214,14 @@ void TStorageClient::getAllVersions(const string& aUser, const string& aPass){
 		this->onGetVersionsError("Temporary Error! Version list cannot be retrived.");
 		return;
 	}
-	msg = this->readMsg();
-	if (msg == nullptr){
+	bm = this->filterPingMsgs("getAllVersions");
+	if (bm == nullptr){
 		this->onGetVersionsError("Temporary Error! Version list cannot be retrived.");
 		return;
 	}
 
 	TGetVersionsReplyMessage_ptr verReply = nullptr;
 	try{
-		bm = new_TBaseMessage_ptr(msg);
 		int kind = bm->getID();
 		if (kind == SYSTEM_ERR_ID){
 			sysErr = make_TSystemErrorMessage_ptr(bm);
@@ -1266,7 +1246,7 @@ void TStorageClient::getAllVersions(const string& aUser, const string& aPass){
 					for (int j = 0; j < totF; j++){
 						TFile_ptr file = vers->at(i)->getNextFile();
 						vers->at(i)->updateNext();
-						files->Add(gcnew UserFile(unmarshalString(file->getClientRelativePath())));
+						files->Add(gcnew UserFile(id, unmarshalString(file->getClientRelativePath())));
 						file.reset();
 					}
 
