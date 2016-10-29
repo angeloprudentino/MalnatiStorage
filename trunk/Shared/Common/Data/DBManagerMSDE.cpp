@@ -471,7 +471,7 @@ TVersionList_ptr TDBManagerMSDE::getAllVersions(const string& aUser){
 
 		//Select user version
 		if (System::Object::ReferenceEquals(this->fSelectAllVersionsCmd, nullptr)){
-			this->fSelectAllVersionsCmd = gcnew SqlCommand("SELECT COUNT(VerID) FROM Users, Versions WHERE Users.UserID = Versions.UserID AND Username = @username;");
+			this->fSelectAllVersionsCmd = gcnew SqlCommand("SELECT Versions.VerID, VerDate, ServerPath, ClientRelativePath, LastModDate FROM Users, Versions, Files WHERE Users.UserID = Versions.UserID AND Users.UserID = Files.UserID AND Versions.VerID = Files.VerID AND Username = @username;");
 			this->fSelectAllVersionsCmd->CommandType = CommandType::Text;
 			this->fSelectAllVersionsCmd->Connection = this->fConnection;
 		}
@@ -480,28 +480,36 @@ TVersionList_ptr TDBManagerMSDE::getAllVersions(const string& aUser){
 		try{
 			reader = fSelectAllVersionsCmd->ExecuteReader();
 
-			int tot = 0;
 			if (reader->HasRows){
-				reader->Read();
-				tot = reader->GetInt32(0);
-
-				//build version list object
 				versionList = new_TVersionList_ptr();
-				for (int i = 0; i < tot; i++){
-					versionList->push_back(move_TVersion_ptr(this->getVersion(aUser, i + 1)));
+
+				while (reader->Read()){
+					int verId = reader->GetInt32(0);
+					long long vDate = reader->GetInt64(1);
+
+					//get files
+					String^ serverPath = reader->GetString(2);
+					String^ clientPath = reader->GetString(3);
+					long long fDate = reader->GetInt64(4);
+					TFile_ptr file = copy_TFile_ptr(marshalString(serverPath), marshalString(clientPath), fDate);
+
+					int size = (int)versionList->size();
+					int pos = -1;
+					for (int i = 0; i < size; i++){
+						if (versionList->at(i)->getVersion() == verId){
+							versionList->at(i)->addFile(file);
+							pos = i;
+							break;
+						}				
+					}
+
+					if (pos == -1){
+						TVersion_ptr vPtr = new_TVersion_ptr(verId, vDate);
+						vPtr->addFile(file);
+						versionList->push_back(move_TVersion_ptr(vPtr));
+					}
 				}
 			}
-
-			//if (reader->HasRows){
-			//	//build version list object
-			//	versionList = new_TVersionList_ptr();
-			//	while (reader->Read()){
-			//		int v = reader->GetInt32(0);
-			//		long long vDate = reader->GetInt64(1);
-			//		TVersion_ptr vPtr = new_TVersion_ptr(v, vDate);
-			//		versionList->push_back(move_TVersion_ptr(vPtr));
-			//	}
-			//}
 
 			this->fSelectAllVersionsCmd->Parameters->Clear();
 			reader->Close();
@@ -510,7 +518,8 @@ TVersionList_ptr TDBManagerMSDE::getAllVersions(const string& aUser){
 		}
 		catch (Exception^ e) {
 			this->fSelectAllVersionsCmd->Parameters->Clear();
-			reader->Close();
+			if (!System::Object::ReferenceEquals(reader, nullptr))
+				reader->Close();
 			throw EDBException("Error during SelectAllVersionsCmd: " + marshalString(e->Message));
 		}
 	}
