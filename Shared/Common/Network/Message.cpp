@@ -1293,7 +1293,7 @@ void TGetVersionsReplyMessage::decodeMessage(){
 				string_ptr path = move_string_ptr(this->fItems->at(it));
 				it++;
 
-				//version->addFile(copy_TFile_ptr(string(""), path->c_str(), time(nullptr)));
+				version->addFile(copy_TFile_ptr(string(""), path->c_str(), time(nullptr)));
 				path.reset();
 			}
 
