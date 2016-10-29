@@ -1203,6 +1203,9 @@ string_ptr TGetVersionsReplyMessage::encodeMessage(){
 			}
 		}
 	}
+	else
+		this->fItems->push_back(make_string_ptr(to_string(0)));
+
 	return TBaseMessage::encodeMessage();
 }
 

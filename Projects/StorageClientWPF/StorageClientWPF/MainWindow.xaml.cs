@@ -97,6 +97,7 @@ namespace StorageClientWPF
                 this.stopUpdate();
 
                 //update UI safely
+                this.clearStatusLabel();
                 this.lastValidVersionList = aVersionsList;
                 this.DrawVersionBottons(aVersionsList);
                 this.showMainBtnBar(true);
