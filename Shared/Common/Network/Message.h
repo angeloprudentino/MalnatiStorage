@@ -417,14 +417,11 @@ typedef std::unique_ptr<TGetVersionsReqMessage> TGetVersionsReqMessage_ptr;
 ////////////////////////////////////////
 class TGetVersionsReplyMessage : public TBaseMessage {
 private:
-	unsigned int fTotVersions = 0;
-	unsigned int fOldestVersion = 0;
-	unsigned int fLastVersion = 0;
 	TVersionList_ptr fVersions = nullptr;
 
 public:
 	TGetVersionsReplyMessage(TBaseMessage_ptr& aBase); //throws EMessageException
-	TGetVersionsReplyMessage(const unsigned int aTotVersions, const unsigned int aOldestVersion, const unsigned int aLastVersion, TVersionList_ptr& aVersions);
+	TGetVersionsReplyMessage(TVersionList_ptr& aVersions);
 	TGetVersionsReplyMessage(const TGetVersionsReplyMessage&) = delete;            // disable copying
 	TGetVersionsReplyMessage& operator=(const TGetVersionsReplyMessage&) = delete; // disable assignment
 	~TGetVersionsReplyMessage();
@@ -433,13 +430,11 @@ public:
 	void decodeMessage(); //throws EMessageException
 
 	//getters
-	const unsigned int getTotVersions(){ return this->fTotVersions; }
-	const unsigned int getOldestVersion(){ return this->fOldestVersion; }
-	const unsigned int getLastVersion(){ return this->fLastVersion; }
-	const time_t getVersionDate(const unsigned int aVersion){ return this->fVersions->at(aVersion-1)->getDate(); }
+	const int getTotVersions(){ return (int)this->fVersions->size(); }
+	TVersionList_ptr getVersions() { return move_TVersionList_ptr(this->fVersions); }
 };
 typedef std::unique_ptr<TGetVersionsReplyMessage> TGetVersionsReplyMessage_ptr;
-#define new_TGetVersionsReplyMessage_ptr(aTotVersions, aOldestVersion, aLastVersion, aVersions) std::make_unique<TGetVersionsReplyMessage>(aTotVersions, aOldestVersion, aLastVersion, aVersions)
+#define new_TGetVersionsReplyMessage_ptr(aVersions) std::make_unique<TGetVersionsReplyMessage>(aVersions)
 #define make_TGetVersionsReplyMessage_ptr(ptr) std::make_unique<TGetVersionsReplyMessage>(ptr)
 
 
@@ -505,10 +500,11 @@ private:
 	string_ptr fUser = nullptr;
 	string_ptr fPass = nullptr;
 	unsigned int fVersion = -1;
+	string_ptr fFile = nullptr;
 
 public:
 	TRestoreVerReqMessage(TBaseMessage_ptr& aBase); //throws EMessageException
-	TRestoreVerReqMessage(const string& aUser, const string& aPass, const unsigned int aVersion);
+	TRestoreVerReqMessage(const string& aUser, const string& aPass, const unsigned int aVersion, const string aFile);
 	TRestoreVerReqMessage(const TRestoreVerReqMessage&) = delete;            // disable copying
 	TRestoreVerReqMessage& operator=(const TRestoreVerReqMessage&) = delete; // disable assignment
 	~TRestoreVerReqMessage();
@@ -520,9 +516,10 @@ public:
 	const string getUser(){ return *(this->fUser); }
 	const string getPass(){ return *(this->fPass); }
 	const unsigned int getVersion(){ return this->fVersion; }
+	const string getFile(){ return *(this->fFile); }
 };
 typedef std::unique_ptr<TRestoreVerReqMessage> TRestoreVerReqMessage_ptr;
-#define new_TRestoreVerReqMessage_ptr(aUser, aPass, aVersion) std::make_unique<TRestoreVerReqMessage>(aUser, aPass, aVersion)
+#define new_TRestoreVerReqMessage_ptr(aUser, aPass, aVersion, aFile) std::make_unique<TRestoreVerReqMessage>(aUser, aPass, aVersion, aFile)
 #define make_TRestoreVerReqMessage_ptr(ptr) std::make_unique<TRestoreVerReqMessage>(ptr)
 
 

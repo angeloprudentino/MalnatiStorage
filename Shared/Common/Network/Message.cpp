@@ -33,10 +33,10 @@ using namespace boost::filesystem;
 #define UPDATE_STOP_REQ_TOK_NUM 3
 #define UPDATE_STOP_REPLY_TOK_NUM 5
 #define GET_VERSIONS_REQ_TOK_NUM 4
-#define GET_VERSIONS_REPLY_MIN_TOK_NUM 5
+#define GET_VERSIONS_REPLY_MIN_TOK_NUM 3
 #define GET_LAST_VERSION_REQ_TOK_NUM 4
 #define GET_LAST_VERSION_REPLY_TOK_NUM 4
-#define RESTORE_VER_REQ_TOK_NUM 5
+#define RESTORE_VER_REQ_TOK_NUM 6
 #define RESTORE_VER_REPLY_TOK_NUM 4
 #define RESTORE_FILE_TOK_NUM 6
 #define RESTORE_FILE_ACK_TOK_NUM 5
@@ -1158,11 +1158,8 @@ TGetVersionsReplyMessage::TGetVersionsReplyMessage(TBaseMessage_ptr& aBase){
 	this->decodeMessage();
 }
 
-TGetVersionsReplyMessage::TGetVersionsReplyMessage(const unsigned int aTotVersions, const unsigned int aOldestVersion, const unsigned int aLastVersion, TVersionList_ptr& aVersions){
+TGetVersionsReplyMessage::TGetVersionsReplyMessage(TVersionList_ptr& aVersions){
 	this->fID = GET_VERSIONS_REPLY_ID;
-	this->fTotVersions = aTotVersions;
-	this->fOldestVersion = aOldestVersion;
-	this->fLastVersion = aLastVersion;
 	this->fVersions = move_TVersionList_ptr(aVersions);
 }
 
@@ -1178,15 +1175,32 @@ TGetVersionsReplyMessage::~TGetVersionsReplyMessage(){
 
 string_ptr TGetVersionsReplyMessage::encodeMessage(){
 	this->fItems->push_back(make_string_ptr(getMessageName(this->fID)));
-	this->fItems->push_back(make_string_ptr(to_string(this->fTotVersions)));
-	this->fItems->push_back(make_string_ptr(to_string(this->fOldestVersion)));
-	this->fItems->push_back(make_string_ptr(to_string(this->fLastVersion)));
 
 	if (this->fVersions != nullptr){
 		int size = (int)this->fVersions->size();
+		//number of versions
+		this->fItems->push_back(make_string_ptr(to_string(size)));
+
 		for (int i = 0; i < size; i++){
+			//version id
+			int id = this->fVersions->at(i)->getVersion();
+			this->fItems->push_back(make_string_ptr(to_string(id)));
+
+			//version date
 			time_t t = this->fVersions->at(i)->getDate();
 			this->fItems->push_back(make_string_ptr(timeToString(t)));
+
+			int fnum = this->fVersions->at(i)->getFileNum();
+			//version files number
+			this->fItems->push_back(make_string_ptr(to_string(fnum)));
+			for (int j = 0; j < fnum; j++){
+				TFile_ptr file = this->fVersions->at(i)->getNextFile();
+				this->fVersions->at(i)->updateNext();
+				string path = file->getClientRelativePath();
+				file.reset();
+				//file path
+				this->fItems->push_back(make_string_ptr(path));
+			}
 		}
 	}
 	return TBaseMessage::encodeMessage();
@@ -1196,9 +1210,11 @@ void TGetVersionsReplyMessage::decodeMessage(){
    /*
 	* item[0] -> msg name
 	* item[1] -> number of versions
-	* item[2] -> oldest version on server
-	* item[3] -> last version
-	* item[4..n] -> versions timestamps
+	*
+	* for each version:
+	* item[2] -> version id
+	* item[3] -> version date
+	* item[4..n] -> version files
 	*/
 	TBaseMessage::decodeMessage();
 
@@ -1214,48 +1230,76 @@ void TGetVersionsReplyMessage::decodeMessage(){
 		throw EMessageException("The given message is not a GET_VERSIONS_REPLY message");
 
 	//tot number of versions
-	if (*(this->fItems->at(1)) == EMPTY)
+	int tot = 0;
+	int it = 1;
+	if (*(this->fItems->at(it)) == EMPTY)
 		throw EMessageException("The total versions number field cannot be empty");
 	
 	try{
-		this->fTotVersions = stoi(*(this->fItems->at(1)));
+		tot = stoi(*(this->fItems->at(it)));
+		it++;
 	}
 	catch (...){
 		throw EMessageException("The total versions number field cannot be converted into an int value");
 	}	
 
-	//oldest version
-	if (*(this->fItems->at(2)) == EMPTY)
-		throw EMessageException("The oldest version number field cannot be empty");
-	
-	try{
-		this->fOldestVersion = stoi(*(this->fItems->at(2)));
-	}
-	catch (...){
-		throw EMessageException("The oldest version number field cannot be converted into an int value");
-	}
+	if (tot > 0){
+		//scan each version
+		for (int i = 0; i < tot; i++){
+			//version id
+			int id = 0;
+			if (*(this->fItems->at(it)) == EMPTY)
+				throw EMessageException("The version id field cannot be empty");
 
-	//last version
-	if (*(this->fItems->at(3)) == EMPTY)
-		throw EMessageException("The last version number field cannot be empty");
+			try{
+				id = stoi(*(this->fItems->at(it)));
+				it++;
+			}
+			catch (...){
+				throw EMessageException("The version id field cannot be converted into an int value");
+			}
 
-	try{
-		this->fLastVersion = stoi(*(this->fItems->at(3)));
-	}
-	catch (...){
-		throw EMessageException("The last version number field cannot be converted into an int value");
-	}
+			//version date
+			if (*(this->fItems->at(it)) == EMPTY)
+				throw EMessageException("The version date field cannot be empty");
 
-	if (this->fTotVersions > 0){
-		int totSize = GET_VERSIONS_REPLY_MIN_TOK_NUM + (this->fLastVersion - this->fOldestVersion) + 1;
-		if (size != totSize)
-			throw EMessageException("GET_VERSIONS_REPLY message contains wrong number of tokens(" + to_string(size) + " instead of " + to_string(totSize) + ")");
+			time_t vdate;
+			try{
+				vdate = stringToTime(*(this->fItems->at(it)));
+				it++;
+			}
+			catch (...){
+				throw EMessageException("The version date field cannot be converted into an int value");
+			}
 
-		int i, j;
-		for (i = GET_VERSIONS_REPLY_MIN_TOK_NUM-1, j = this->fOldestVersion; i < totSize-1; i++, j++){
+			//file num
+			int fn = 0;
+			if (*(this->fItems->at(it)) == EMPTY)
+				throw EMessageException("The file number field cannot be empty");
+
+			try{
+				fn = stoi(*(this->fItems->at(it)));
+				it++;
+			}
+			catch (...){
+				throw EMessageException("The file number field cannot be converted into an int value");
+			}
+
+			TVersion_ptr version = new_TVersion_ptr(id, vdate);
+			for (int j = 0; j < fn; j++){
+				//scan each file
+				if (*(this->fItems->at(it)) == EMPTY)
+					throw EMessageException("The file name field cannot be empty");
+				string_ptr path = move_string_ptr(this->fItems->at(it));
+				it++;
+
+				//version->addFile(copy_TFile_ptr(string(""), path->c_str(), time(nullptr)));
+				path.reset();
+			}
+
 			if (this->fVersions == nullptr)
 				this->fVersions = new_TVersionList_ptr();
-			this->fVersions->push_back(new_TVersion_ptr(j, stringToTime(*(this->fItems->at(i)))));
+			this->fVersions->push_back(move_TVersion_ptr(version));
 		}
 	}
 }
@@ -1412,7 +1456,7 @@ TRestoreVerReqMessage::TRestoreVerReqMessage(TBaseMessage_ptr& aBase){
 	this->decodeMessage();
 }
 
-TRestoreVerReqMessage::TRestoreVerReqMessage(const string& aUser, const string& aPass, const unsigned int aVersion){
+TRestoreVerReqMessage::TRestoreVerReqMessage(const string& aUser, const string& aPass, const unsigned int aVersion, const string aFile){
 	this->fID = RESTORE_VER_REQ_ID;
 	this->fUser = make_string_ptr(aUser);
 	try{
@@ -1422,6 +1466,7 @@ TRestoreVerReqMessage::TRestoreVerReqMessage(const string& aUser, const string& 
 		throw EMessageException("Error encrypting password: " + e.getMessage());
 	}
 	this->fVersion = aVersion;
+	this->fFile = make_string_ptr(aFile);
 }
 
 TRestoreVerReqMessage::~TRestoreVerReqMessage(){
@@ -1431,8 +1476,12 @@ TRestoreVerReqMessage::~TRestoreVerReqMessage(){
 	if (this->fPass != nullptr)
 		this->fPass.reset();
 
+	if (this->fFile != nullptr)
+		this->fFile.reset();
+
 	this->fUser = nullptr;
 	this->fPass = nullptr;
+	this->fFile = nullptr;
 }
 
 string_ptr TRestoreVerReqMessage::encodeMessage(){
@@ -1440,6 +1489,7 @@ string_ptr TRestoreVerReqMessage::encodeMessage(){
 	this->fItems->push_back(move_string_ptr(this->fUser));
 	this->fItems->push_back(move_string_ptr(this->fPass));
 	this->fItems->push_back(make_string_ptr(to_string(this->fVersion)));
+	this->fItems->push_back(move_string_ptr(this->fFile));
 
 	return TBaseMessage::encodeMessage();
 }
@@ -1450,6 +1500,7 @@ void TRestoreVerReqMessage::decodeMessage(){
 	* item[1] -> username
 	* item[2] -> password
 	* item[3] -> version
+	* item[4] -> file
 	*/
 	TBaseMessage::decodeMessage();
 	
@@ -1485,6 +1536,9 @@ void TRestoreVerReqMessage::decodeMessage(){
 	catch (...){
 		throw EMessageException("The version number field cannot be converted into an int value");
 	}
+
+	//file
+	this->fPass = move_string_ptr(this->fItems->at(4));
 }
 #pragma endregion
 

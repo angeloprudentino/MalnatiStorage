@@ -63,7 +63,7 @@ private:
 	void registerUser(const string& aUser, const string& aPass, const string& aRootPath);
 	int getLastVersion(const string& aUser, const string& aPass);
 	void updateCurrentVersion(const string& aUser, const string& aPass, const string& aRootPath);
-	const bool restoreVersion(const string& aUser, const string& aPass, const int aVersion, const string& aDestPath, const bool aStoreOnLocalDB);
+	const bool restoreVersion(const string& aUser, const string& aPass, const int aVersion, const string& aFile, const string& aDestPath, const bool aStoreOnLocalDB);
 	void getAllVersions(const string& aUser, const string& aPass);
 	const bool pingServer(const string& aToken);
 	

@@ -133,15 +133,17 @@ private:
 	String^ fUser;
 	String^ fPass;
 	int fVersion;
+	String^ fFile;
 	String^ fDestPath;
 
 public:
-	RestoreRequest(String^ aUser, String^ aPass, const int aVersion, String^ aDestPath);
+	RestoreRequest(String^ aUser, String^ aPass, const int aVersion, String^ aFile, String^ aDestPath);
 
 	//getters
 	String^ getUser() { return this->fUser; }
 	String^ getPass() { return this->fPass; }
 	const int getVersion() { return this->fVersion; }
+	String^ getFile() { return this->fFile; }
 	String^ getDestPath() { return this->fDestPath; }
 };
 

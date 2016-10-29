@@ -471,7 +471,7 @@ TVersionList_ptr TDBManagerMSDE::getAllVersions(const string& aUser){
 
 		//Select user version
 		if (System::Object::ReferenceEquals(this->fSelectAllVersionsCmd, nullptr)){
-			this->fSelectAllVersionsCmd = gcnew SqlCommand("SELECT VerID, VerDate FROM Users, Versions WHERE Users.UserID = Versions.UserID AND Username = @username;");
+			this->fSelectAllVersionsCmd = gcnew SqlCommand("SELECT COUNT(VerID) FROM Users, Versions WHERE Users.UserID = Versions.UserID AND Username = @username;");
 			this->fSelectAllVersionsCmd->CommandType = CommandType::Text;
 			this->fSelectAllVersionsCmd->Connection = this->fConnection;
 		}
@@ -480,16 +480,28 @@ TVersionList_ptr TDBManagerMSDE::getAllVersions(const string& aUser){
 		try{
 			reader = fSelectAllVersionsCmd->ExecuteReader();
 
+			int tot = 0;
 			if (reader->HasRows){
+				reader->Read();
+				tot = reader->GetInt32(0);
+
 				//build version list object
 				versionList = new_TVersionList_ptr();
-				while (reader->Read()){
-					int v = reader->GetInt32(0);
-					long long vDate = reader->GetInt64(1);
-					TVersion_ptr vPtr = new_TVersion_ptr(v, vDate);
-					versionList->push_back(move_TVersion_ptr(vPtr));
+				for (int i = 0; i < tot; i++){
+					versionList->push_back(move_TVersion_ptr(this->getVersion(aUser, i + 1)));
 				}
 			}
+
+			//if (reader->HasRows){
+			//	//build version list object
+			//	versionList = new_TVersionList_ptr();
+			//	while (reader->Read()){
+			//		int v = reader->GetInt32(0);
+			//		long long vDate = reader->GetInt64(1);
+			//		TVersion_ptr vPtr = new_TVersion_ptr(v, vDate);
+			//		versionList->push_back(move_TVersion_ptr(vPtr));
+			//	}
+			//}
 
 			this->fSelectAllVersionsCmd->Parameters->Clear();
 			reader->Close();

@@ -952,16 +952,7 @@ void TStorageServer::processGetVersions(TConnection_ptr& aConnection, TGetVersio
 			return;
 		}
 
-		int totVers = 0;
-		int oldest = 0;
-		int last = 0;
-		if (vers != nullptr){
-			totVers = (int)vers->size();
-			oldest = 1;
-			last = totVers;
-		}
-
-		reply = new_TGetVersionsReplyMessage_ptr(totVers, oldest, last, vers);
+		reply = new_TGetVersionsReplyMessage_ptr(move_TVersion_ptr(vers));
 		replyContainer = new_TMessageContainer_ptr(move_TBaseMessage_ptr(reply), aConnection); //reply is moved
 		this->sendMessage(move_TMessageContainer_ptr(replyContainer), false); //replyContainer is moved
 	}

@@ -12,23 +12,6 @@
 using namespace System;
 using namespace System::Collections::Generic;
 
-//////////////////////////////////
-//         UserVersion	        //
-//////////////////////////////////
-public ref class UserVersion{
-private:
-	int fVersionID = -1;
-	String^ fVersionDate = nullptr;
-
-public:
-	UserVersion(String^ aVersionDate, const int aVersionID);
-
-	//getters
-	const int getVersionID(){ return this->fVersionID; }
-	String^ getVersionDate(){ return this->fVersionDate; }
-};
-
-
 ///////////////////////////////
 //          UserFile	     //
 ///////////////////////////////
@@ -43,6 +26,25 @@ public:
 	//getters
 	String^ getFileName() { return this->fFileName; }
 	String^ getFilePath() { return this->fFilePath; }
+};
+
+
+//////////////////////////////////
+//         UserVersion	        //
+//////////////////////////////////
+public ref class UserVersion{
+private:
+	int fVersionID = -1;
+	String^ fVersionDate = nullptr;
+	List<UserFile^>^ fFileList = nullptr;
+
+public:
+	UserVersion(String^ aVersionDate, const int aVersionID, List<UserFile^>^ aFileList);
+
+	//getters
+	const int getVersionID() { return this->fVersionID; }
+	String^ getVersionDate() { return this->fVersionDate; }
+	List<UserFile^>^ getFileList() { return this->fFileList; }
 };
 
 

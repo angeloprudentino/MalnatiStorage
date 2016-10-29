@@ -91,6 +91,7 @@ public:
 	const int getVersion() { return this->fId; }
 	const time_t getDate() { return this->fVersionDate; }
 	TFile_ptr getNextFile();
+	const int getFileNum() { return (int)this->fFileList.size(); }
 };
 typedef unique_ptr<TVersion> TVersion_ptr;
 typedef vector<TVersion_ptr> TVersionList;
