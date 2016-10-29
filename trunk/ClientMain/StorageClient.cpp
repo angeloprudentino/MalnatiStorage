@@ -780,7 +780,7 @@ void TStorageClient::updateCurrentVersion(const string& aUser, const string& aPa
 
 				path local(root / path("LOCAL_NO_SYNCH"));
 				moveAllFiles(root, local);
-				if (!this->restoreVersion(aUser, aPass, lastServer, aRootPath, true)){
+				if (!this->restoreVersion(aUser, aPass, lastServer, "", aRootPath, true)){
 					moveAllFiles(local, root);
 					removeDir(local);
 				}
@@ -996,7 +996,7 @@ void TStorageClient::updateCurrentVersion(const string& aUser, const string& aPa
 	}
 }
 
-const bool TStorageClient::restoreVersion(const string& aUser, const string& aPass, const int aVersion, const string& aDestPath, const bool aStoreOnLocalDB){
+const bool TStorageClient::restoreVersion(const string& aUser, const string& aPass, const int aVersion, const string& aFile, const string& aDestPath, const bool aStoreOnLocalDB){
 	path root(aDestPath);
 	bool is_err = false;
 	string_ptr msg = nullptr;
@@ -1033,7 +1033,7 @@ const bool TStorageClient::restoreVersion(const string& aUser, const string& aPa
 
 	//verify if an update session could be started
 	logToFile("TStorageClient", "restoreVersion", "Verify if a restore session could be started for user " + aUser);
-	if (!this->sendMsg((TBaseMessage_ptr&)move_TBaseMessage_ptr(new_TRestoreVerReqMessage_ptr(aUser, aPass, aVersion)))){
+	if (!this->sendMsg((TBaseMessage_ptr&)move_TBaseMessage_ptr(new_TRestoreVerReqMessage_ptr(aUser, aPass, aVersion, aFile)))){
 		this->onRestoreError("Temporary error! Restore of version " + aVersion + " cannot be started.", aStoreOnLocalDB);
 		return false;
 	}
@@ -1252,15 +1252,30 @@ void TStorageClient::getAllVersions(const string& aUser, const string& aPass){
 			verReply = make_TGetVersionsReplyMessage_ptr(bm);
 			int tot = verReply->getTotVersions();
 			if (tot > 0){
-				int oldest = verReply->getOldestVersion();
-				int last = verReply->getLastVersion();
 				logToFile("TStorageClient", "getAllVersions", "Versions of user " + aUser + ":");
 				List<UserVersion^>^ result = gcnew List<UserVersion^>();
-				for (int i = oldest; i <= last; i++){
-					string vd = formatFileDate(verReply->getVersionDate(i));
-					logToFile("TStorageClient", "getAllVersions", "-\tVersion " + to_string(i) + " [" + vd + "]");
-					result->Add(gcnew UserVersion(unmarshalString(vd), i));
+				TVersionList_ptr vers = verReply->getVersions();
+				for (int i = 0; i < tot; i++){
+					int id = vers->at(i)->getVersion();
+					string vd = formatFileDate(vers->at(i)->getDate());
+					logToFile("TStorageClient", "getAllVersions", "Version " + to_string(id) + " @ " + vd);
+					int totF = vers->at(i)->getFileNum();
+
+					//files for this version
+					List<UserFile^>^ files = nullptr;
+					if (totF > 0)
+						List<UserFile^>^ files = gcnew List<UserFile^>();
+
+					for (int j = 0; j < totF; j++){
+						TFile_ptr file = vers->at(i)->getNextFile();
+						vers->at(i)->updateNext();
+						files->Add(gcnew UserFile(unmarshalString(file->getClientRelativePath())));
+						file.reset();
+					}
+
+					result->Add(gcnew UserVersion(unmarshalString(vd), id, files));
 				}
+				vers.reset();
 				this->onGetVersionsSuccess(result);
 			}
 			else
@@ -1324,7 +1339,7 @@ void TStorageClient::processRequest(){
 			}
 			case RESTORE_REQ:{
 				RestoreRequest^ rr = (RestoreRequest^)req;
-				this->restoreVersion(marshalString(rr->getUser()), marshalString(rr->getPass()), rr->getVersion(), marshalString(rr->getDestPath()), false);
+				this->restoreVersion(marshalString(rr->getUser()), marshalString(rr->getPass()), rr->getVersion(), marshalString(rr->getFile()), marshalString(rr->getDestPath()), false);
 				break;
 			}
 			default:{

@@ -55,11 +55,12 @@ GetVerRequest::GetVerRequest(String^ aUser, String^ aPass){
 //////////////////////////////////
 //        RestoreRequest	    //
 //////////////////////////////////
-RestoreRequest::RestoreRequest(String^ aUser, String^ aPass, const int aVersion, String^ aDestPath){
+RestoreRequest::RestoreRequest(String^ aUser, String^ aPass, const int aVersion, String^ aFile, String^ aDestPath){
 	this->fID = RESTORE_REQ;
 	this->fUser = aUser;
 	this->fPass = aPass;
 	this->fVersion = aVersion;
+	this->fFile = aFile;
 	this->fDestPath = aDestPath;
 }
 

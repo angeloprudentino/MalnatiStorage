@@ -112,8 +112,8 @@ const bool TServerSockController::checkMessageToSend(const string& aClassName, c
 		case GET_VERSIONS_REPLY_ID:{
 			this->onServerLog(aClassName, aFuncName, "=>  GetVersionsReplyMessage");
 			this->onServerLog(aClassName, aFuncName, "=>  tot versions: " + to_string(((TGetVersionsReplyMessage_ptr&)aBMsg)->getTotVersions()));
-			this->onServerLog(aClassName, aFuncName, "=>  oldest version: " + to_string(((TGetVersionsReplyMessage_ptr&)aBMsg)->getOldestVersion()));
-			this->onServerLog(aClassName, aFuncName, "=>  last version: " + to_string(((TGetVersionsReplyMessage_ptr&)aBMsg)->getLastVersion()));
+			//this->onServerLog(aClassName, aFuncName, "=>  oldest version: " + to_string(((TGetVersionsReplyMessage_ptr&)aBMsg)->getOldestVersion()));
+			//this->onServerLog(aClassName, aFuncName, "=>  last version: " + to_string(((TGetVersionsReplyMessage_ptr&)aBMsg)->getLastVersion()));
 			break;
 		}
 		case GET_LAST_VERSION_REPLY_ID:{

@@ -13,14 +13,6 @@
 using namespace boost::filesystem;
 
 
-//////////////////////////////////
-//         UserVersion	        //
-//////////////////////////////////
-UserVersion::UserVersion(String^ aVersionDate, const int aVersionID){
-	this->fVersionID = aVersionID; 
-	this->fVersionDate = aVersionDate; 
-}
-
 ///////////////////////////////
 //          UserFile         //
 ///////////////////////////////
@@ -30,4 +22,14 @@ UserFile::UserFile(String^ aFilePath){
 
 	this->fFilePath = unmarshalString(p.string());
 	this->fFileName = unmarshalString(p.filename().string());
+}
+
+
+//////////////////////////////////
+//         UserVersion	        //
+//////////////////////////////////
+UserVersion::UserVersion(String^ aVersionDate, const int aVersionID, List<UserFile^>^ aFileList){
+	this->fVersionID = aVersionID;
+	this->fVersionDate = aVersionDate;
+	this->fFileList = aFileList;
 }
