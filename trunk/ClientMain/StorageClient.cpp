@@ -1262,10 +1262,7 @@ void TStorageClient::getAllVersions(const string& aUser, const string& aPass){
 					int totF = vers->at(i)->getFileNum();
 
 					//files for this version
-					List<UserFile^>^ files = nullptr;
-					if (totF > 0)
-						List<UserFile^>^ files = gcnew List<UserFile^>();
-
+					List<UserFile^>^ files = gcnew List<UserFile^>();
 					for (int j = 0; j < totF; j++){
 						TFile_ptr file = vers->at(i)->getNextFile();
 						vers->at(i)->updateNext();
