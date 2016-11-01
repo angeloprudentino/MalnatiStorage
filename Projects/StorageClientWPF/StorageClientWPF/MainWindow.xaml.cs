@@ -611,6 +611,7 @@ namespace StorageClientWPF
         {
             //prima pulisci tutto
             clearRows();
+            WriteGrid.Height = 30 * 11;
 
             this.user_label.FontWeight = FontWeights.Bold;
             this.user_label.Text = aMsg;
@@ -655,6 +656,7 @@ namespace StorageClientWPF
             //prima pulisci tutto
             clearRows();
             int tot = aVersionsList.Count;
+            WriteGrid.Height = 30 * 11;
 
             this.user_label.FontWeight = FontWeights.Bold;
             this.user_label.Text = "Available versions: ";
